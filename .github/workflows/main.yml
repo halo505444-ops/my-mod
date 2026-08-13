@@ -11,6 +11,10 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
+    - name: Install Dependencies (ldid & dpkg)
+      run: |
+        brew install ldid dpkg
+
     - name: Setup Theos
       run: |
         git clone --recursive https://github.com/theos/theos.git $HOME/theos
@@ -31,3 +35,4 @@ jobs:
       with:
         name: MamaHala-Dylib
         path: packages/*.deb
+
