@@ -7,12 +7,22 @@ bool isESPEnabled = false;
 // فەنکشنی سەرەکی بۆ کێشانەوەی ESP
 void DrawESP() {
     if (!isESPEnabled) return;
-    // لێرەدا لۆجیکی پیشاندانی کەسەکان (Boxes/Lines) جێبەجێ دەبێت
+    // لێرەدا لۆجیکی پیشاندانی کەسەکان جێبەجێ دەبێت
 }
 
-// دروستکردنی مێنوی ڕووکار (Menu UI)
+// دروستکردنی مێنوی ڕووکار بە شێوازی نوێ (iOS 13+)
 void ShowMenu() {
-    UIWindow *window = [UIApplication sharedApplication].keyWindow;
+    UIWindow *window = nil;
+    for (UIWindowScene *windowScene in [UIApplication sharedApplication].connectedScenes) {
+        if (windowScene.activationState == UISceneActivationStateForegroundActive) {
+            for (UIWindow *w in windowScene.windows) {
+                if (w.isKeyWindow) {
+                    window = w;
+                    break;
+                }
+            }
+        }
+    }
     if (!window) return;
 
     // دروستکردنی دوگمەیەک بۆ مۆنۆکە
