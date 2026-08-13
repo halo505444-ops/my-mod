@@ -1,8 +1,0 @@
-Package: com.mamahala.mod
-Name: MamaHala
-Depends: mobilesubstrate
-Version: 1.0.0
-Architecture: iphoneos-arm
-Maintainer: MamaHala
-Author: MamaHala
-Section: Tweaks
