@@ -26,7 +26,7 @@ jobs:
         echo "TARGET := iphone:clang:latest:14.0" > Makefile
         echo "include \$(THEOS)/makefiles/common.mk" >> Makefile
         echo "TWEAK_NAME = MamaHala" >> Makefile
-        echo "MamaHala_FILES = mod.xm" >> Makefile
+        echo "MamaHala_FILES = mod.m" >> Makefile
         echo "MamaHala_CFLAGS = -fobjc-arc" >> Makefile
         echo "include \$(THEOS_MAKE_PATH)/tweak.mk" >> Makefile
 
