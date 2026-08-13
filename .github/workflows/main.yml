@@ -11,9 +11,10 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    - name: Setup Theos
+    - name: Install Theos (Official)
       run: |
-        git clone --recursive https://github.com/theos/theos.git $HOME/theos
+        export THEOS=$HOME/theos
+        bash -c "$(curl -fsSL https://raw.githubusercontent.com/theos/theos/master/bin/install-theos)"
         echo "THEOS=$HOME/theos" >> $GITHUB_ENV
         echo "$HOME/theos/bin" >> $GITHUB_PATH
 
