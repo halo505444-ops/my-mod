@@ -30,7 +30,8 @@
         [self addSubview:espBtn];
         
         UIButton *aimBtn = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-        aimBtn.frame = CGRectMake(15, 95, frame.size.width - 30, 35];
+        aimBtn.frame = CGRectMake(15, 95, frame.size.width - 30, 35);
+
         [aimBtn setTitle:@"Aimbot: OFF" forState:UIControlStateNormal];
         [aimBtn setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
         aimBtn.backgroundColor = [UIColor colorWithWhite:0.2 alpha:1.0];
