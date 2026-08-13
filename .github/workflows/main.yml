@@ -11,7 +11,7 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    - name: Setup Theos and SDKs
+    - name: Install Theos Manually
       run: |
         git clone --recursive https://github.com/theos/theos.git $HOME/theos
         git clone --depth=1 https://github.com/theos/sdks.git $HOME/theos/sdks
@@ -27,4 +27,3 @@ jobs:
       with:
         name: MamaHala-Dylib
         path: packages/*.deb
-
