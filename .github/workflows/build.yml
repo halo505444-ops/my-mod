@@ -1,0 +1,17 @@
+name: Build iOS Dylib
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Compile Dylib
+      run: |
+        xcrun --sdk iphoneos clang -dynamiclib -arch arm64 -o libcustommod.dylib mod.m -framework UIKit -framework Foundation
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: custom-dylib
+        path: libcustommod.dylib
