@@ -21,7 +21,8 @@
         [self addSubview:title];
         
         UIButton *espBtn = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-        espBtn.frame = CGRectMake(15, 50, frame.size.width - 30, 35];
+        espBtn.frame = CGRectMake(15, 50, 200, 35);
+
         [espBtn setTitle:@"ESP: OFF" forState:UIControlStateNormal];
         [espBtn setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
         espBtn.backgroundColor = [UIColor colorWithWhite:0.2 alpha:1.0];
