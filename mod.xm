@@ -36,33 +36,40 @@ static void openTelegramChannel() {
         }
         if (!window) return;
         
-        // دروستکردنی دوگمەی هێلکەیی (Capsule) وەک وێنەکە
+        // دروستکردنی ستایلی گەیمینگ و بریقەدار (Neon Badge)
         UIButton *logoBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-        CGFloat w = 150.0f;
+        CGFloat w = 170.0f;
         CGFloat h = 42.0f;
-        logoBtn.frame = CGRectMake((window.bounds.size.width - w) / 2.0f, 40.0f, w, h);
+        logoBtn.frame = CGRectMake((window.bounds.size.width - w) / 2.0f, 45.0f, w, h);
         
-        // پاشبنەمای تاریکی شەفاف و شێوە خڕ (Capsule)
-        logoBtn.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.7f];
-        logoBtn.layer.cornerRadius = h / 2.0f;
-        logoBtn.layer.borderWidth = 1.0f;
-        logoBtn.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.25f].CGColor;
-        logoBtn.clipsToBounds = YES;
+        // پاشبنەمای تاریکی گەیمینگ
+        logoBtn.backgroundColor = [UIColor colorWithRed:0.06f green:0.02f blue:0.12f alpha:0.9f];
+        logoBtn.layer.cornerRadius = 10.0f;
         
-        // ڕێکخستنی دوو دێڕ نووسین (ناوی سەرەوە و مێژووی ژێرەوە)
-        NSString *mainText = @"MamaHala";
-        NSString *subText = @"08/13/26";
+        // چوارچێوەی نایاب و ڕووناک (Neon Border)
+        logoBtn.layer.borderWidth = 1.5f;
+        logoBtn.layer.borderColor = [UIColor colorWithRed:0.8f green:0.2f blue:1.0f alpha:1.0f].CGColor;
+        
+        // دروستکردنی سێبەری درەوشاوە (Glow Effect)
+        logoBtn.layer.shadowColor = [UIColor colorWithRed:0.8f green:0.2f blue:1.0f alpha:1.0f].CGColor;
+        logoBtn.layer.shadowOffset = CGSizeMake(0, 0);
+        logoBtn.layer.shadowRadius = 6.0f;
+        logoBtn.layer.shadowOpacity = 0.8f;
+        
+        // ڕێکخستنی نووسینەکان بە ستایلی VIP
+        NSString *mainText = @"⚡ MamaHala ⚡";
+        NSString *subText = @"VIP MODULE • 2026";
         NSString *fullString = [NSString stringWithFormat:@"%@\n%@", mainText, subText];
         
         NSMutableAttributedString *attrString = [[NSMutableAttributedString alloc] initWithString:fullString];
         
         // فۆنت و ڕەنگی ناوی سەرەوە
         [attrString addAttribute:NSFontAttributeName value:[UIFont boldSystemFontOfSize:13] range:[fullString rangeOfString:mainText]];
-        [attrString addAttribute:NSForegroundColorAttributeName value:[UIColor whiteColor] range:[fullString rangeOfString:mainText]];
+        [attrString addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithRed:1.0f green:0.8f blue:1.0f alpha:1.0f] range:[fullString rangeOfString:mainText]];
         
-        // فۆنت و ڕەنگی مێژووی خوارەوە
-        [attrString addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:10] range:[fullString rangeOfString:subText]];
-        [attrString addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithWhite:0.75f alpha:1.0f] range:[fullString rangeOfString:subText]];
+        // فۆنت و ڕەنگی دەقی خوارەوە
+        [attrString addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:9] range:[fullString rangeOfString:subText]];
+        [attrString addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithRed:0.6f green:0.6f blue:0.8f alpha:1.0f] range:[fullString rangeOfString:subText]];
         
         [logoBtn setAttributedTitle:attrString forState:UIControlStateNormal];
         logoBtn.titleLabel.numberOfLines = 2;
