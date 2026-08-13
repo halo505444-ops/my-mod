@@ -1,16 +1,32 @@
 #import <substrate.h>
 #import <UIKit/UIKit.h>
+#import <CoreGraphics/CoreGraphics.h>
 
-// گۆڕاوی سەرەکی بۆ هەڵگیرسان و کوژاندنەوەی ESP
 bool isESPEnabled = false;
 
-// فەنکشنی سەرەکی بۆ کێشانەوەی ESP
-void DrawESP() {
-    if (!isESPEnabled) return;
-    // لێرەدا لۆجیکی پیشاندانی کەسەکان جێبەجێ دەبێت
+// فەنکشنێک بۆ دروستکردنی Gradientی ئاڵای کوردستان
+CAGradientLayer *kurdistanFlagGradient(CGRect frame) {
+    CAGradientLayer *layer = [CAGradientLayer layer];
+    layer.frame = frame;
+    
+    // ڕەنگەکان بەپێی ڕێز بەندی ئاڵا (سەوز لە سەرەوە، سپی، سوور لە خوارەوە)
+    // وەزیفی ستاندارد: سەرەوە سەوز، ناوەڕاست سپی، خوارەوە سوور
+    UIColor *colorTop = [UIColor colorWithRed:0.0 green:0.6 blue:0.3 alpha:1.0]; // سەوزی تۆخ
+    UIColor *colorMid = [UIColor whiteColor]; // سپی
+    UIColor *colorBot = [UIColor colorWithRed:0.8 green:0.1 blue:0.2 alpha:1.0]; // سووری تۆخ
+    
+    layer.colors = @[(__bridge id)colorTop.CGColor, (__bridge id)colorMid.CGColor, (__bridge id)colorBot.CGColor];
+    
+    // دیاریکردنی ڕێژەی هەر ڕەنگێک (33% بۆ هەر یەکێک)
+    layer.locations = @[@0.0, @0.33, @0.66, @1.0]; // زیادکردنی خاڵێک بۆ ڕێکخستنی باشتر
+    
+    // ڕێکخستنی ئاراستەی gradient (ستونی)
+    layer.startPoint = CGPointMake(0.5, 0.0);
+    layer.endPoint = CGPointMake(0.5, 1.0);
+    
+    return layer;
 }
 
-// دروستکردنی مێنوی ڕووکار بە شێوازی نوێ (iOS 13+)
 void ShowMenu() {
     UIWindow *window = nil;
     for (UIWindowScene *windowScene in [UIApplication sharedApplication].connectedScenes) {
@@ -25,12 +41,31 @@ void ShowMenu() {
     }
     if (!window) return;
 
-    // دروستکردنی دوگمەیەک بۆ مۆنۆکە
-    UIButton *menuButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-    menuButton.frame = CGRectMake(50, 50, 120, 40);
-    [menuButton setTitle:@"ESP Menu: OFF" forState:UIControlStateNormal];
-    [menuButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
-    menuButton.backgroundColor = [UIColor colorWithWhite:0.2 alpha:0.7];
+    // گەورەکردنی دوگمەکە بۆ قەبارەی گەورە (بۆ نموونە: 200x70)
+    // وە گواستنەوەی بۆ شوێنێکی زۆر دیار (ناوەڕاستی سەرەوە)
+    CGRect buttonFrame = CGRectMake(100, 50, 200, 70);
+    UIButton *menuButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    menuButton.frame = buttonFrame;
+    
+    // دانانی نووسینەکان
+    [menuButton setTitle:@"ESP: OFF" forState:UIControlStateNormal];
+    [menuButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal]; // نووسینی سەرەکی سپی
+    [menuButton.titleLabel setFont:[UIFont boldSystemFontOfSize:20]]; // فۆنتی گەورە
+    
+    // دانانی Gradientی ئاڵای کوردستان لە پشتەوەی دوگمەکە
+    CAGradientLayer *flagLayer = kurdistanFlagGradient(menuButton.bounds);
+    flagLayer.cornerRadius = 10; // گۆشە خڕکردنەوە
+    [menuButton.layer insertSublayer:flagLayer atIndex:0];
+    
+    // زیادکردنی سنوورێک (Border) بۆ جوانی
+    menuButton.layer.borderColor = [UIColor blackColor].CGColor;
+    menuButton.layer.borderWidth = 1.0;
+    menuButton.layer.cornerRadius = 10;
+    menuButton.clipsToBounds = YES;
+
+    // زیادکردنی وێنەی خۆرەکە لە ناوەڕاستی دوگمەکە (وەک ئایکۆنێکی ناوەکی)
+    // لێرەدا تەنها نووسینێک زیاد دەکەین چونکە دانانی وێنە لە کۆدی سادەدا ئاڵۆزە
+    // دەتوانیت دواتر وێنەی خۆرەکە وەک وێنەیەک دابنێیت لەسەر دوگمەکە
 
     [menuButton addTarget:[NSClassFromString(@"MenuController") class] action:@selector(toggleESP:) forControlEvents:UIControlEventTouchUpInside];
 
@@ -44,12 +79,15 @@ void ShowMenu() {
 @implementation MenuController
 + (void)toggleESP:(UIButton *)sender {
     isESPEnabled = !isESPEnabled;
+    
+    // دۆزینەوەی Gradient layerەکە بۆ گۆڕینی ڕەنگەکان لە کاتی ON/OFF
+    // (لە کۆدی سادەدا تەنها ڕەنگی نووسینەکە دەگۆڕین)
     if (isESPEnabled) {
-        [sender setTitle:@"ESP Menu: ON" forState:UIControlStateNormal];
-        [sender setTitleColor:[UIColor greenColor] forState:UIControlStateNormal];
+        [sender setTitle:@"ESP: ON" forState:UIControlStateNormal];
+        [sender setTitleColor:[UIColor yellowColor] forState:UIControlStateNormal]; // گۆڕینی ڕەنگی نووسین بۆ زەرد لە کاتی ON
     } else {
-        [sender setTitle:@"ESP Menu: OFF" forState:UIControlStateNormal];
-        [sender setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
+        [sender setTitle:@"ESP: OFF" forState:UIControlStateNormal];
+        [sender setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal]; // گەڕانەوە بۆ سپی لە کاتی OFF
     }
 }
 @end
@@ -58,7 +96,7 @@ static void (*old_applicationDidFinishLaunching)(id, SEL, id, id);
 static void replacement_applicationDidFinishLaunching(id self, SEL _cmd, id application, id launchOptions) {
     old_applicationDidFinishLaunching(self, _cmd, application, launchOptions);
     
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         ShowMenu();
     });
 }
