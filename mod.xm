@@ -1,7 +1,5 @@
 #import <UIKit/UIKit.h>
 
-static UIButton *logoBtn;
-
 static void openTelegramChannel() {
     NSURL *telegramURL = [NSURL URLWithString:@"https://t.me/SNAKE_IOS01"]; 
     if ([[UIApplication sharedApplication] canOpenURL:telegramURL]) {
@@ -38,27 +36,37 @@ static void openTelegramChannel() {
         }
         if (!window) return;
         
-        logoBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+        // دروستکردنی دوگمەی هێلکەیی (Capsule) وەک وێنەکە
+        UIButton *logoBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+        CGFloat w = 150.0f;
+        CGFloat h = 42.0f;
+        logoBtn.frame = CGRectMake((window.bounds.size.width - w) / 2.0f, 40.0f, w, h);
         
-        // قەبارەی گونجاو وەک لۆگۆکەی ناو وێنەکە (پانی ١٣٠، بەرزی ٣٢)
-        CGFloat w = 130.0f;
-        CGFloat h = 32.0f;
-        logoBtn.frame = CGRectMake((window.bounds.size.width - w) / 2.0f, 65.0f, w, h);
+        // پاشبنەمای تاریکی شەفاف و شێوە خڕ (Capsule)
+        logoBtn.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.7f];
+        logoBtn.layer.cornerRadius = h / 2.0f;
+        logoBtn.layer.borderWidth = 1.0f;
+        logoBtn.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.25f].CGColor;
+        logoBtn.clipsToBounds = YES;
         
-        // پاشبنەمایەکی شینی تاریکی تەنک (تایبەت بە ستایلی شین)
-        logoBtn.backgroundColor = [UIColor colorWithRed:0.02f green:0.08f blue:0.18f alpha:0.85f];
+        // ڕێکخستنی دوو دێڕ نووسین (ناوی سەرەوە و مێژووی ژێرەوە)
+        NSString *mainText = @"MamaHala";
+        NSString *subText = @"08/13/26";
+        NSString *fullString = [NSString stringWithFormat:@"%@\n%@", mainText, subText];
         
-        // نووسینی ناوی تۆ
-        [logoBtn setTitle:@"MamaHala" forState:UIControlStateNormal];
+        NSMutableAttributedString *attrString = [[NSMutableAttributedString alloc] initWithString:fullString];
         
-        // ڕەنگی دەقەکە بە شینی کاڵی درەوشاوە
-        [logoBtn setTitleColor:[UIColor colorWithRed:0.4f green:0.8f blue:1.0f alpha:1.0f] forState:UIControlStateNormal];
-        logoBtn.titleLabel.font = [UIFont boldSystemFontOfSize:14];
+        // فۆنت و ڕەنگی ناوی سەرەوە
+        [attrString addAttribute:NSFontAttributeName value:[UIFont boldSystemFontOfSize:13] range:[fullString rangeOfString:mainText]];
+        [attrString addAttribute:NSForegroundColorAttributeName value:[UIColor whiteColor] range:[fullString rangeOfString:mainText]];
         
-        // چوارچێوەیەکی شینی سەرنجڕاکێش وەک تابلۆکە
-        logoBtn.layer.cornerRadius = 6.0f;
-        logoBtn.layer.borderWidth = 1.5f;
-        logoBtn.layer.borderColor = [UIColor colorWithRed:0.0f green:0.5f blue:1.0f alpha:1.0f].CGColor;
+        // فۆنت و ڕەنگی مێژووی خوارەوە
+        [attrString addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:10] range:[fullString rangeOfString:subText]];
+        [attrString addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithWhite:0.75f alpha:1.0f] range:[fullString rangeOfString:subText]];
+        
+        [logoBtn setAttributedTitle:attrString forState:UIControlStateNormal];
+        logoBtn.titleLabel.numberOfLines = 2;
+        logoBtn.titleLabel.textAlignment = NSTextAlignmentCenter;
         
         [logoBtn addTarget:[LogoButtonHandler class] action:@selector(onLogoClicked:) forControlEvents:UIControlEventTouchUpInside];
         
