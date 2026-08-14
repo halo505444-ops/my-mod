@@ -25,12 +25,15 @@
     UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(dragButton:)];
     [self.floatingButton addGestureRecognizer:pan];
     
-    UIWindow *window = [UIApplication sharedApplication].keyWindow;
-    [window addSubview:self.floatingButton];
+    // دۆزینەوەی پەنجەرەی سەرەکی بە شێوازێکی مۆدێرن
+    UIWindow *window = [self currentWindow];
+    if (window) {
+        [window addSubview:self.floatingButton];
+    }
 }
 
 - (void)dragButton:(UIPanGestureRecognizer *)pan {
-    UIWindow *window = [UIApplication sharedApplication].keyWindow;
+    UIWindow *window = [self currentWindow];
     CGPoint translation = [pan translationInView:window];
     CGPoint center = self.floatingButton.center;
     self.floatingButton.center = CGPointMake(center.x + translation.x, center.y + translation.y);
@@ -38,7 +41,8 @@
 }
 
 - (void)setupMenuUI {
-    UIWindow *window = [UIApplication sharedApplication].keyWindow;
+    UIWindow *window = [self currentWindow];
+    if (!window) return;
     
     self.menuView = [[UIView alloc] initWithFrame:CGRectMake(50, 180, 280, 260)];
     self.menuView.backgroundColor = [UIColor colorWithWhite:0.1f alpha:0.9f];
@@ -80,6 +84,20 @@
     [self.menuView addSubview:footerLabel];
     
     [window addSubview:self.menuView];
+}
+
+// فەنکشنی یاریدەدەر بۆ وەرگرتنی پەنجەرەی کارا بە شێوازی سەردەمی
+- (UIWindow *)currentWindow {
+    for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
+        if (scene.activationState == UISceneActivationStateForegroundActive) {
+            for (UIWindow *window in scene.windows) {
+                if (window.isKeyWindow) {
+                    return window;
+                }
+            }
+        }
+    }
+    return [UIApplication sharedApplication].windows.firstObject;
 }
 
 - (void)toggleMenu {
