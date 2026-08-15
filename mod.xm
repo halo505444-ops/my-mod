@@ -13,6 +13,11 @@
             __block UIView *overlayView = [[UIView alloc] initWithFrame:window.bounds];
             overlayView.backgroundColor = [UIColor colorWithRed:0.05 green:0.05 blue:0.08 alpha:0.98];
             
+            // زیادکردنی فەرمان بۆ لادانی کیبۆرد کاتێک لە دەرەوە دەدرێت
+            UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:overlayView action:@selector(endEditing:)];
+            tapGesture.cancelsTouchesInView = NO;
+            [overlayView addGestureRecognizer:tapGesture];
+            
             // نوسینی ناوی محمدVIP بە قەبارەیەکی گەورە و درەوشاوە
             UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 90, window.bounds.size.width - 40, 60)];
             titleLabel.text = @"محمدVIP";
@@ -36,9 +41,9 @@
                 titleLabel.transform = CGAffineTransformMakeTranslation(30, 0);
             } completion:nil];
             
-            // نوسینی ڕێنمایی
+            // نوسینی ڕێنمایی بە عەرەبی
             UILabel *subLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 170, window.bounds.size.width - 40, 30)];
-            subLabel.text = @"تکایە کۆدی چالاککردن بنووسە:";
+            subLabel.text = @"الرجاء إدخال كود التفعيل:";
             subLabel.textColor = [UIColor lightGrayColor];
             subLabel.textAlignment = NSTextAlignmentCenter;
             subLabel.font = [UIFont systemFontOfSize:14];
@@ -48,7 +53,7 @@
             UITextField *keyField = [[UITextField alloc] initWithFrame:CGRectMake(50, 220, window.bounds.size.width - 100, 45)];
             keyField.backgroundColor = [UIColor colorWithRed:0.15 green:0.15 blue:0.2 alpha:1.0];
             keyField.textColor = [UIColor whiteColor];
-            keyField.placeholder = @" لێرە کۆد بنووسە...";
+            keyField.placeholder = @" أدخل الكود هنا...";
             keyField.textAlignment = NSTextAlignmentCenter;
             keyField.layer.cornerRadius = 8;
             keyField.layer.borderWidth = 1.0;
@@ -56,11 +61,11 @@
             keyField.secureTextEntry = YES;
             [overlayView addSubview:keyField];
             
-            // دوگمەی پشکنینی کۆد
+            // دوگمەی پشکنینی کۆد بە عەرەبی
             UIButton *submitBtn = [UIButton buttonWithType:UIButtonTypeSystem];
             submitBtn.frame = CGRectMake(50, 280, window.bounds.size.width - 100, 45);
             submitBtn.backgroundColor = [UIColor colorWithRed:0.0 green:0.6 blue:1.0 alpha:1.0];
-            [submitBtn setTitle:@"پشکنین و کردنەوە" forState:UIControlStateNormal];
+            [submitBtn setTitle:@"تحقق وفتح" forState:UIControlStateNormal];
             [submitBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
             submitBtn.titleLabel.font = [UIFont boldSystemFontOfSize:16];
             submitBtn.layer.cornerRadius = 8;
@@ -68,7 +73,7 @@
             [submitBtn addAction:[UIAction actionWithHandler:^(__kindof UIAction * _Nonnull action) {
                 NSString *enteredCode = keyField.text;
                 
-                // لێرە مەرجەکە دانراوە کە دەبێت کۆدەکە "محمدVIP" بێت
+                // پشکنینی کۆد
                 if ([enteredCode isEqualToString:@"محمدVIP"]) {
                     // ١. لادانی شاشەی قفڵ و کردنەوەی یارییەکە
                     [overlayView removeFromSuperview];
