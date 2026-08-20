@@ -3,7 +3,7 @@
 #import <dlfcn.h>
 #import <sys/sysctl.h>
 
-// پاراستنی دژە-دەبەس (Anti-Debug) بۆ ئەوەی کەس نەتوانێ بە ئاسانی دەستکاری بکات یان ڕێگری بکات
+// پاراستنی دژە-دەبەس (Anti-Debug) بۆ ئەوەی کەس نەتوانێ بە ئاسانی دەستکاری بکات
 typedef int (*ptrace_ptr)(int _request, pid_t _pid, caddr_t _addr, int _data);
 void antiDebug() {
     ptrace_ptr ptrace_s = (ptrace_ptr)dlsym(RTLD_DEFAULT, "ptrace");
@@ -27,13 +27,13 @@ void antiDebug() {
     self.animatedLabel.text = @"MamaHALA";
     self.animatedLabel.font = [UIFont boldSystemFontOfSize:24];
     self.animatedLabel.textColor = [UIColor systemYellowColor];
-    self.animatedLabel.textAlignment = NSTertAlignmentCenter;
+    self.animatedLabel.textAlignment = NSTextAlignmentCenter; // ڕاستکراوەیە بۆ NSTextAlignmentCenter
     [self.view addSubview:self.animatedLabel];
     
-    // جووڵەی سوڕانەوەی ٣٦٠ پلە بە دەوری خۆیدا (Continuous 360 Rotation)
+    // جووڵەی سوڕانەوەی ٣٦٠ پلە بە دەوری خۆیدا
     CABasicAnimation *rotationAnimation = [CABasicAnimation animationWithKeyPath:@"transform.rotation.z"];
     rotationAnimation.toValue = [NSNumber numberWithDouble:M_PI * 2.0];
-    rotationAnimation.duration = 4.0; // خێرایی سوڕانەوەکە
+    rotationAnimation.duration = 4.0;
     rotationAnimation.repeatCount = HUGE_VALF;
     [self.animatedLabel.layer addAnimation:rotationAnimation forKey:@"rotationAnimation"];
 }
@@ -57,9 +57,9 @@ void antiDebug() {
     titleLabel.font = [UIFont boldSystemFontOfSize:28];
     
     NSMutableAttributedString *coloredTitle = [[NSMutableAttributedString alloc] initWithString:@"Mama Hala"];
-    [coloredTitle addAttribute:NSForegroundColorAttributeName value:[UIColor redColor] range:NSMakeRange(0, 4)];     // Mama (سوور)
-    [coloredTitle addAttribute:NSForegroundColorAttributeName value:[UIColor whiteColor] range:NSMakeRange(4, 1)];   // بۆشایی (سپی)
-    [coloredTitle addAttribute:NSForegroundColorAttributeName value:[UIColor greenColor] range:NSMakeRange(5, 4)];   // Hala (سەوز)
+    [coloredTitle addAttribute:NSForegroundColorAttributeName value:[UIColor redColor] range:NSMakeRange(0, 4)];     // Mama
+    [coloredTitle addAttribute:NSForegroundColorAttributeName value:[UIColor whiteColor] range:NSMakeRange(4, 1)];   // بۆشایی
+    [coloredTitle addAttribute:NSForegroundColorAttributeName value:[UIColor greenColor] range:NSMakeRange(5, 4)];   // Hala
     titleLabel.attributedText = coloredTitle;
     [self.view addSubview:titleLabel];
     
@@ -102,7 +102,6 @@ void antiDebug() {
         NSURL *telegramURL = [NSURL URLWithString:@"https://t.me/MARAyHACK"];
         [[UIApplication sharedApplication] openURL:telegramURL options:@{} completionHandler:nil];
         
-        // داخستنی پەنجەرەی کلیل و نیشاندانی مۆدەکە لەناو یارییەکەدا
         [self dismissViewControllerAnimated:YES completion:^{
             UIWindow *window = nil;
             for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
@@ -131,9 +130,8 @@ void antiDebug() {
 
 @end
 
-// سەرەتای کارپێکردنی تویکەکە (Constructor)
+// سەرەتای کارپێکردنی تویکەکە
 %ctor {
-    // کارپێکردنی پاراستن دژی دەستکاری و دیبەگ
     antiDebug();
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
