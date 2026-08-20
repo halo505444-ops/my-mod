@@ -57,9 +57,7 @@
 - (void)verifyKey {
     NSString *enteredKey = self.keyTextField.text;
     
-    // پشکنینی کلیلەکە کە دەبێت MamaHala بێت
     if ([enteredKey isEqualToString:@"MamaHala"]) {
-        // کردنەوەی کەناڵی تلیگرام
         NSURL *telegramURL = [NSURL URLWithString:@"https://t.me/Mama_Hala0"];
         [[UIApplication sharedApplication] openURL:telegramURL options:@{} completionHandler:nil];
         
@@ -73,10 +71,22 @@
 
 @end
 
-// نیشاندانی پەنجەرەی کلیل لە کاتی کردنەوەی یارییەکەدا
+// چارەسەرکراو بۆ پەیوەندیه نوێیەکانی Window
 %ctor {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        UIWindow *window = [[UIApplication sharedApplication] keyWindow];
+        UIWindow *window = nil;
+        for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if (scene.activationState == UISceneActivationStateForegroundActive) {
+                for (UIWindow *w in scene.windows) {
+                    if (w.isKeyWindow) {
+                        window = w;
+                        break;
+                    }
+                }
+            }
+        }
+        if (!window) window = [[UIApplication sharedApplication].windows firstObject];
+        
         LoginViewController *loginVC = [[LoginViewController alloc] init];
         loginVC.modalPresentationStyle = UIModalPresentationFullScreen;
         [window.rootViewController presentViewController:loginVC animated:YES completion:nil];
