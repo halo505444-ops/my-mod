@@ -1,5 +1,4 @@
-#import "./7AMOD.h"
-
+#import "7AMOD.h"
 #import "views/DLGMemUIView.h"
 
 //antiban
