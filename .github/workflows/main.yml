@@ -12,9 +12,9 @@ jobs:
       - name: Install Theos Locally
         run: |
           git clone --recursive https://github.com/theos/theos.git $HOME/theos
-          echo "THEOS=$HOME/theos" >> $GITHUB_ENV
-          echo "$HOME/theos/bin" >> $GITHUB_PATH
 
       - name: Compile dylib
         run: |
+          export THEOS=$HOME/theos
+          export PATH="$THEOS/bin:$PATH"
           make package
