@@ -9,11 +9,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install Theos Manually
+      - name: Install Theos Locally
         run: |
-          git clone --recursive https://github.com/theos/theos.git /var/theos
-          echo "THEOS=/var/theos" >> $GITHUB_ENV
-          echo "/var/theos/bin" >> $GITHUB_PATH
+          git clone --recursive https://github.com/theos/theos.git $HOME/theos
+          echo "THEOS=$HOME/theos" >> $GITHUB_ENV
+          echo "$HOME/theos/bin" >> $GITHUB_PATH
 
       - name: Compile dylib
         run: |
