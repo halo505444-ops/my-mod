@@ -1,5 +1,5 @@
-#import "7AMOD.h"
-#import "views/DLGMemUIView.h"
+#include "KittyMemory/KittyMemory.hpp"
+#include "KittyMemory/MemoryPatch.hpp"
 
 //antiban
 %hook UIApplication
