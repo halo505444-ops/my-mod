@@ -16,3 +16,4 @@ TWEAK_NAME = 7AMOD
 7AMOD_LIBRARIES += substrate
 
 include $(THEOS_MAKE_PATH)/tweak.mk
+ADDITIONAL_OBJCFLAGS = -fobjc-arc
