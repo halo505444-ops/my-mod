@@ -1,5 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <vector>
+#include <string>
+
 
 // `M × N × O` matrix
 #define M 2
