@@ -21,7 +21,7 @@ jobs:
           clang++ -dynamiclib -arch arm64 -isysroot $(xcrun --sdk iphoneos --show-sdk-path) -F$(xcrun --sdk iphoneos --show-sdk-path)/System/Library/Frameworks -framework UIKit -framework Foundation mod.mm -o MamaHala.dylib
 
       - name: Upload dylib artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: MamaHala
           path: MamaHala.dylib
