@@ -13,8 +13,9 @@ jobs:
         run: |
           git clone --recursive https://github.com/theos/theos.git $HOME/theos
 
-      - name: Compile dylib directly
+      - name: Compile mod.xm directly
         run: |
           export THEOS=$HOME/theos
           export PATH="$THEOS/bin:$PATH"
-          clang++ -dynamiclib -arch arm64 -isysroot $(xcrun --sdk iphoneos --show-sdk-path) -F$(xcrun --sdk iphoneos --show-sdk-path)/System/Library/Frameworks -framework UIKit -framework Foundation mod.xm -o MamaHala.dylib
+          logos.pl mod.xm > mod.mm
+          clang++ -dynamiclib -arch arm64 -isysroot $(xcrun --sdk iphoneos --show-sdk-path) -F$(xcrun --sdk iphoneos --show-sdk-path)/System/Library/Frameworks -framework UIKit -framework Foundation mod.mm -o MamaHala.dylib
