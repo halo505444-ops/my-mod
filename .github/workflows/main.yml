@@ -18,7 +18,7 @@ jobs:
           export THEOS=$HOME/theos
           export PATH="$THEOS/bin:$PATH"
           logos.pl mod.xm > mod.mm
-          clang++ -dynamiclib -arch arm64 -isysroot $(xcrun --sdk iphoneos --show-sdk-path) -F$(xcrun --sdk iphoneos --show-sdk-path)/System/Library/Frameworks -framework UIKit -framework Foundation mod.mm -o MamaHala.dylib
+          xcrun --sdk iphoneos clang++ -dynamiclib -arch arm64 -o MamaHala.dylib mod.mm -framework Foundation -framework UIKit -framework CoreGraphics -framework QuartzCore -fobjc-arc
 
       - name: Upload dylib artifact
         uses: actions/upload-artifact@v4
