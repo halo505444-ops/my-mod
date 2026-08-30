@@ -30,6 +30,12 @@ static BOOL skinOutfit = NO;
 void createMenuUI();
 void toggleMenu();
 
+// Handler Interface Declaration (Moved up to fix undeclared identifier error)
+@interface MaMaHaLaHandler : NSObject
++ (void)handleDrag:(UIPanGestureRecognizer *)gesture;
++ (void)toggleMenuAction;
+@end
+
 // Helper for Modern Window Retrieval
 UIWindow *getModernKeyWindow() {
     UIWindow *keyWindow = nil;
@@ -94,9 +100,6 @@ UIWindow *getModernKeyWindow() {
         createMenuUI();
     });
 }
-
-@interface MaMaHaLaHandler : NSObject
-@end
 
 @implementation MaMaHaLaHandler
 + (void)handleDrag:(UIPanGestureRecognizer *)gesture {
