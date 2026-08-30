@@ -1,53 +1,133 @@
+// ==========================================
+// MaMaHaLa VIP Gaming Mod Menu - iOS (Theos)
+// Target: PUBG Mobile - ESP, Aimbot, Skin Hack
+// ==========================================
+
 #import <UIKit/UIKit.h>
+#import <CoreGraphics/CoreGraphics.h>
 
-@interface MamaHalaView : NSObject
-+ (void)showBanner;
-@end
+// Global UI Elements
+static UIButton *maMaHaLaFloatBtn = nil;
+static UIView *menuContainer = nil;
+static BOOL isMenuVisible = NO;
 
-@implementation MamaHalaView
+// Feature States
+static BOOL espBox = NO;
+static BOOL espLine = NO;
+static BOOL espDistance = NO;
+static BOOL espHealth = NO;
+static BOOL espName = NO;
 
-+ (void)showBanner {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        UIWindow *window = [UIApplication sharedApplication].keyWindow;
-        if (!window) return;
+static BOOL aimbotEnabled = NO;
+static int aimbotFOV = 100;
+static int aimbotSmooth = 5;
 
-        // دروستکردنی باوەڕی سەرەکی لۆگۆکە
-        UIView *banner = [[UIView alloc] initWithFrame:CGRectMake((window.bounds.size.width - 220) / 2, 40, 220, 45)];
-        banner.backgroundColor = [UIColor colorWithRed:0.08 green:0.05 blue:0.15 alpha:0.92];
-        banner.layer.cornerRadius = 12;
-        banner.layer.borderWidth = 1.5;
-        banner.layer.borderColor = [UIColor colorWithRed:0.65 green:0.15 blue:0.95 alpha:1.0].CGColor;
+static BOOL skinM416 = NO;
+static BOOL skinAWM = NO;
+static BOOL skinOutfit = NO;
+
+// Forward Declarations
+void createMenuUI();
+void toggleMenu();
+
+// ==========================================
+// FLOATING BUTTON (MaMaHaLa)
+// ==========================================
+%ctor {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        UIWindow *keyWindow = [UIApplication sharedApplication].keyWindow;
+        if (!keyWindow) return;
+
+        // Create Floating Button
+        maMaHaLaFloatBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+        maMaHaLaFloatBtn.frame = CGRectMake(20, 120, 75, 75);
+        maMaHaLaFloatBtn.layer.cornerRadius = 37.5;
         
-        // بریقەدانەوەی لێوارەکان (Glow Effect)
-        banner.layer.shadowColor = [UIColor colorWithRed:0.75 green:0.2 blue:1.0 alpha:1.0].CGColor;
-        banner.layer.shadowOffset = CGSizeMake(0, 0);
-        banner.layer.shadowRadius = 8.0;
-        banner.layer.shadowOpacity = 0.8;
+        // Gorgeous Gaming Gradient Background
+        CAGradientLayer *gradient = [CAGradientLayer layer];
+        gradient.frame = maMaHaLaFloatBtn.bounds;
+        gradient.cornerRadius = 37.5;
+        gradient.colors = @[(id)[UIColor colorWithRed:0.05 green:0.85 blue:0.95 alpha:0.95].CGColor,
+                            (id)[UIColor colorWithRed:0.55 green:0.05 blue:0.95 alpha:0.95].CGColor];
+        [maMaHaLaFloatBtn.layer insertSublayer:gradient atIndex:0];
 
-        // تێکستی یەکەم: ⚡ MamaHala ⚡
-        UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 6, 220, 20)];
-        titleLabel.text = @"⚡ MamaHala ⚡";
-        titleLabel.textAlignment = NSTextAlignmentCenter;
-        titleLabel.textColor = [UIColor whiteColor];
-        titleLabel.font = [UIFont boldSystemFontOfSize:14];
-        [banner addSubview:titleLabel];
+        // Button Title styling
+        [maMaHaLaFloatBtn setTitle:@"MaMaHaLa" forState:UIControlStateNormal];
+        maMaHaLaFloatBtn.titleLabel.font = [UIFont boldSystemFontOfSize:12];
+        [maMaHaLaFloatBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        
+        // Shadow & Glow
+        maMaHaLaFloatBtn.layer.shadowColor = [UIColor colorWithRed:0.0 green:0.8 blue:1.0 alpha:0.9].CGColor;
+        maMaHaLaFloatBtn.layer.shadowOffset = CGSizeMake(0, 0);
+        maMaHaLaFloatBtn.layer.shadowRadius = 10.0;
+        maMaHaLaFloatBtn.layer.shadowOpacity = 1.0;
 
-        // تێکستی دووەم: VIP MODULE • 2026
-        UILabel *subLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 24, 220, 16)];
-        subLabel.text = @"VIP MODULE • 2026";
-        subLabel.textAlignment = NSTextAlignmentCenter;
-        subLabel.textColor = [UIColor colorWithRed:0.85 green:0.7 blue:1.0 alpha:1.0];
-        subLabel.font = [UIFont systemFontOfSize:10];
-        [banner addSubview:subLabel];
+        // Pan Gesture for dragging the button anywhere
+        UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:[MaMaHaLaHandler class] action:@selector(handleDrag:)];
+        [maMaHaLaFloatBtn addGestureRecognizer:pan];
 
-        [window addSubview:banner];
+        // Tap action to show/hide menu
+        [maMaHaLaFloatBtn addTarget:[MaMaHaLaHandler class] action:@selector(toggleMenuAction) forControlEvents:UIControlEventTouchUpInside];
+
+        [keyWindow addSubview:maMaHaLaFloatBtn];
+        createMenuUI();
     });
 }
 
+@interface MaMaHaLaHandler : NSObject
 @end
 
-%ctor {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [MamaHalaView showBanner];
-    });
+@implementation MaMaHaLaHandler
++ (void)handleDrag:(UIPanGestureRecognizer *)gesture {
+    UIWindow *window = [UIApplication sharedApplication].keyWindow;
+    CGPoint translation = [gesture translationInView:window];
+    CGPoint center = gesture.view.center;
+    gesture.view.center = CGPointMake(center.x + translation.x, center.y + translation.y);
+    [gesture setTranslation:CGPointZero inView:window];
+}
+
++ (void)toggleMenuAction {
+    isMenuVisible = !isMenuVisible;
+    menuContainer.hidden = !isMenuVisible;
+}
+@end
+
+// ==========================================
+// MODERN GAMING MENU UI CONSTRUCTION
+// ==========================================
+void createMenuUI() {
+    UIWindow *window = [UIApplication sharedApplication].keyWindow;
+    if (!window) return;
+
+    // Main Menu Container (Glassmorphism & Gaming Neon Border)
+    menuContainer = [[UIView alloc] initWithFrame:CGRectMake(120, 80, 450, 340)];
+    menuContainer.backgroundColor = [UIColor colorWithRed:0.06 green:0.07 blue:0.10 alpha:0.96];
+    menuContainer.layer.cornerRadius = 18.0;
+    menuContainer.layer.borderWidth = 2.0;
+    menuContainer.layer.borderColor = [UIColor colorWithRed:0.0 green:0.9 blue:0.95 alpha:0.9].CGColor;
+    menuContainer.hidden = YES; // Hidden by default
+
+    // Header Bar
+    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 450, 50)];
+    headerView.backgroundColor = [UIColor colorWithRed:0.10 green:0.12 blue:0.18 alpha:1.0];
+    headerView.layer.cornerRadius = 18.0;
+    headerView.clipsToBounds = YES;
+
+    UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 0, 350, 50)];
+    titleLabel.text = @"⚡ MaMaHaLa VIP GAMING MENU ⚡";
+    titleLabel.textColor = [UIColor colorWithRed:0.0 green:0.95 blue:1.0 alpha:1.0];
+    titleLabel.font = [UIFont boldSystemFontOfSize:15];
+    [headerView addSubview:titleLabel];
+
+    // Close Button inside Menu
+    UIButton *closeBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+    closeBtn.frame = CGRectMake(400, 10, 30, 30);
+    [closeBtn setTitle:@"✕" forState:UIControlStateNormal];
+    [closeBtn setTitleColor:[UIColor colorWithRed:1.0 green:0.2 blue:0.2 alpha:1.0] forState:UIControlStateNormal];
+    closeBtn.titleLabel.font = [UIFont boldSystemFontOfSize:16];
+    [closeBtn addTarget:[MaMaHaLaHandler class] action:@selector(toggleMenuAction) forControlEvents:UIControlEventTouchUpInside];
+    [headerView addSubview:closeBtn];
+
+    [menuContainer addSubview:headerView];
+    [window addSubview:menuContainer];
 }
