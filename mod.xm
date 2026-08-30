@@ -4,6 +4,7 @@
 // ==========================================
 
 #import <UIKit/UIKit.h>
+#import <QuartzCore/QuartzCore.h>
 #import <CoreGraphics/CoreGraphics.h>
 
 // Global UI Elements
@@ -30,7 +31,7 @@ static BOOL skinOutfit = NO;
 void createMenuUI();
 void toggleMenu();
 
-// Handler Interface Declaration (Moved up to fix undeclared identifier error)
+// Handler Interface Declaration
 @interface MaMaHaLaHandler : NSObject
 + (void)handleDrag:(UIPanGestureRecognizer *)gesture;
 + (void)toggleMenuAction;
@@ -52,7 +53,11 @@ UIWindow *getModernKeyWindow() {
         }
     }
     if (!keyWindow) {
+        // Fallback to older window array retrieval safely
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wdeprecated-declarations"
         keyWindow = [UIApplication sharedApplication].windows.firstObject;
+        #pragma clang diagnostic pop
     }
     return keyWindow;
 }
