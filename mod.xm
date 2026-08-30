@@ -30,12 +30,33 @@ static BOOL skinOutfit = NO;
 void createMenuUI();
 void toggleMenu();
 
+// Helper for Modern Window Retrieval
+UIWindow *getModernKeyWindow() {
+    UIWindow *keyWindow = nil;
+    if (@available(iOS 13.0, *)) {
+        for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if (scene.activationState == UISceneActivationStateForegroundActive) {
+                for (UIWindow *window in scene.windows) {
+                    if (window.isKeyWindow) {
+                        keyWindow = window;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    if (!keyWindow) {
+        keyWindow = [UIApplication sharedApplication].windows.firstObject;
+    }
+    return keyWindow;
+}
+
 // ==========================================
 // FLOATING BUTTON (MaMaHaLa)
 // ==========================================
 %ctor {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        UIWindow *keyWindow = [UIApplication sharedApplication].keyWindow;
+        UIWindow *keyWindow = getModernKeyWindow();
         if (!keyWindow) return;
 
         // Create Floating Button
@@ -79,7 +100,7 @@ void toggleMenu();
 
 @implementation MaMaHaLaHandler
 + (void)handleDrag:(UIPanGestureRecognizer *)gesture {
-    UIWindow *window = [UIApplication sharedApplication].keyWindow;
+    UIWindow *window = getModernKeyWindow();
     CGPoint translation = [gesture translationInView:window];
     CGPoint center = gesture.view.center;
     gesture.view.center = CGPointMake(center.x + translation.x, center.y + translation.y);
@@ -96,7 +117,7 @@ void toggleMenu();
 // MODERN GAMING MENU UI CONSTRUCTION
 // ==========================================
 void createMenuUI() {
-    UIWindow *window = [UIApplication sharedApplication].keyWindow;
+    UIWindow *window = getModernKeyWindow();
     if (!window) return;
 
     // Main Menu Container (Glassmorphism & Gaming Neon Border)
