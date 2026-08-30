@@ -39,6 +39,10 @@ static UIView *mainMenuView = nil;
 + (void)toggleMenu:(UIButton *)sender {
     if (mainMenuView) {
         mainMenuView.hidden = !mainMenuView.hidden;
+        if (!mainMenuView.hidden) {
+            [mainMenuView.superview bringSubviewToFront:mainMenuView];
+            [mainMenuView.superview bringSubviewToFront:sender];
+        }
     }
 }
 @end
@@ -47,31 +51,32 @@ static UIView *mainMenuView = nil;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         UIWindow *window = [UIApplication sharedApplication].keyWindow;
         
-        // دوگمەی سەر شاشە (کەلسەر و ئاگر + ناوی MaMahaLa)
+        // دوگمەی سەر شاشە (تاج، چەک و ناوی MaMahaLa)
         DraggableButton *floatBtn = [DraggableButton buttonWithType:UIButtonTypeCustom];
-        floatBtn.frame = CGRectMake(40, 100, 80, 80);
-        floatBtn.backgroundColor = [UIColor colorWithRed:0.2 green:0.05 blue:0.05 alpha:0.95];
-        floatBtn.layer.cornerRadius = 40;
-        floatBtn.layer.borderWidth = 3.0;
-        floatBtn.layer.borderColor = [UIColor orangeColor].CGColor;
-        [floatBtn setTitle:@"🔥💀\nMaMahaLa" forState:UIControlStateNormal];
+        floatBtn.frame = CGRectMake(30, 90, 110, 65);
+        floatBtn.backgroundColor = [UIColor colorWithRed:0.1 green:0.05 blue:0.02 alpha:0.95];
+        floatBtn.layer.cornerRadius = 12;
+        floatBtn.layer.borderWidth = 2.0;
+        floatBtn.layer.borderColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:1.0].CGColor;
+        
+        [floatBtn setTitle:@"👑 ⚔️\nMaMahaLa" forState:UIControlStateNormal];
         floatBtn.titleLabel.numberOfLines = 2;
         floatBtn.titleLabel.textAlignment = NSTextAlignmentCenter;
-        [floatBtn setTitleColor:[UIColor yellowColor] forState:UIControlStateNormal];
-        floatBtn.titleLabel.font = [UIFont boldSystemFontOfSize:11];
+        [floatBtn setTitleColor:[UIColor colorWithRed:1.0 green:0.9 blue:0.2 alpha:1.0] forState:UIControlStateNormal];
+        floatBtn.titleLabel.font = [UIFont boldSystemFontOfSize:12];
         
-        // مێنۆی سەرەکی بە هەموو بەشەکانیەوە
-        mainMenuView = [[UIView alloc] initWithFrame:CGRectMake(30, 150, 420, 310)];
+        // مێنۆی سەرەکی
+        mainMenuView = [[UIView alloc] initWithFrame:CGRectMake(30, 165, 420, 310)];
         mainMenuView.backgroundColor = [UIColor colorWithRed:0.12 green:0.06 blue:0.22 alpha:0.97];
         mainMenuView.layer.cornerRadius = 16;
         mainMenuView.layer.borderWidth = 2.0;
-        mainMenuView.layer.borderColor = [UIColor colorWithRed:1.0 green:0.3 blue:0.3 alpha:1.0].CGColor;
+        mainMenuView.layer.borderColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:1.0].CGColor;
         mainMenuView.hidden = YES;
         
         // تایتڵ و بەرهەمهێنەر
         UILabel *creatorLbl = [[UILabel alloc] initWithFrame:CGRectMake(15, 8, 390, 22)];
-        creatorLbl.text = @"🔥 بەرهەم هێنەری مۆدمینۆ: MaMahaLa 🔥";
-        creatorLbl.textColor = [UIColor orangeColor];
+        creatorLbl.text = @"👑 بەرهەم هێنەری مۆدمینۆ: MaMahaLa 👑";
+        creatorLbl.textColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:1.0];
         creatorLbl.font = [UIFont boldSystemFontOfSize:13];
         creatorLbl.textAlignment = NSTextAlignmentCenter;
         [mainMenuView addSubview:creatorLbl];
