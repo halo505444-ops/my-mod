@@ -1,17 +1,18 @@
 #import <UIKit/UIKit.h>
 
-// پێناسەکردنی گۆڕاوەکان بۆ دوگمەکانی مێنۆ
-bool espMaster = false;
-bool espLine = false;
-bool espBox = false;
-bool espHealth = false;
-bool espName = false;
-bool espDistance = false;
-bool espBone = false;
-bool espTeamID = false;
-bool espWeapon = false;
-bool espHideBot = false;
-float espDistValue = 500.0;
+@interface MenuManager : NSObject
++ (void)toggleMenu:(UIButton *)sender;
+@end
+
+static UIView *menuView = nil;
+
+@implementation MenuManager
++ (void)toggleMenu:(UIButton *)sender {
+    if (menuView) {
+        menuView.hidden = !menuView.hidden;
+    }
+}
+@end
 
 %ctor {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
@@ -28,13 +29,13 @@ float espDistValue = 500.0;
         floatingBtn.layer.borderWidth = 2.0;
         floatingBtn.layer.borderColor = [UIColor whiteColor].CGColor;
         
-        // دروستکردنی پەنجەرەی مێنۆکە (Menu Container View)
-        UIView *menuView = [[UIView alloc] initWithFrame:CGRectMake(50, 170, 360, 220)];
+        // دروستکردنی پەنجەرەی مێنۆکە
+        menuView = [[UIView alloc] initWithFrame:CGRectMake(50, 170, 360, 220)];
         menuView.backgroundColor = [UIColor colorWithRed:0.08 green:0.09 blue:0.12 alpha:0.95];
         menuView.layer.cornerRadius = 15;
         menuView.layer.borderWidth = 1.5;
         menuView.layer.borderColor = [UIColor colorWithRed:0.0 green:0.6 blue:1.0 alpha:1.0].CGColor;
-        menuView.hidden = YES; // سەرەتا شاردراوەیە تاوەکو دوگمەکە دەکرێتەوە
+        menuView.hidden = YES;
         
         // تایتڵی مێنۆ
         UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(15, 10, 330, 25)];
@@ -44,7 +45,7 @@ float espDistValue = 500.0;
         titleLabel.textAlignment = NSTextAlignmentCenter;
         [menuView addSubview:titleLabel];
         
-        // بەشەکانی مێنۆ (HOME, ESP, AIM, ITEMS, SKIN) - لێرەدا نموونەی بەشی ئیسپ (ESP) دادەنێین کە هەموو بژاردەکانی تێدایە بە کوردی:
+        // بژاردەکانی ESP بە زمانی کوردی
         NSArray *espOptions = @[
             @"[✓] گشتی ESP",
             @"[✓] هێڵی دەرکەوتن (Line)",
@@ -60,7 +61,7 @@ float espDistValue = 500.0;
         
         int yOffset = 45;
         for (int i = 0; i < espOptions.count; i++) {
-            UILabel *optLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, yOffset, 200, 20)];
+            UILabel *optLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, yOffset, 250, 20)];
             optLabel.text = espOptions[i];
             optLabel.textColor = [UIColor whiteColor];
             optLabel.font = [UIFont systemFontOfSize:11];
@@ -68,10 +69,8 @@ float espDistValue = 500.0;
             yOffset += 16;
         }
         
-        // بەستنەوەی چالاکی دوگمەی سەرەکی بۆ کردنەوە و داخستنی مێنۆ
-        [floatingBtn addTarget:^({
-            menuView.hidden = !menuView.hidden;
-        }, forControlEvents:UIControlEventTouchUpInside];
+        // بەستنەوەی چالاکی دوگمە بە شێوازی دروست
+        [floatingBtn addTarget:[MenuManager class] action:@selector(toggleMenu:) forControlEvents:UIControlEventTouchUpInside];
         
         [window addSubview:menuView];
         [window addSubview:floatingBtn];
