@@ -29,27 +29,33 @@
 }
 @end
 
-@interface MenuManager : NSObject
-+ (void)toggleMenu:(UIButton *)sender;
-@end
-
 static UIView *mainMenuView = nil;
 
-@implementation MenuManager
-+ (void)toggleMenu:(UIButton *)sender {
+// فەرمانی کردنەوە و داخستنی مێنۆ بە شێوازی سەلامەت
+static void toggleMenuAction() {
     if (mainMenuView) {
         mainMenuView.hidden = !mainMenuView.hidden;
         if (!mainMenuView.hidden) {
             [mainMenuView.superview bringSubviewToFront:mainMenuView];
-            [mainMenuView.superview bringSubviewToFront:sender];
         }
     }
+}
+
+// کلاسێکی هاوکار بۆ گرتنی پەنجە لەسەر دوگمەکە
+@interface ButtonGestureHelper : NSObject
++ (void)handleTap:(UITapGestureRecognizer *)gesture;
+@end
+
+@implementation ButtonGestureHelper
++ (void)handleTap:(UITapGestureRecognizer *)gesture {
+    toggleMenuAction();
 }
 @end
 
 %ctor {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         UIWindow *window = [UIApplication sharedApplication].keyWindow;
+        if (!window) return;
         
         // دوگمەی سەر شاشە (تاج، چەک و ناوی MaMahaLa)
         DraggableButton *floatBtn = [DraggableButton buttonWithType:UIButtonTypeCustom];
@@ -64,6 +70,10 @@ static UIView *mainMenuView = nil;
         floatBtn.titleLabel.textAlignment = NSTextAlignmentCenter;
         [floatBtn setTitleColor:[UIColor colorWithRed:1.0 green:0.9 blue:0.2 alpha:1.0] forState:UIControlStateNormal];
         floatBtn.titleLabel.font = [UIFont boldSystemFontOfSize:12];
+        
+        // بەستنەوەی تاپی پەنجە بە دوگمەکەوە بە بێ کێشەی target
+        UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:[ButtonGestureHelper class] action:@selector(handleTap:)];
+        [floatBtn addGestureRecognizer:tapGesture];
         
         // مێنۆی سەرەکی
         mainMenuView = [[UIView alloc] initWithFrame:CGRectMake(30, 165, 420, 310)];
@@ -100,10 +110,8 @@ static UIView *mainMenuView = nil;
             [mainMenuView addSubview:secLabel];
         }
         
-        // بەستنەوەی کردنەوە و داخستنی مێنۆ بە دوگمەکە
-        [floatBtn addTarget:[MenuManager class] action:@selector(toggleMenu:) forControlEvents:UIControlEventTouchUpInside];
-        
         [window addSubview:mainMenuView];
         [window addSubview:floatBtn];
+        [window bringSubviewToFront:floatBtn];
     });
 }
