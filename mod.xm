@@ -23,9 +23,27 @@
 }
 @end
 
-@interface DraggableButton : DraggableManager
+@interface DraggableButton : UIButton {
+    CGPoint touchLocation;
+}
 @end
+
 @implementation DraggableButton
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    UITouch *touch = [touches anyObject];
+    touchLocation = [touch locationInView:self.superview];
+}
+- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    UITouch *touch = [touches anyObject];
+    CGPoint currentLocation = [touch locationInView:self.superview];
+    CGFloat deltaX = currentLocation.x - touchLocation.x;
+    CGFloat deltaY = currentLocation.y - touchLocation.y;
+    CGPoint newCenter = CGPointMake(self.center.x + deltaX, self.center.y + deltaY);
+    CGFloat x = MAX(self.frame.size.width/2, MIN(newCenter.x, self.superview.bounds.size.width - self.frame.size.width/2));
+    CGFloat y = MAX(self.frame.size.height/2, MIN(newCenter.y, self.superview.bounds.size.height - self.frame.size.height/2));
+    self.center = CGPointMake(x, y);
+    touchLocation = currentLocation;
+}
 @end
 
 @interface DraggableMenuView : DraggableManager
@@ -36,14 +54,13 @@
 static DraggableMenuView *mainMenuView = nil;
 static UIView *contentAreaView = nil;
 
-// گۆڕینی ناوەڕۆکی بەشەکان بە شێوازی ڕاستەقینەی ناو وێنەکان
 static void switchTab(int index) {
     if (!contentAreaView) return;
     for (UIView *sub in contentAreaView.subviews) {
         [sub removeFromSuperview];
     }
     
-    if (index == 0) { // ESP
+    if (index == 0) {
         NSArray *switches = @[@"Line", @"Nation", @"Enemy", @"Box"];
         for (int i = 0; i < switches.count; i++) {
             UISwitch *sw = [[UISwitch alloc] initWithFrame:CGRectMake(20, 20 + (i * 40))];
@@ -56,30 +73,7 @@ static void switchTab(int index) {
             lbl.font = [UIFont boldSystemFontOfSize:14];
             [contentAreaView addSubview:lbl];
         }
-        
-        // سڵایەر و نرخی وەک وێنەکە (1.2)
-        for (int i = 0; i < 2; i++) {
-            UIView *boxView = [[UIView alloc] initWithFrame:CGRectMake(20, 185 + (i * 45), 320, 38)];
-            boxView.backgroundColor = [UIColor whiteColor];
-            boxView.layer.cornerRadius = 10;
-            boxView.layer.borderWidth = 1.5;
-            boxView.layer.borderColor = [UIColor colorWithRed:0.55 green:0.25 blue:0.65 alpha:1.0].CGColor;
-            [contentAreaView addSubview:boxView];
-            
-            UIView *sliderThumb = [[UIView alloc] initWithFrame:CGRectMake(15, 6, 12, 26)];
-            sliderThumb.backgroundColor = [UIColor colorWithRed:0.85 green:0.12 blue:0.35 alpha:1.0];
-            sliderThumb.layer.cornerRadius = 6;
-            [boxView addSubview:sliderThumb];
-            
-            UILabel *valLbl = [[UILabel alloc] initWithFrame:CGRectMake(130, 4, 100, 30)];
-            valLbl.text = @"1.2";
-            valLbl.textColor = [UIColor blackColor];
-            valLbl.font = [UIFont boldSystemFontOfSize:14];
-            valLbl.textAlignment = NSTextAlignmentCenter;
-            [boxView addSubview:valLbl];
-        }
-        
-    } else if (index == 1) { // AIMBOT
+    } else if (index == 1) {
         NSArray *switches = @[@"Aimbot", @"Silent Aim", @"Aim Line", @"Ignore Bots"];
         for (int i = 0; i < switches.count; i++) {
             int row = i / 2;
@@ -94,19 +88,7 @@ static void switchTab(int index) {
             lbl.font = [UIFont boldSystemFontOfSize:12];
             [contentAreaView addSubview:lbl];
         }
-        
-        UILabel *fovText = [[UILabel alloc] initWithFrame:CGRectMake(20, 105, 100, 25)];
-        fovText.text = @"FOV: 188";
-        fovText.textColor = [UIColor darkGray];
-        fovText.font = [UIFont boldSystemFontOfSize:13];
-        [contentAreaView addSubview:fovText];
-        
-        UISlider *slider = [[UISlider alloc] initWithFrame:CGRectMake(120, 107, 210, 20)];
-        slider.value = 188;
-        slider.maximumValue = 360;
-        [contentAreaView addSubview:slider];
-        
-    } else if (index == 2) { // MEMORY
+    } else if (index == 2) {
         NSArray *items = @[@"Snowy", @"Rainy", @"Character Size", @"HitX", @"Crosshair"];
         for (int i = 0; i < items.count; i++) {
             int row = i / 2;
@@ -121,8 +103,7 @@ static void switchTab(int index) {
             lbl.font = [UIFont boldSystemFontOfSize:12];
             [contentAreaView addSubview:lbl];
         }
-        
-    } else if (index == 3) { // MODSKIN
+    } else if (index == 3) {
         NSArray *items = @[@"Enable Skin", @"Bag Gun", @"Dead Box", @"Lobby Skin"];
         for (int i = 0; i < items.count; i++) {
             int row = i / 2;
@@ -137,8 +118,7 @@ static void switchTab(int index) {
             lbl.font = [UIFont boldSystemFontOfSize:12];
             [contentAreaView addSubview:lbl];
         }
-        
-    } else if (index == 4) { // SETTINGS
+    } else if (index == 4) {
         NSArray *fpsList = @[@"30FPS", @"60FPS", @"90FPS", @"120FPS"];
         for (int i = 0; i < fpsList.count; i++) {
             UISwitch *sw = [[UISwitch alloc] initWithFrame:CGRectMake(20 + (i * 82), 20)];
