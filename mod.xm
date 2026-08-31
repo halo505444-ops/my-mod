@@ -179,9 +179,6 @@ static void toggleMenuAction() {
                 }
             }
         }
-        if (!window) {
-            window = [UIApplication sharedApplication].windows.firstObject;
-        }
         if (!window) return;
         
         DraggableButton *floatBtn = [DraggableButton buttonWithType:UIButtonTypeCustom];
@@ -206,7 +203,6 @@ static void toggleMenuAction() {
         mainMenuView.layer.borderColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:1.0].CGColor;
         mainMenuView.hidden = YES;
         
-        // ناونیشانی بەرهەمهێنەر و لۆگۆ لە سەرەوەی مێنۆ
         UILabel *brandLbl = [[UILabel alloc] initWithFrame:CGRectMake(15, 8, 510, 22)];
         brandLbl.text = @"⚡ MaMaHaLa VIP Menu - All Rights Reserved ⚡";
         brandLbl.textColor = [UIColor colorWithRed:1.0 green:0.85 blue:0.2 alpha:1.0];
@@ -224,7 +220,7 @@ static void toggleMenuAction() {
         NSArray *tabs = @[@"دیاریکردن (ESP)", @"نیشانەگر (AIM)", @"یادگە (MEMORY)", @"ڕووکەش (SKIN)", @"ڕێکخستن (SET)"];
         for (int i = 0; i < tabs.count; i++) {
             UIButton *tabBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-            tabBtn.frame = CGRectMake(10, 12 + (i * 52), 110, 42];
+            tabBtn.frame = CGRectMake(10, 12 + (i * 52), 110, 42);
             [tabBtn setTitle:tabs[i] forState:UIControlStateNormal];
             [tabBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
             tabBtn.titleLabel.font = [UIFont boldSystemFontOfSize:11];
