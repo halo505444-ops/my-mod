@@ -63,7 +63,7 @@ static void switchTab(int index) {
     if (index == 0) {
         NSArray *switches = @[@"Line", @"Nation", @"Enemy", @"Box"];
         for (int i = 0; i < switches.count; i++) {
-            UISwitch *sw = [[UISwitch alloc] initWithFrame:CGRectMake(20, 20 + (i * 40))];
+            UISwitch *sw = [[UISwitch alloc] initWithFrame:CGRectMake(20, 20 + (i * 40), 50, 30)];
             [sw setOnTintColor:[UIColor colorWithRed:0.55 green:0.25 blue:0.65 alpha:1.0]];
             [contentAreaView addSubview:sw];
             
@@ -78,7 +78,7 @@ static void switchTab(int index) {
         for (int i = 0; i < switches.count; i++) {
             int row = i / 2;
             int col = i % 2;
-            UISwitch *sw = [[UISwitch alloc] initWithFrame:CGRectMake(20 + (col * 170), 15 + (row * 40))];
+            UISwitch *sw = [[UISwitch alloc] initWithFrame:CGRectMake(20 + (col * 170), 15 + (row * 40), 50, 30)];
             [sw setOnTintColor:[UIColor colorWithRed:0.55 green:0.25 blue:0.65 alpha:1.0]];
             [contentAreaView addSubview:sw];
             
@@ -93,7 +93,7 @@ static void switchTab(int index) {
         for (int i = 0; i < items.count; i++) {
             int row = i / 2;
             int col = i % 2;
-            UISwitch *sw = [[UISwitch alloc] initWithFrame:CGRectMake(20 + (col * 170), 20 + (row * 50))];
+            UISwitch *sw = [[UISwitch alloc] initWithFrame:CGRectMake(20 + (col * 170), 20 + (row * 50), 50, 30)];
             [sw setOnTintColor:[UIColor colorWithRed:0.55 green:0.25 blue:0.65 alpha:1.0]];
             [contentAreaView addSubview:sw];
             
@@ -108,7 +108,7 @@ static void switchTab(int index) {
         for (int i = 0; i < items.count; i++) {
             int row = i / 2;
             int col = i % 2;
-            UISwitch *sw = [[UISwitch alloc] initWithFrame:CGRectMake(20 + (col * 170), 20 + (row * 50))];
+            UISwitch *sw = [[UISwitch alloc] initWithFrame:CGRectMake(20 + (col * 170), 20 + (row * 50), 50, 30)];
             [sw setOnTintColor:[UIColor colorWithRed:0.55 green:0.25 blue:0.65 alpha:1.0]];
             [contentAreaView addSubview:sw];
             
@@ -121,7 +121,7 @@ static void switchTab(int index) {
     } else if (index == 4) {
         NSArray *fpsList = @[@"30FPS", @"60FPS", @"90FPS", @"120FPS"];
         for (int i = 0; i < fpsList.count; i++) {
-            UISwitch *sw = [[UISwitch alloc] initWithFrame:CGRectMake(20 + (i * 82), 20)];
+            UISwitch *sw = [[UISwitch alloc] initWithFrame:CGRectMake(20 + (i * 82), 20, 50, 30)];
             [sw setOnTintColor:[UIColor colorWithRed:0.55 green:0.25 blue:0.65 alpha:1.0]];
             [contentAreaView addSubview:sw];
             
@@ -164,7 +164,22 @@ static void toggleMenuAction() {
 
 %ctor {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        UIWindow *window = [UIApplication sharedApplication].keyWindow;
+        UIWindow *window = nil;
+        if (@available(iOS 13.0, *)) {
+            for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
+                if (scene.activationState == UISceneActivationStateForegroundActive) {
+                    for (UIWindow *win in scene.windows) {
+                        if (win.isKeyWindow) {
+                            window = win;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        if (!window) {
+            window = [UIApplication sharedApplication].windows.firstObject;
+        }
         if (!window) return;
         
         DraggableButton *floatBtn = [DraggableButton buttonWithType:UIButtonTypeCustom];
@@ -197,7 +212,7 @@ static void toggleMenuAction() {
         NSArray *tabs = @[@"ESP", @"AIMBOT", @"MEMORY", @"MODSKIN", @"SETTINGS"];
         for (int i = 0; i < tabs.count; i++) {
             UIButton *tabBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-            tabBtn.frame = CGRectMake(10, 15 + (i * 50), 110, 40];
+            tabBtn.frame = CGRectMake(10, 15 + (i * 50), 110, 40);
             [tabBtn setTitle:tabs[i] forState:UIControlStateNormal];
             [tabBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
             tabBtn.titleLabel.font = [UIFont boldSystemFontOfSize:12];
