@@ -1,37 +1,169 @@
 #import <UIKit/UIKit.h>
 
-@interface DraggableButton : UIButton
-@end
-
-@implementation DraggableButton {
+@interface DraggableManager : UIView {
     CGPoint touchLocation;
 }
+@end
 
+@implementation DraggableManager
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     UITouch *touch = [touches anyObject];
     touchLocation = [touch locationInView:self.superview];
 }
-
 - (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     UITouch *touch = [touches anyObject];
     CGPoint currentLocation = [touch locationInView:self.superview];
-    
     CGFloat deltaX = currentLocation.x - touchLocation.x;
     CGFloat deltaY = currentLocation.y - touchLocation.y;
-    
     CGPoint newCenter = CGPointMake(self.center.x + deltaX, self.center.y + deltaY);
-    
     CGFloat x = MAX(self.frame.size.width/2, MIN(newCenter.x, self.superview.bounds.size.width - self.frame.size.width/2));
     CGFloat y = MAX(self.frame.size.height/2, MIN(newCenter.y, self.superview.bounds.size.height - self.frame.size.height/2));
-    
     self.center = CGPointMake(x, y);
     touchLocation = currentLocation;
 }
 @end
 
-static UIView *mainMenuView = nil;
+@interface DraggableButton : DraggableManager
+@end
+@implementation DraggableButton
+@end
 
-// فەرمانی کردنەوە و داخستنی مێنۆ بە شێوازی سەلامەت
+@interface DraggableMenuView : DraggableManager
+@end
+@implementation DraggableMenuView
+@end
+
+static DraggableMenuView *mainMenuView = nil;
+static UIView *contentAreaView = nil;
+
+// گۆڕینی ناوەڕۆکی بەشەکان بە شێوازی ڕاستەقینەی ناو وێنەکان
+static void switchTab(int index) {
+    if (!contentAreaView) return;
+    for (UIView *sub in contentAreaView.subviews) {
+        [sub removeFromSuperview];
+    }
+    
+    if (index == 0) { // ESP
+        NSArray *switches = @[@"Line", @"Nation", @"Enemy", @"Box"];
+        for (int i = 0; i < switches.count; i++) {
+            UISwitch *sw = [[UISwitch alloc] initWithFrame:CGRectMake(20, 20 + (i * 40))];
+            [sw setOnTintColor:[UIColor colorWithRed:0.55 green:0.25 blue:0.65 alpha:1.0]];
+            [contentAreaView addSubview:sw];
+            
+            UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(85, 20 + (i * 40), 200, 30)];
+            lbl.text = switches[i];
+            lbl.textColor = [UIColor colorWithRed:0.25 green:0.15 blue:0.35 alpha:1.0];
+            lbl.font = [UIFont boldSystemFontOfSize:14];
+            [contentAreaView addSubview:lbl];
+        }
+        
+        // سڵایەر و نرخی وەک وێنەکە (1.2)
+        for (int i = 0; i < 2; i++) {
+            UIView *boxView = [[UIView alloc] initWithFrame:CGRectMake(20, 185 + (i * 45), 320, 38)];
+            boxView.backgroundColor = [UIColor whiteColor];
+            boxView.layer.cornerRadius = 10;
+            boxView.layer.borderWidth = 1.5;
+            boxView.layer.borderColor = [UIColor colorWithRed:0.55 green:0.25 blue:0.65 alpha:1.0].CGColor;
+            [contentAreaView addSubview:boxView];
+            
+            UIView *sliderThumb = [[UIView alloc] initWithFrame:CGRectMake(15, 6, 12, 26)];
+            sliderThumb.backgroundColor = [UIColor colorWithRed:0.85 green:0.12 blue:0.35 alpha:1.0];
+            sliderThumb.layer.cornerRadius = 6;
+            [boxView addSubview:sliderThumb];
+            
+            UILabel *valLbl = [[UILabel alloc] initWithFrame:CGRectMake(130, 4, 100, 30)];
+            valLbl.text = @"1.2";
+            valLbl.textColor = [UIColor blackColor];
+            valLbl.font = [UIFont boldSystemFontOfSize:14];
+            valLbl.textAlignment = NSTextAlignmentCenter;
+            [boxView addSubview:valLbl];
+        }
+        
+    } else if (index == 1) { // AIMBOT
+        NSArray *switches = @[@"Aimbot", @"Silent Aim", @"Aim Line", @"Ignore Bots"];
+        for (int i = 0; i < switches.count; i++) {
+            int row = i / 2;
+            int col = i % 2;
+            UISwitch *sw = [[UISwitch alloc] initWithFrame:CGRectMake(20 + (col * 170), 15 + (row * 40))];
+            [sw setOnTintColor:[UIColor colorWithRed:0.55 green:0.25 blue:0.65 alpha:1.0]];
+            [contentAreaView addSubview:sw];
+            
+            UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(85 + (col * 170), 15 + (row * 40), 90, 30)];
+            lbl.text = switches[i];
+            lbl.textColor = [UIColor colorWithRed:0.25 green:0.15 blue:0.35 alpha:1.0];
+            lbl.font = [UIFont boldSystemFontOfSize:12];
+            [contentAreaView addSubview:lbl];
+        }
+        
+        UILabel *fovText = [[UILabel alloc] initWithFrame:CGRectMake(20, 105, 100, 25)];
+        fovText.text = @"FOV: 188";
+        fovText.textColor = [UIColor darkGray];
+        fovText.font = [UIFont boldSystemFontOfSize:13];
+        [contentAreaView addSubview:fovText];
+        
+        UISlider *slider = [[UISlider alloc] initWithFrame:CGRectMake(120, 107, 210, 20)];
+        slider.value = 188;
+        slider.maximumValue = 360;
+        [contentAreaView addSubview:slider];
+        
+    } else if (index == 2) { // MEMORY
+        NSArray *items = @[@"Snowy", @"Rainy", @"Character Size", @"HitX", @"Crosshair"];
+        for (int i = 0; i < items.count; i++) {
+            int row = i / 2;
+            int col = i % 2;
+            UISwitch *sw = [[UISwitch alloc] initWithFrame:CGRectMake(20 + (col * 170), 20 + (row * 50))];
+            [sw setOnTintColor:[UIColor colorWithRed:0.55 green:0.25 blue:0.65 alpha:1.0]];
+            [contentAreaView addSubview:sw];
+            
+            UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(85 + (col * 170), 22 + (row * 50), 100, 25)];
+            lbl.text = items[i];
+            lbl.textColor = [UIColor colorWithRed:0.25 green:0.15 blue:0.35 alpha:1.0];
+            lbl.font = [UIFont boldSystemFontOfSize:12];
+            [contentAreaView addSubview:lbl];
+        }
+        
+    } else if (index == 3) { // MODSKIN
+        NSArray *items = @[@"Enable Skin", @"Bag Gun", @"Dead Box", @"Lobby Skin"];
+        for (int i = 0; i < items.count; i++) {
+            int row = i / 2;
+            int col = i % 2;
+            UISwitch *sw = [[UISwitch alloc] initWithFrame:CGRectMake(20 + (col * 170), 20 + (row * 50))];
+            [sw setOnTintColor:[UIColor colorWithRed:0.55 green:0.25 blue:0.65 alpha:1.0]];
+            [contentAreaView addSubview:sw];
+            
+            UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(85 + (col * 170), 22 + (row * 50), 100, 25)];
+            lbl.text = items[i];
+            lbl.textColor = [UIColor colorWithRed:0.25 green:0.15 blue:0.35 alpha:1.0];
+            lbl.font = [UIFont boldSystemFontOfSize:12];
+            [contentAreaView addSubview:lbl];
+        }
+        
+    } else if (index == 4) { // SETTINGS
+        NSArray *fpsList = @[@"30FPS", @"60FPS", @"90FPS", @"120FPS"];
+        for (int i = 0; i < fpsList.count; i++) {
+            UISwitch *sw = [[UISwitch alloc] initWithFrame:CGRectMake(20 + (i * 82), 20)];
+            [sw setOnTintColor:[UIColor colorWithRed:0.55 green:0.25 blue:0.65 alpha:1.0]];
+            [contentAreaView addSubview:sw];
+            
+            UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(15 + (i * 82), 58, 80, 20)];
+            lbl.text = fpsList[i];
+            lbl.textColor = [UIColor colorWithRed:0.25 green:0.15 blue:0.35 alpha:1.0];
+            lbl.font = [UIFont boldSystemFontOfSize:11];
+            lbl.textAlignment = NSTextAlignmentCenter;
+            [contentAreaView addSubview:lbl];
+        }
+    }
+}
+
+@interface TabButtonHandler : NSObject
++ (void)tabClicked:(UIButton *)sender;
+@end
+@implementation TabButtonHandler
++ (void)tabClicked:(UIButton *)sender {
+    switchTab((int)sender.tag);
+}
+@end
+
 static void toggleMenuAction() {
     if (mainMenuView) {
         mainMenuView.hidden = !mainMenuView.hidden;
@@ -41,11 +173,9 @@ static void toggleMenuAction() {
     }
 }
 
-// کلاسێکی هاوکار بۆ گرتنی پەنجە لەسەر دوگمەکە
 @interface ButtonGestureHelper : NSObject
 + (void)handleTap:(UITapGestureRecognizer *)gesture;
 @end
-
 @implementation ButtonGestureHelper
 + (void)handleTap:(UITapGestureRecognizer *)gesture {
     toggleMenuAction();
@@ -57,58 +187,53 @@ static void toggleMenuAction() {
         UIWindow *window = [UIApplication sharedApplication].keyWindow;
         if (!window) return;
         
-        // دوگمەی سەر شاشە (تاج، چەک و ناوی MaMahaLa)
         DraggableButton *floatBtn = [DraggableButton buttonWithType:UIButtonTypeCustom];
         floatBtn.frame = CGRectMake(30, 90, 110, 65);
         floatBtn.backgroundColor = [UIColor colorWithRed:0.1 green:0.05 blue:0.02 alpha:0.95];
         floatBtn.layer.cornerRadius = 12;
         floatBtn.layer.borderWidth = 2.0;
         floatBtn.layer.borderColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:1.0].CGColor;
-        
         [floatBtn setTitle:@"👑 ⚔️\nMaMahaLa" forState:UIControlStateNormal];
         floatBtn.titleLabel.numberOfLines = 2;
         floatBtn.titleLabel.textAlignment = NSTextAlignmentCenter;
         [floatBtn setTitleColor:[UIColor colorWithRed:1.0 green:0.9 blue:0.2 alpha:1.0] forState:UIControlStateNormal];
         floatBtn.titleLabel.font = [UIFont boldSystemFontOfSize:12];
         
-        // بەستنەوەی تاپی پەنجە بە دوگمەکەوە بە بێ کێشەی target
         UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:[ButtonGestureHelper class] action:@selector(handleTap:)];
         [floatBtn addGestureRecognizer:tapGesture];
         
-        // مێنۆی سەرەکی
-        mainMenuView = [[UIView alloc] initWithFrame:CGRectMake(30, 165, 420, 310)];
-        mainMenuView.backgroundColor = [UIColor colorWithRed:0.12 green:0.06 blue:0.22 alpha:0.97];
+        mainMenuView = [[DraggableMenuView alloc] initWithFrame:CGRectMake(40, 165, 520, 310)];
+        mainMenuView.backgroundColor = [UIColor colorWithRed:0.18 green:0.08 blue:0.28 alpha:0.98];
         mainMenuView.layer.cornerRadius = 16;
         mainMenuView.layer.borderWidth = 2.0;
         mainMenuView.layer.borderColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:1.0].CGColor;
         mainMenuView.hidden = YES;
         
-        // تایتڵ و بەرهەمهێنەر
-        UILabel *creatorLbl = [[UILabel alloc] initWithFrame:CGRectMake(15, 8, 390, 22)];
-        creatorLbl.text = @"👑 بەرهەم هێنەری مۆدمینۆ: MaMahaLa 👑";
-        creatorLbl.textColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:1.0];
-        creatorLbl.font = [UIFont boldSystemFontOfSize:13];
-        creatorLbl.textAlignment = NSTextAlignmentCenter;
-        [mainMenuView addSubview:creatorLbl];
+        UIView *sidebarView = [[UIView alloc] initWithFrame:CGRectMake(10, 15, 130, 280)];
+        sidebarView.backgroundColor = [UIColor colorWithRed:0.12 green:0.05 blue:0.20 alpha:1.0];
+        sidebarView.layer.cornerRadius = 10;
+        [mainMenuView addSubview:sidebarView];
         
-        // بەشەکانی مێنۆ بە زمانی کوردی
-        NSArray *sections = @[
-            @"بەشی ESP: یاریزان، تەندروستی، هێڵ، کوب",
-            @"بەشی ئایمبۆت: ئایمبۆت، سەر، فۆڤ 188",
-            @"بەشی بیرگە: بەفراوی، باراناوی، قەبارەی کەسایەتی",
-            @"بەشی جلوبەرگ: پێستەکان، سندوقی مردن",
-            @"ڕێکخستنەکان: 60 فرەیم، زمانی کوردی"
-        ];
-        
-        int startY = 38;
-        for (int i = 0; i < sections.count; i++) {
-            UILabel *secLabel = [[UILabel alloc] initWithFrame:CGRectMake(15, startY + (i * 50), 390, 42)];
-            secLabel.text = [NSString stringWithFormat:@"🔹 %@", sections[i]];
-            secLabel.textColor = [UIColor cyanColor];
-            secLabel.font = [UIFont boldSystemFontOfSize:11];
-            secLabel.numberOfLines = 2;
-            [mainMenuView addSubview:secLabel];
+        NSArray *tabs = @[@"ESP", @"AIMBOT", @"MEMORY", @"MODSKIN", @"SETTINGS"];
+        for (int i = 0; i < tabs.count; i++) {
+            UIButton *tabBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+            tabBtn.frame = CGRectMake(10, 15 + (i * 50), 110, 40];
+            [tabBtn setTitle:tabs[i] forState:UIControlStateNormal];
+            [tabBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+            tabBtn.titleLabel.font = [UIFont boldSystemFontOfSize:12];
+            tabBtn.backgroundColor = [UIColor colorWithRed:0.25 green:0.12 blue:0.38 alpha:1.0];
+            tabBtn.layer.cornerRadius = 8;
+            tabBtn.tag = i;
+            [tabBtn addTarget:[TabButtonHandler class] action:@selector(tabClicked:) forControlEvents:UIControlEventTouchUpInside];
+            [sidebarView addSubview:tabBtn];
         }
+        
+        contentAreaView = [[UIView alloc] initWithFrame:CGRectMake(150, 15, 360, 280)];
+        contentAreaView.backgroundColor = [UIColor colorWithRed:0.94 green:0.90 blue:0.98 alpha:1.0];
+        contentAreaView.layer.cornerRadius = 10;
+        [mainMenuView addSubview:contentAreaView];
+        
+        switchTab(0);
         
         [window addSubview:mainMenuView];
         [window addSubview:floatBtn];
