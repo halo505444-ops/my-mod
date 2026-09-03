@@ -6,22 +6,22 @@
 
 @implementation CloseIPAManager
 + (void)showFloatingHeaderInWindow:(UIWindow *)window {
-    // چوارچێوەی بچووکی سەرەوە لە شوێنی RTVIP بۆ داپۆشینی بە شێوازێکی مۆدێرن
-    UIView *floatingHeader = [[UIView alloc] initWithFrame:CGRectMake((window.bounds.size.width - 240) / 2, 45, 240, 40)];
-    floatingHeader.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.85];
-    floatingHeader.layer.cornerRadius = 12.0;
-    floatingHeader.layer.borderWidth = 1.5;
-    floatingHeader.layer.borderColor = [UIColor whiteColor].CGColor;
-    floatingHeader.layer.shadowColor = [UIColor whiteColor].CGColor;
-    floatingHeader.layer.shadowOpacity = 0.3;
-    floatingHeader.layer.shadowRadius = 8.0;
+    // چوارچێوەی سەرەوە بە دیزاینی هاکەری (لێواری سەوزی درندانە)
+    UIView *floatingHeader = [[UIView alloc] initWithFrame:CGRectMake((window.bounds.size.width - 280) / 2, 20, 280, 50)];
+    floatingHeader.backgroundColor = [UIColor colorWithRed:0.0 green:0.05 blue:0.0 alpha:0.95];
+    floatingHeader.layer.cornerRadius = 16.0;
+    floatingHeader.layer.borderWidth = 2.0;
+    floatingHeader.layer.borderColor = [UIColor greenColor].CGColor;
+    floatingHeader.layer.shadowColor = [UIColor greenColor].CGColor;
+    floatingHeader.layer.shadowOpacity = 0.6;
+    floatingHeader.layer.shadowRadius = 12.0;
     
-    // نوسینی CLOSE_IPA بە فۆنتێکی زەق و ڕاق لە ناو چوارچێوەکەدا
+    // نوسینی CLOSE_IPA بە ڕەنگی سەوزی درەوشاوە
     UILabel *headerLabel = [[UILabel alloc] initWithFrame:floatingHeader.bounds];
     headerLabel.text = @"CLOSE_IPA";
     headerLabel.textAlignment = NSTextAlignmentCenter;
-    headerLabel.font = [UIFont fontWithName:@"HelveticaNeue-Bold" size:18.0];
-    headerLabel.textColor = [UIColor whiteColor];
+    headerLabel.font = [UIFont fontWithName:@"Courier-Bold" size:22.0];
+    headerLabel.textColor = [UIColor greenColor];
     [floatingHeader addSubview:headerLabel];
     
     [window addSubview:floatingHeader];
@@ -47,61 +47,60 @@
         
         if (!keyWindow) return;
 
-        // مینیووی پڕی شاشە بۆ داواکردنی کلیل
+        // مینیووی پڕی شاشە بە باکگراوندی ماتریکس/هاکەری تاریک
         UIViewController *customVC = [[UIViewController alloc] init];
         customVC.modalPresentationStyle = UIModalPresentationOverFullScreen;
-        customVC.view.backgroundColor = [UIColor blackColor];
+        customVC.view.backgroundColor = [UIColor colorWithRed:0.02 green:0.05 blue:0.02 alpha:0.92];
 
-        // بۆکسەی ناوەڕاست بۆ خانەی نووسین
+        // بۆکسەی ناوەڕاست بە لێواری سەوزی هاکەری
         UIView *container = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 320, 290)];
         container.center = customVC.view.center;
-        container.backgroundColor = [UIColor blackColor];
+        container.backgroundColor = [UIColor colorWithRed:0.01 green:0.03 blue:0.01 alpha:0.98];
         container.layer.cornerRadius = 24.0;
         container.layer.borderWidth = 2.0;
-        container.layer.borderColor = [UIColor whiteColor].CGColor;
+        container.layer.borderColor = [UIColor greenColor].CGColor;
         [customVC.view addSubview:container];
 
-        // ناونیشانی سەرەکی لە مینیووی داخستندا
+        // ناونیشانی سەرەکی
         UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 20, 280, 40)];
         titleLabel.text = @"CLOSE_IPA";
         titleLabel.textAlignment = NSTextAlignmentCenter;
-        titleLabel.font = [UIFont fontWithName:@"HelveticaNeue-Bold" size:28.0];
-        titleLabel.textColor = [UIColor whiteColor];
+        titleLabel.font = [UIFont fontWithName:@"Courier-Bold" size:28.0];
+        titleLabel.textColor = [UIColor greenColor];
         [container addSubview:titleLabel];
 
         // خانەی نووسینی کۆد
         UITextField *textField = [[UITextField alloc] initWithFrame:CGRectMake(20, 80, 280, 45)];
         textField.borderStyle = UITextBorderStyleNone;
-        textField.textColor = [UIColor whiteColor];
-        textField.backgroundColor = [UIColor colorWithWhite:0.15 alpha:1.0];
+        textField.textColor = [UIColor greenColor];
+        textField.backgroundColor = [UIColor colorWithRed:0.0 green:0.1 mode:0.0 alpha:1.0];
         textField.layer.cornerRadius = 10.0;
         textField.layer.borderWidth = 1.0;
-        textField.layer.borderColor = [UIColor colorWithWhite:0.4 alpha:1.0].CGColor;
+        textField.layer.borderColor = [UIColor colorWithRed:0.0 green:0.5 blue:0.0 alpha:1.0].CGColor;
         textField.textAlignment = NSTextAlignmentCenter;
-        textField.font = [UIFont systemFontOfSize:15.0];
-        textField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:@"کۆد لێرە بنووسە" attributes:@{NSForegroundColorAttributeName: [UIColor lightGrayColor]}];
+        textField.font = [UIFont fontWithName:@"Courier" size:15.0];
+        textField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:@"ENTER ACCESS CODE" attributes:@{NSForegroundColorAttributeName: [UIColor colorWithRed:0.0 green:0.4 blue:0.0 alpha:1.0]}];
         [container addSubview:textField];
 
-        // دوگمەی پشکنین
+        // دوگمەی پشکنین بە ڕەنگی سەوزی کاڵ
         UIButton *submitBtn = [UIButton buttonWithType:UIButtonTypeSystem];
         submitBtn.frame = CGRectMake(20, 145, 280, 45);
-        [submitBtn setTitle:@"پشکنین" forState:UIControlStateNormal];
+        [submitBtn setTitle:@"ACCESS" forState:UIControlStateNormal];
         [submitBtn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-        submitBtn.backgroundColor = [UIColor whiteColor];
+        submitBtn.backgroundColor = [UIColor greenColor];
         submitBtn.layer.cornerRadius = 10.0;
-        submitBtn.titleLabel.font = [UIFont boldSystemFontOfSize:16.0];
+        submitBtn.titleLabel.font = [UIFont fontWithName:@"Courier-Bold" size:16.0];
 
         [submitBtn addAction:[UIAction actionWithHandler:^(__kindof UIAction * _Nonnull action) {
             [container endEditing:YES];
             
             if ([textField.text isEqualToString:@"CLOSE_IPA"]) {
                 [customVC dismissViewControllerAnimated:YES completion:^{
-                    // کاتێک کلیلەکە ڕاست بوو، پەنجەرەکە لادەچێت و چوارچێوە مۆدێرنەکەی سەرەوە لە شوێنی RTVIP دەردەکەوێت
                     [CloseIPAManager showFloatingHeaderInWindow:keyWindow];
                 }];
             } else {
                 textField.text = @"";
-                textField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:@"کۆدەکە هەڵەیە!" attributes:@{NSForegroundColorAttributeName: [UIColor redColor]}];
+                textField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:@"ACCESS DENIED!" attributes:@{NSForegroundColorAttributeName: [UIColor redColor]}];
             }
         }] forControlEvents:UIControlEventTouchUpInside];
         [container addSubview:submitBtn];
@@ -110,15 +109,15 @@
         UILabel *tgLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 210, 300, 20)];
         tgLabel.text = @"https://t.me/close_hack";
         tgLabel.textAlignment = NSTextAlignmentCenter;
-        tgLabel.font = [UIFont systemFontOfSize:12.0 weight:UIFontWeightMedium];
-        tgLabel.textColor = [UIColor colorWithRed:0.4 green:0.8 blue:1.0 alpha:1.0];
+        tgLabel.font = [UIFont fontWithName:@"Courier" size:12.0];
+        tgLabel.textColor = [UIColor colorWithRed:0.2 green:0.8 blue:0.5 alpha:1.0];
         [container addSubview:tgLabel];
 
         // واژووی mamahala
         UILabel *footerLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 245, 300, 15)];
         footerLabel.text = @"mamahala";
         footerLabel.textAlignment = NSTextAlignmentCenter;
-        footerLabel.font = [UIFont systemFontOfSize:10.0];
+        footerLabel.font = [UIFont fontWithName:@"Courier" size:10.0];
         footerLabel.textColor = [UIColor darkGrayColor];
         [container addSubview:footerLabel];
 
