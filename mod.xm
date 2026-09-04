@@ -1,7 +1,7 @@
 #import <UIKit/UIKit.h>
 
 @interface MamaHalaManager : NSObject
-+ * (void)startFloatingAnimationInWindow:(UIWindow *)window;
++ (void)startFloatingAnimationInWindow:(UIWindow *)window;
 @end
 
 @implementation MamaHalaManager
