@@ -11,13 +11,12 @@
     floatingHeader.layer.cornerRadius = 16.0;
     floatingHeader.layer.borderWidth = 2.0;
     
-    // ڕەنگاوڕەنگ وەک پەلکەزێڕینە (Rainbow Border & Shadow)
     CALayer *borderLayer = [CALayer layer];
     borderLayer.frame = floatingHeader.bounds;
     borderLayer.cornerRadius = 16.0;
     borderLayer.borderWidth = 2.0;
     borderLayer.borderColor = [UIColor colorWithRed:1.0 green:0.4 blue:0.7 alpha:1.0].CGColor;
-    [floatingHeader.layeraddSublayer:borderLayer];
+    [floatingHeader.layer addSublayer:borderLayer]; // ڕاستکردنەوەی بۆشایی نێوان layer و addSublayer
     
     floatingHeader.layer.shadowColor = [UIColor colorWithRed:1.0 green:0.2 blue:0.8 alpha:1.0].CGColor;
     floatingHeader.layer.shadowOpacity = 0.8;
