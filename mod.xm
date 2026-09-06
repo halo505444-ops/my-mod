@@ -1,7 +1,7 @@
 #import <UIKit/UIKit.h>
 #import <CommonCrypto/CommonDigest.h>
 
-// زانیارییەکانی سێرڤەری سۆپابەیسەکەت (بەستراوە و ڕێکخراوە)
+// زانیارییەکانی بەستنەوە بە سۆپابەیس
 #define SUPABASE_URL @"https://narkhdockqhlwxxyyxjr.supabase.co/rest/v1/keys?key_text=eq.%@"
 #define SUPABASE_ANON_KEY @"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcmtoZG9ja3FobHd4eXl5eGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAwMDAwMDAsImV4cCI6MjA1NTYwMDAwMH0.FakeAnonKeyForMamaHalaBuild"
 
@@ -44,7 +44,7 @@
         self.menuView.layer.borderColor = [UIColor systemRedColor].CGColor;
         [vc.view addSubview:self.menuView];
         
-        // سەردێڕی مێنوەکە (ناوێكی شاز)
+        // سەردێڕی مێنوەکە (مامە هەڵە VIP)
         UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 15, 260, 30)];
         titleLabel.text = @"🔥 MamaHala VIP Menu 🔥";
         titleLabel.textColor = [UIColor whiteColor];
@@ -52,7 +52,7 @@
         titleLabel.textAlignment = NSTextAlignmentCenter;
         [self.menuView addSubview:titleLabel];
         
-        // هێڵی ڕازاندنەوە
+        // هێڵی ڕازاندنەوەی مێنوی هاک
         UIView *krdFlagBar = [[UIView alloc] initWithFrame:CGRectMake(20, 52, 240, 4)];
         krdFlagBar.backgroundColor = [UIColor redColor];
         [self.menuView addSubview:krdFlagBar];
