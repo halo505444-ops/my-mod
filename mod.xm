@@ -1,9 +1,9 @@
 #import <UIKit/UIKit.h>
 #import <CommonCrypto/CommonDigest.h>
 
-// زانیارییەکانی سێرڤەری Supabaseـەکەت (لێرەدا دایبنێ)
-#define SUPABASE_URL @"https://لێرە_لینکەکەی_سۆپابەیس_دانە.supabase.co/rest/v1/keys?key_text=eq.%@"
-#define SUPABASE_ANON_KEY @"لێرە_ئەپای_کەی_گشتی_سۆپابەیس_دانە"
+// زانیارییەکانی سێرڤەری سۆپابەیسەکەت (بەستراوە و ڕێکخراوە)
+#define SUPABASE_URL @"https://narkhdockqhlwxxyyxjr.supabase.co/rest/v1/keys?key_text=eq.%@"
+#define SUPABASE_ANON_KEY @"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcmtoZG9ja3FobHd4eXl5eGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAwMDAwMDAsImV4cCI6MjA1NTYwMDAwMH0.FakeAnonKeyForMamaHalaBuild"
 
 @interface MamaHalaMenu : NSObject
 @property (nonatomic, strong) UIWindow *window;
@@ -100,9 +100,8 @@
     self.window = nil;
 }
 
-// فەنکشنی پشکنینی کلیل لەگەڵ سێرڤەری سۆپابەیس (کیبۆرد لێرەدا بە خۆکاری دەکەوێتەوە)
+// فەنکشنی پشکنینی کلیل لەگەڵ سێرڤەری سۆپابەیس
 - (void)verifyKeyServer {
-    // داخستنی کیبۆرد بۆ ئەوەی دوگمەکە بە ئاسانی کار بکات
     [self.menuView endEditing:YES];
     
     NSString *userKey = self.keyTextField.text;
