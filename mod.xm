@@ -2,7 +2,7 @@
 #import <CommonCrypto/CommonDigest.h>
 
 // زانیارییەکانی سێرڤەری Supabaseـەکەت (لێرەدا دایبنێ)
-#define SUPABASE_URL @"https:// لێرە_لینکەکەی_سۆپابەیس_دانە .supabase.co/rest/v1/keys?key_text=eq.%@"
+#define SUPABASE_URL @"https://لێرە_لینکەکەی_سۆپابەیس_دانە.supabase.co/rest/v1/keys?key_text=eq.%@"
 #define SUPABASE_ANON_KEY @"لێرە_ئەپای_کەی_گشتی_سۆپابەیس_دانە"
 
 @interface MamaHalaMenu : NSObject
@@ -52,9 +52,9 @@
         titleLabel.textAlignment = NSTextAlignmentCenter;
         [self.menuView addSubview:titleLabel];
         
-        // ڕازاندنەوە بە ڕەنگەکانی ئاڵی کوردستان (بۆ دوگمە یان هێڵێکی خوار سەردێڕ)
+        // هێڵی ڕازاندنەوە
         UIView *krdFlagBar = [[UIView alloc] initWithFrame:CGRectMake(20, 52, 240, 4)];
-        krdFlagBar.backgroundColor = [UIColor redColor]; // دەتوانیت بەشی بکەیت یان سوور دابنێیت
+        krdFlagBar.backgroundColor = [UIColor redColor];
         [self.menuView addSubview:krdFlagBar];
         
         // خانەی نووسینی کلیل (TextField)
@@ -66,7 +66,7 @@
         self.keyTextField.borderStyle = UITextBorderStyleRoundedRect;
         [self.menuView addSubview:self.keyTextField];
         
-        // دوگمەی پشکنینی کلیل (Login / Check Button)
+        // دوگمەی پشکنینی کلیل (Check Button)
         UIButton *checkButton = [UIButton buttonWithType:UIButtonTypeSystem];
         checkButton.frame = CGRectMake(20, 130, 240, 45);
         [checkButton setTitle:@"پشکنینی کلیل (Check Key)" forState:UIControlStateNormal];
@@ -85,7 +85,7 @@
         self.statusLabel.textAlignment = NSTextAlignmentCenter;
         [self.menuView addSubview:self.statusLabel];
         
-        // دوگمەی داخستن یان پەنهانکردن
+        // دوگمەی داخستن
         UIButton *closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
         closeButton.frame = CGRectMake(90, 265, 100, 35);
         [closeButton setTitle:@"پەنهان کردن" forState:UIControlStateNormal];
@@ -100,8 +100,11 @@
     self.window = nil;
 }
 
-// فەنکشنی پشکنینی کلیل لەگەڵ سێرڤەری سۆپابەیس
+// فەنکشنی پشکنینی کلیل لەگەڵ سێرڤەری سۆپابەیس (کیبۆرد لێرەدا بە خۆکاری دەکەوێتەوە)
 - (void)verifyKeyServer {
+    // داخستنی کیبۆرد بۆ ئەوەی دوگمەکە بە ئاسانی کار بکات
+    [self.menuView endEditing:YES];
+    
     NSString *userKey = self.keyTextField.text;
     if (userKey.length == 0) {
         self.statusLabel.text = @"❌ تکایە کلیلەکەت بنووسە!";
@@ -112,7 +115,6 @@
     self.statusLabel.text = @"⏳ خەریکە دەپشکنرێت...";
     self.statusLabel.textColor = [UIColor orangeColor];
     
-    // دروستکردنی لینکی داواکاری بۆ سۆپابەیس
     NSString *urlString = [NSString stringWithFormat:SUPABASE_URL, userKey];
     NSURL *url = [NSURL URLWithString:[urlString stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]]];
     
@@ -140,9 +142,8 @@
                     self.statusLabel.text = @"✅ کلیلەکە دروستە! هاک کارا بوو.";
                     self.statusLabel.textColor = [UIColor greenColor];
                     
-                    // لێرەدا دەتوانیت فەنکشنەکانی هاکەکەت (وەک ESP یان Aimbot) کارا بکەیت
                     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                        [self hideMenu]; // مێنوەکە دەشارێتەوە کاتێک کلیلەکە ڕاست دەبێت
+                        [self hideMenu];
                     });
                 } else {
                     self.statusLabel.text = @"⚠️ ئەم کلیلە ناچالاک کراوە!";
@@ -159,7 +160,6 @@
 
 @end
 
-// ئەمە یەکەمجارە کە دایلیبەکە ببارێت (Load)، مێنوەکە نیشان دەدات
 __attribute__((constructor)) void entryPoint() {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [[MamaHalaMenu sharedInstance] showMenu];
