@@ -1,127 +1,167 @@
 #import <UIKit/UIKit.h>
+#import <CommonCrypto/CommonDigest.h>
 
-@interface HafristManager : NSObject
-+ (void)showFloatingHeaderInWindow:(UIWindow *)window;
+// زانیارییەکانی سێرڤەری Supabaseـەکەت (لێرەدا دایبنێ)
+#define SUPABASE_URL @"https:// لێرە_لینکەکەی_سۆپابەیس_دانە .supabase.co/rest/v1/keys?key_text=eq.%@"
+#define SUPABASE_ANON_KEY @"لێرە_ئەپای_کەی_گشتی_سۆپابەیس_دانە"
+
+@interface MamaHalaMenu : NSObject
+@property (nonatomic, strong) UIWindow *window;
+@property (nonatomic, strong) UIView *menuView;
+@property (nonatomic, strong) UITextField *keyTextField;
+@property (nonatomic, strong) UILabel *statusLabel;
 @end
 
-@implementation HafristManager
-+ (void)showFloatingHeaderInWindow:(UIWindow *)window {
-    UIView *floatingHeader = [[UIView alloc] initWithFrame:CGRectMake((window.bounds.size.width - 320) / 2, 20, 320, 50)];
-    floatingHeader.backgroundColor = [UIColor colorWithRed:0.1 green:0.02 blue:0.15 alpha:0.95];
-    floatingHeader.layer.cornerRadius = 16.0;
-    floatingHeader.layer.borderWidth = 2.0;
-    
-    CALayer *borderLayer = [CALayer layer];
-    borderLayer.frame = floatingHeader.bounds;
-    borderLayer.cornerRadius = 16.0;
-    borderLayer.borderWidth = 2.0;
-    borderLayer.borderColor = [UIColor colorWithRed:1.0 green:0.4 blue:0.7 alpha:1.0].CGColor;
-    [floatingHeader.layer addSublayer:borderLayer]; // ڕاستکردنەوەی بۆشایی نێوان layer و addSublayer
-    
-    floatingHeader.layer.shadowColor = [UIColor colorWithRed:1.0 green:0.2 blue:0.8 alpha:1.0].CGColor;
-    floatingHeader.layer.shadowOpacity = 0.8;
-    floatingHeader.layer.shadowRadius = 12.0;
-    
-    UILabel *headerLabel = [[UILabel alloc] initWithFrame:floatingHeader.bounds];
-    headerLabel.text = @"🔞🔞هافرێست بەس پیاو نی😂🔞";
-    headerLabel.textAlignment = NSTextAlignmentCenter;
-    headerLabel.font = [UIFont fontWithName:@"Courier-Bold" size:14.0];
-    headerLabel.textColor = [UIColor colorWithRed:1.0 green:0.6 blue:0.9 alpha:1.0];
-    [floatingHeader addSubview:headerLabel];
-    
-    [window addSubview:floatingHeader];
+@implementation MamaHalaMenu
+
++ (instancetype)sharedInstance {
+    static MamaHalaMenu *sharedInstance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sharedInstance = [[MamaHalaMenu alloc] init];
+    });
+    return sharedInstance;
 }
+
+- (void)showMenu {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (self.window) return;
+        
+        UIWindowScene *scene = (UIWindowScene *)[UIApplication sharedApplication].connectedScenes.anyObject;
+        self.window = [[UIWindow alloc] initWithFrame:scene.coordinateSpace.bounds];
+        self.window.windowLevel = UIWindowLevelAlert + 1;
+        self.window.hidden = NO;
+        self.window.backgroundColor = [UIColor clearColor];
+        
+        UIViewController *vc = [[UIViewController alloc] init];
+        self.window.rootViewController = vc;
+        
+        // دروستکردنی چوارچێوەی سەرەکی مێنوی هاک
+        self.menuView = [[UIView alloc] initWithFrame:CGRectMake(40, 100, 280, 320)];
+        self.menuView.backgroundColor = [UIColor colorWithRed:0.1 green:0.1 blue:0.1 alpha:0.92];
+        self.menuView.layer.cornerRadius = 16;
+        self.menuView.layer.borderWidth = 1.5;
+        self.menuView.layer.borderColor = [UIColor systemRedColor].CGColor;
+        [vc.view addSubview:self.menuView];
+        
+        // سەردێڕی مێنوەکە (ناوێكی شاز)
+        UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 15, 260, 30)];
+        titleLabel.text = @"🔥 MamaHala VIP Menu 🔥";
+        titleLabel.textColor = [UIColor whiteColor];
+        titleLabel.font = [UIFont boldSystemFontOfSize:18];
+        titleLabel.textAlignment = NSTextAlignmentCenter;
+        [self.menuView addSubview:titleLabel];
+        
+        // ڕازاندنەوە بە ڕەنگەکانی ئاڵی کوردستان (بۆ دوگمە یان هێڵێکی خوار سەردێڕ)
+        UIView *krdFlagBar = [[UIView alloc] initWithFrame:CGRectMake(20, 52, 240, 4)];
+        krdFlagBar.backgroundColor = [UIColor redColor]; // دەتوانیت بەشی بکەیت یان سوور دابنێیت
+        [self.menuView addSubview:krdFlagBar];
+        
+        // خانەی نووسینی کلیل (TextField)
+        self.keyTextField = [[UITextField alloc] initWithFrame:CGRectMake(20, 75, 240, 40)];
+        self.keyTextField.placeholder = @" لێرە کلیلەکەت بنووسە...";
+        self.keyTextField.backgroundColor = [UIColor colorWithRed:0.2 green:0.2 blue:0.2 alpha:1.0];
+        self.keyTextField.textColor = [UIColor whiteColor];
+        self.keyTextField.layer.cornerRadius = 8;
+        self.keyTextField.borderStyle = UITextBorderStyleRoundedRect;
+        [self.menuView addSubview:self.keyTextField];
+        
+        // دوگمەی پشکنینی کلیل (Login / Check Button)
+        UIButton *checkButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        checkButton.frame = CGRectMake(20, 130, 240, 45);
+        [checkButton setTitle:@"پشکنینی کلیل (Check Key)" forState:UIControlStateNormal];
+        [checkButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        checkButton.backgroundColor = [UIColor systemBlueColor];
+        checkButton.layer.cornerRadius = 8;
+        [checkButton addTarget:self action:@selector(verifyKeyServer) forControlEvents:UIControlEventTouchUpInside];
+        [self.menuView addSubview:checkButton];
+        
+        // نیشاندەری دۆخ (Status Label)
+        self.statusLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 190, 240, 60)];
+        self.statusLabel.text = @"دۆخ: چاوەڕێی کلیل...";
+        self.statusLabel.textColor = [UIColor yellowColor];
+        self.statusLabel.font = [UIFont systemFontOfSize:13];
+        self.statusLabel.numberOfLines = 2;
+        self.statusLabel.textAlignment = NSTextAlignmentCenter;
+        [self.menuView addSubview:self.statusLabel];
+        
+        // دوگمەی داخستن یان پەنهانکردن
+        UIButton *closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        closeButton.frame = CGRectMake(90, 265, 100, 35);
+        [closeButton setTitle:@"پەنهان کردن" forState:UIControlStateNormal];
+        [closeButton setTitleColor:[UIColor lightGrayColor] forState:UIControlStateNormal];
+        [closeButton addTarget:self action:@selector(hideMenu) forControlEvents:UIControlEventTouchUpInside];
+        [self.menuView addSubview:closeButton];
+    });
+}
+
+- (void)hideMenu {
+    self.window.hidden = YES;
+    self.window = nil;
+}
+
+// فەنکشنی پشکنینی کلیل لەگەڵ سێرڤەری سۆپابەیس
+- (void)verifyKeyServer {
+    NSString *userKey = self.keyTextField.text;
+    if (userKey.length == 0) {
+        self.statusLabel.text = @"❌ تکایە کلیلەکەت بنووسە!";
+        self.statusLabel.textColor = [UIColor redColor];
+        return;
+    }
+    
+    self.statusLabel.text = @"⏳ خەریکە دەپشکنرێت...";
+    self.statusLabel.textColor = [UIColor orangeColor];
+    
+    // دروستکردنی لینکی داواکاری بۆ سۆپابەیس
+    NSString *urlString = [NSString stringWithFormat:SUPABASE_URL, userKey];
+    NSURL *url = [NSURL URLWithString:[urlString stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]]];
+    
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+    [request setHTTPMethod:@"GET"];
+    [request setValue:SUPABASE_ANON_KEY forHTTPHeaderField:@"apikey"];
+    [request setValue:[NSString stringWithFormat:@"Bearer %@", SUPABASE_ANON_KEY] forHTTPHeaderField:@"Authorization"];
+    
+    NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (error) {
+                self.statusLabel.text = @"❌ کێشەی هێڵ هەیە!";
+                self.statusLabel.textColor = [UIColor redColor];
+                return;
+            }
+            
+            NSError *jsonError;
+            NSArray *jsonArray = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
+            
+            if (jsonArray && [jsonArray isKindOfClass:[NSArray class]] && jsonArray.count > 0) {
+                NSDictionary *keyData = jsonArray[0];
+                NSNumber *isActive = keyData[@"is_active"];
+                
+                if ([isActive boolValue] == YES) {
+                    self.statusLabel.text = @"✅ کلیلەکە دروستە! هاک کارا بوو.";
+                    self.statusLabel.textColor = [UIColor greenColor];
+                    
+                    // لێرەدا دەتوانیت فەنکشنەکانی هاکەکەت (وەک ESP یان Aimbot) کارا بکەیت
+                    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                        [self hideMenu]; // مێنوەکە دەشارێتەوە کاتێک کلیلەکە ڕاست دەبێت
+                    });
+                } else {
+                    self.statusLabel.text = @"⚠️ ئەم کلیلە ناچالاک کراوە!";
+                    self.statusLabel.textColor = [UIColor redColor];
+                }
+            } else {
+                self.statusLabel.text = @"❌ کلیلەکە هەڵەیە یان بوونی نییە!";
+                self.statusLabel.textColor = [UIColor redColor];
+            }
+        });
+    }];
+    [task resume];
+}
+
 @end
 
-%ctor {
+// ئەمە یەکەمجارە کە دایلیبەکە ببارێت (Load)، مێنوەکە نیشان دەدات
+__attribute__((constructor)) void entryPoint() {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        UIWindow *keyWindow = nil;
-        for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
-            if (scene.activationState == UISceneActivationStateForegroundActive) {
-                for (UIWindow *window in scene.windows) {
-                    if (window.isKeyWindow) {
-                        keyWindow = window;
-                        break;
-                    }
-                }
-            }
-        }
-        if (!keyWindow) {
-            for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
-                for (UIWindow *window in scene.windows) {
-                    keyWindow = window;
-                    break;
-                }
-                if (keyWindow) break;
-            }
-        }
-        
-        if (!keyWindow) return;
-
-        UIViewController *customVC = [[UIViewController alloc] init];
-        customVC.modalPresentationStyle = UIModalPresentationOverFullScreen;
-        customVC.view.backgroundColor = [UIColor colorWithRed:0.08 green:0.02 blue:0.12 alpha:0.92];
-
-        UIView *container = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 340, 290)];
-        container.center = customVC.view.center;
-        container.backgroundColor = [UIColor colorWithRed:0.05 green:0.01 blue:0.08 alpha:0.98];
-        container.layer.cornerRadius = 24.0;
-        container.layer.borderWidth = 2.0;
-        container.layer.borderColor = [UIColor colorWithRed:1.0 green:0.4 blue:0.8 alpha:1.0].CGColor;
-        [customVC.view addSubview:container];
-
-        UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 20, 320, 40)];
-        titleLabel.text = @"🔞🔞هافرێست بەس پیاو نی😂🔞";
-        titleLabel.textAlignment = NSTextAlignmentCenter;
-        titleLabel.font = [UIFont fontWithName:@"Courier-Bold" size:15.0];
-        titleLabel.textColor = [UIColor colorWithRed:1.0 green:0.6 blue:0.9 alpha:1.0];
-        [container addSubview:titleLabel];
-
-        UITextField *textField = [[UITextField alloc] initWithFrame:CGRectMake(20, 80, 300, 45)];
-        textField.borderStyle = UITextBorderStyleNone;
-        textField.textColor = [UIColor colorWithRed:1.0 green:0.7 blue:0.95 alpha:1.0];
-        textField.backgroundColor = [UIColor colorWithRed:0.15 green:0.03 blue:0.2 alpha:1.0];
-        textField.layer.cornerRadius = 10.0;
-        textField.layer.borderWidth = 1.0;
-        textField.layer.borderColor = [UIColor colorWithRed:0.8 green:0.3 blue:0.7 alpha:1.0].CGColor;
-        textField.textAlignment = NSTextAlignmentCenter;
-        textField.font = [UIFont fontWithName:@"Courier" size:13.0];
-        textField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:@"🔞🔞هافرێست بەس پیاو نی😂🔞" attributes:@{NSForegroundColorAttributeName: [UIColor colorWithRed:0.7 green:0.4 blue:0.7 alpha:1.0]}];
-        [container addSubview:textField];
-
-        UIButton *submitBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-        submitBtn.frame = CGRectMake(20, 145, 300, 45);
-        [submitBtn setTitle:@"🔞🔞هافرێست بەس پیاو نی😂🔞" forState:UIControlStateNormal];
-        [submitBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        submitBtn.backgroundColor = [UIColor colorWithRed:0.85 green:0.25 blue:0.75 alpha:1.0];
-        submitBtn.layer.cornerRadius = 10.0;
-        submitBtn.titleLabel.font = [UIFont fontWithName:@"Courier-Bold" size:13.0];
-
-        [submitBtn addAction:[UIAction actionWithHandler:^(__kindof UIAction * _Nonnull action) {
-            [container endEditing:YES];
-            [customVC dismissViewControllerAnimated:YES completion:^{
-                [HafristManager showFloatingHeaderInWindow:keyWindow];
-            }];
-        }] forControlEvents:UIControlEventTouchUpInside];
-        [container addSubview:submitBtn];
-
-        UILabel *tgLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 210, 320, 20)];
-        tgLabel.text = @"🔞🔞هافرێست بەس پیاو نی😂🔞";
-        tgLabel.textAlignment = NSTextAlignmentCenter;
-        tgLabel.font = [UIFont fontWithName:@"Courier" size:11.0];
-        tgLabel.textColor = [UIColor colorWithRed:1.0 green:0.5 blue:0.85 alpha:1.0];
-        [container addSubview:tgLabel];
-
-        UILabel *footerLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 245, 320, 15)];
-        footerLabel.text = @"🔞🔞هافرێست بەس پیاو نی😂🔞";
-        footerLabel.textAlignment = NSTextAlignmentCenter;
-        footerLabel.font = [UIFont fontWithName:@"Courier" size:10.0];
-        footerLabel.textColor = [UIColor colorWithRed:0.8 green:0.6 blue:0.9 alpha:1.0];
-        [container addSubview:footerLabel];
-
-        UIViewController *rootVC = keyWindow.rootViewController;
-        if (rootVC) {
-            [rootVC presentViewController:customVC animated:YES completion:nil];
-        }
+        [[MamaHalaMenu sharedInstance] showMenu];
     });
 }
