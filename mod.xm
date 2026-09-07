@@ -2,23 +2,19 @@
 #import <objc/runtime.h>
 
 void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success)) {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        NSString *supabaseUrl = @"https://narkhdockqhlwxxyyxjr.supabase.co";
-        NSString *supabaseKey = @"Sb_publishable_ZSYNiCI8U1zVImnMUKqTsA_6RBjMIVs";
-        
-        NSString *urlString = [NSString stringWithFormat:@"%@/rest/v1/keys?key_text=eq.%@&select=is_active", supabaseUrl, [enteredKey stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]]];
-        
-        NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:urlString]];
-        [request setHTTPMethod:@"GET"];
-        [request setValue:supabaseKey forHTTPHeaderField:@"apikey"];
-        [request setValue:[NSString stringWithFormat:@"Bearer %@", supabaseKey] forHTTPHeaderField:@"Authorization"];
-        
-        NSURLResponse *response = nil;
-        NSError *error = nil;
-        NSData *data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
-        
+    NSString *supabaseUrl = @"https://narkhdockqhlwxxyyxjr.supabase.co";
+    NSString *supabaseKey = @"Sb_publishable_ZSYNiCI8U1zVImnMUKqTsA_6RBjMIVs";
+    
+    NSString *urlString = [NSString stringWithFormat:@"%@/rest/v1/keys?key_text=eq.%@&select=is_active", supabaseUrl, [enteredKey stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]]];
+    
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:urlString]];
+    [request setHTTPMethod:@"GET"];
+    [request setValue:supabaseKey forHTTPHeaderField:@"apikey"];
+    [request setValue:[NSString stringWithFormat:@"Bearer %@", supabaseKey] forHTTPHeaderField:@"Authorization"];
+    
+    NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         bool isValid = false;
-        if (data) {
+        if (!error && data) {
             NSError *jsonError = nil;
             NSArray *jsonArray = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
             if ([jsonArray count] > 0) {
@@ -35,7 +31,8 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
         dispatch_async(dispatch_get_main_queue(), ^{
             completion(isValid);
         });
-    });
+    }];
+    [task resume];
 }
 
 @interface MamaHalaGestureRecognizer : UITapGestureRecognizer
@@ -168,8 +165,8 @@ static void handleButtonTap(MamaHalaGestureRecognizer *sender) {
         
         [menuView addSubview:containerView];
         
-        // تاچ بۆ لابردنی کیبۆرد کاتێک لە دەرەوەی خانەکە دەدەیت
-        UITapGestureRecognizer *dismissKeyboardTap = [[UITapGestureRecognizer alloc] initWithTarget:nil action:nil];
+        // چارەسەری کیبۆرد: هەر کاتێک لە دەرەوەی سندوقەکە دەدەیت، کیبۆردەکە لادەچێت
+        UITapGestureRecognizer *dismissKeyboardTap = [[UITapGestureRecognizer alloc] init];
         MamaHalaGestureRecognizer *dismissHelper = [[MamaHalaGestureRecognizer alloc] initWithTarget:nil action:@selector(handleButtonTap:)];
         dismissHelper.actionBlock = ^{
             [keyField resignFirstResponder];
