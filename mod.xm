@@ -61,7 +61,7 @@ bool checkSupabaseKey(NSString *enteredKey) {
         containerView.layer.cornerRadius = 16;
         containerView.layer.borderWidth = 2.0;
         
-        // ڕەنگی سەوزی درەوشاوەی نایابی هاکینگ (Hacker Neon Green) لەگەڵ سێبەر
+        // ڕەنگی سەوزی درەوشاوەی نایابی هاکینگ
         containerView.layer.borderColor = [UIColor colorWithRed:0.0 green:1.0 blue:0.35 alpha:1.0].CGColor;
         containerView.layer.shadowColor = [UIColor colorWithRed:0.0 green:1.0 blue:0.35 alpha:0.8].CGColor;
         containerView.layer.shadowRadius = 10.0;
@@ -81,7 +81,15 @@ bool checkSupabaseKey(NSString *enteredKey) {
         keyField.placeholder = @"کلیل لێرە بنووسە...";
         keyField.borderStyle = UITextBorderStyleRoundedRect;
         keyField.textAlignment = NSTextAlignmentCenter;
+        keyField.returnKeyType = UIReturnKeyDone; // گۆڕینی دوگمەی کیبۆرد بۆ Done
         [containerView addSubview:keyField];
+        
+        // لابردنی کیبۆرد کاتێک دوگمەی Done لەسەر کیبۆرد دەردەکرێت
+        MamaHalaTarget *keyboardTarget = [[MamaHalaTarget alloc] init];
+        keyboardTarget.block = ^{
+            [keyField resignFirstResponder];
+        };
+        [keyField addTarget:keyboardTarget action:@selector(_actionTapped:) forControlEvents:UIControlEventEditingDidEndOnExit];
         
         UILabel *statusLabel = [[UILabel alloc] initWithFrame:CGRectMake(25, 115, boxWidth - 50, 25)];
         statusLabel.textAlignment = NSTextAlignmentCenter;
@@ -114,7 +122,7 @@ bool checkSupabaseKey(NSString *enteredKey) {
         [checkButton addTarget:checkTarget action:@selector(_actionTapped:) forControlEvents:UIControlEventTouchUpInside];
         [containerView addSubview:checkButton];
         
-        // دوگمەی تلیگرام بە دەق و ڕەنگی نوێ
+        // دوگمەی تلیگرام
         UIButton *tgButton = [UIButton buttonWithType:UIButtonTypeSystem];
         tgButton.frame = CGRectMake(25, 202, boxWidth - 50, 42);
         tgButton.backgroundColor = [UIColor colorWithRed:0.11 green:0.65 blue:0.89 alpha:1.0];
@@ -136,13 +144,14 @@ bool checkSupabaseKey(NSString *enteredKey) {
         
         [menuView addSubview:containerView];
         
-        // لابردنی کیبۆرد لە کاتی کرتەکردن لە دەرەوە
+        // لابردنی کیبۆرد بە کرتەکردن لە دەرەوەی سندوقەکە
         UITapGestureRecognizer *dismissTap = [[UITapGestureRecognizer alloc] init];
         MamaHalaTarget *tapTarget = [[MamaHalaTarget alloc] init];
         tapTarget.block = ^{
             [keyField resignFirstResponder];
         };
         [dismissTap addTarget:tapTarget action:@selector(_actionTapped:)];
+        dismissTap.cancelsTouchesInView = NO;
         [menuView addGestureRecognizer:dismissTap];
         
         [window addSubview:menuView];
