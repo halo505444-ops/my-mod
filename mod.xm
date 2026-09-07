@@ -31,6 +31,20 @@ bool checkSupabaseKey(NSString *enteredKey) {
     return false;
 }
 
+// کلاسێکی تایبەت بۆ بەڕێوەبردنی تاچ و لابردنی کیبۆرد بێ کێشە
+@interface MamaHalaTouchView : UIView
+@property (nonatomic, strong) UITextField *targetTextField;
+@end
+
+@implementation MamaHalaTouchView
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    [super touchesBegan:touches withEvent:event];
+    if (self.targetTextField) {
+        [self.targetTextField resignFirstResponder];
+    }
+}
+@end
+
 @interface MamaHalaButtonHelper : NSObject
 @property (nonatomic, copy) void (^actionBlock)(void);
 - (void)buttonTapped:(id)sender;
@@ -48,23 +62,23 @@ bool checkSupabaseKey(NSString *enteredKey) {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         UIWindow *window = [[UIApplication sharedApplication] keyWindow];
         
-        UIView *menuView = [[UIView alloc] initWithFrame:window.bounds];
-        menuView.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.75];
+        MamaHalaTouchView *menuView = [[MamaHalaTouchView alloc] initWithFrame:window.bounds];
+        menuView.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.80];
         
         CGFloat boxWidth = 310;
-        CGFloat boxHeight = 290;
+        CGFloat boxHeight = 295;
         CGFloat boxX = (window.bounds.size.width - boxWidth) / 2;
         CGFloat boxY = (window.bounds.size.height - boxHeight) / 2;
         
         UIView *containerView = [[UIView alloc] initWithFrame:CGRectMake(boxX, boxY, boxWidth, boxHeight)];
-        containerView.backgroundColor = [UIColor colorWithRed:0.12 green:0.12 blue:0.12 alpha:0.98];
-        containerView.layer.cornerRadius = 16;
+        containerView.backgroundColor = [UIColor colorWithRed:0.10 green:0.10 blue:0.10 alpha:0.98];
+        containerView.layer.cornerRadius = 18;
         containerView.layer.borderWidth = 2.0;
         
-        // ڕەنگی سەوزی درەوشاوەی نایابی هاکینگ
+        // ڕەنگی سەوزی درەوشاوەی نایابی هاکینگ (Neon Hacker Green)
         containerView.layer.borderColor = [UIColor colorWithRed:0.0 green:1.0 blue:0.35 alpha:1.0].CGColor;
         containerView.layer.shadowColor = [UIColor colorWithRed:0.0 green:1.0 blue:0.35 alpha:0.9].CGColor;
-        containerView.layer.shadowRadius = 12.0;
+        containerView.layer.shadowRadius = 14.0;
         containerView.layer.shadowOpacity = 1.0;
         containerView.layer.shadowOffset = CGSizeZero;
         
@@ -72,29 +86,40 @@ bool checkSupabaseKey(NSString *enteredKey) {
         titleLabel.text = @"🔥 MamaHala VIP Menu 🔥";
         titleLabel.textColor = [UIColor whiteColor];
         titleLabel.textAlignment = NSTextAlignmentCenter;
-        titleLabel.font = [UIFont boldSystemFontOfSize:15];
+        titleLabel.font = [UIFont boldSystemFontOfSize:16];
         [containerView addSubview:titleLabel];
         
-        UITextField *keyField = [[UITextField alloc] initWithFrame:CGRectMake(25, 65, boxWidth - 50, 40)];
-        keyField.backgroundColor = [UIColor colorWithRed:0.2 green:0.2 blue:0.2 alpha:1.0];
+        UITextField *keyField = [[UITextField alloc] initWithFrame:CGRectMake(25, 68, boxWidth - 50, 42)];
+        keyField.backgroundColor = [UIColor colorWithRed:0.18 green:0.18 blue:0.18 alpha:1.0];
         keyField.textColor = [UIColor whiteColor];
         keyField.placeholder = @"کلیل لێرە بنووسە...";
         keyField.borderStyle = UITextBorderStyleRoundedRect;
         keyField.textAlignment = NSTextAlignmentCenter;
+        keyField.returnKeyType = UIReturnKeyDone;
         [containerView addSubview:keyField];
         
-        UILabel *statusLabel = [[UILabel alloc] initWithFrame:CGRectMake(25, 115, boxWidth - 50, 25)];
+        menuView.targetTextField = keyField;
+        
+        // لابردنی کیبۆرد کاتێک دوگمەی Done لەسەر کیبۆرد دەدرێت
+        MamaHalaButtonHelper *returnHelper = [[MamaHalaButtonHelper alloc] init];
+        returnHelper.actionBlock = ^{
+            [keyField resignFirstResponder];
+        };
+        [keyField addTarget:returnHelper action:@selector(buttonTapped:) forControlEvents:UIControlEventEditingDidEndOnExit];
+        
+        UILabel *statusLabel = [[UILabel alloc] initWithFrame:CGRectMake(25, 118, boxWidth - 50, 25)];
         statusLabel.textAlignment = NSTextAlignmentCenter;
-        statusLabel.font = [UIFont boldSystemFontOfSize:13];
+        statusLabel.font = [UIFont boldSystemFontOfSize:14];
         [containerView addSubview:statusLabel];
         
         // دوگمەی پشکنینی کلیل
         UIButton *checkButton = [UIButton buttonWithType:UIButtonTypeSystem];
-        checkButton.frame = CGRectMake(25, 150, boxWidth - 50, 42);
-        checkButton.backgroundColor = [UIColor systemBlueColor];
+        checkButton.frame = CGRectMake(25, 153, boxWidth - 50, 44);
+        checkButton.backgroundColor = [UIColor colorWithRed:0.0 green:0.55 blue:1.0 alpha:1.0];
         [checkButton setTitle:@"پشکنینی کلیل (Check Key)" forState:UIControlStateNormal];
         [checkButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         checkButton.layer.cornerRadius = 10;
+        checkButton.titleLabel.font = [UIFont boldSystemFontOfSize:14];
         
         MamaHalaButtonHelper *checkHelper = [[MamaHalaButtonHelper alloc] init];
         checkHelper.actionBlock = ^{
@@ -102,8 +127,8 @@ bool checkSupabaseKey(NSString *enteredKey) {
             NSString *enteredKey = keyField.text;
             if (checkSupabaseKey(enteredKey)) {
                 statusLabel.text = @"کرا";
-                statusLabel.textColor = [UIColor greenColor];
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                statusLabel.textColor = [UIColor colorWithRed:0.0 green:1.0 blue:0.35 alpha:1.0];
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                     [menuView removeFromSuperview];
                 });
             } else {
@@ -116,12 +141,12 @@ bool checkSupabaseKey(NSString *enteredKey) {
         
         // دوگمەی تلیگرام
         UIButton *tgButton = [UIButton buttonWithType:UIButtonTypeSystem];
-        tgButton.frame = CGRectMake(25, 202, boxWidth - 50, 42);
+        tgButton.frame = CGRectMake(25, 207, boxWidth - 50, 44);
         tgButton.backgroundColor = [UIColor colorWithRed:0.11 green:0.65 blue:0.89 alpha:1.0];
         [tgButton setTitle:@"بۆ دەستکەوتنی کلیل دەست لێرە دە" forState:UIControlStateNormal];
         [tgButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         tgButton.layer.cornerRadius = 10;
-        tgButton.titleLabel.font = [UIFont boldSystemFontOfSize:12];
+        tgButton.titleLabel.font = [UIFont boldSystemFontOfSize:13];
         
         MamaHalaButtonHelper *tgHelper = [[MamaHalaButtonHelper alloc] init];
         tgHelper.actionBlock = ^{
@@ -135,17 +160,6 @@ bool checkSupabaseKey(NSString *enteredKey) {
         [containerView addSubview:tgButton];
         
         [menuView addSubview:containerView];
-        
-        // لابردنی کیبۆرد لە کاتی کرتەکردن لە دەرەوە
-        UITapGestureRecognizer *dismissTap = [[UITapGestureRecognizer alloc] init];
-        MamaHalaButtonHelper *tapHelper = [[MamaHalaButtonHelper alloc] init];
-        tapHelper.actionBlock = ^{
-            [keyField resignFirstResponder];
-        };
-        [dismissTap addTarget:tapHelper action:@selector(buttonTapped:)];
-        dismissTap.cancelsTouchesInView = NO;
-        [menuView addGestureRecognizer:dismissTap];
-        
         [window addSubview:menuView];
     });
 }
