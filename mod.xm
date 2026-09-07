@@ -1,4 +1,5 @@
 #import <UIKit/UIKit.h>
+#import <objc/runtime.h>
 
 bool checkSupabaseKey(NSString *enteredKey) {
     NSString *supabaseUrl = @"https://narkhdockqhlwxxyyxjr.supabase.co";
@@ -31,7 +32,6 @@ bool checkSupabaseKey(NSString *enteredKey) {
     return false;
 }
 
-// بەکارهێنانی UITapGestureRecognizer بۆ دوگمەکان تاوەکو بە مسۆگەری و بێ کێشە کار بکەن
 @interface MamaHalaGestureRecognizer : UITapGestureRecognizer
 @property (nonatomic, copy) void (^actionBlock)(void);
 @end
@@ -47,7 +47,19 @@ static void handleButtonTap(MamaHalaGestureRecognizer *sender) {
 
 %ctor {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        UIWindow *window = [[UIApplication sharedApplication] keyWindow];
+        UIWindow *window = nil;
+        for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if ([scene isKindOfClass:[UIWindowScene class]]) {
+                for (UIWindow *w in scene.windows) {
+                    if (w.isKeyWindow) {
+                        window = w;
+                        break;
+                    }
+                }
+            }
+            if (window) break;
+        }
+        if (!window) window = [[UIApplication sharedApplication] keyWindow];
         if (!window) return;
         
         UIView *menuView = [[UIView alloc] initWithFrame:window.bounds];
@@ -63,7 +75,6 @@ static void handleButtonTap(MamaHalaGestureRecognizer *sender) {
         containerView.layer.cornerRadius = 18;
         containerView.layer.borderWidth = 2.0;
         
-        // ڕەنگی سەوزی درەوشاوەی هاکینگ
         containerView.layer.borderColor = [UIColor colorWithRed:0.0 green:1.0 blue:0.35 alpha:1.0].CGColor;
         containerView.layer.shadowColor = [UIColor colorWithRed:0.0 green:1.0 blue:0.35 alpha:0.9].CGColor;
         containerView.layer.shadowRadius = 14.0;
@@ -90,7 +101,6 @@ static void handleButtonTap(MamaHalaGestureRecognizer *sender) {
         statusLabel.font = [UIFont boldSystemFontOfSize:14];
         [containerView addSubview:statusLabel];
         
-        // دوگمەی پشکنینی کلیل بە تەلە و گێستەر
         UIView *checkButton = [[UIView alloc] initWithFrame:CGRectMake(25, 153, boxWidth - 50, 44)];
         checkButton.backgroundColor = [UIColor colorWithRed:0.0 green:0.55 blue:1.0 alpha:1.0];
         checkButton.layer.cornerRadius = 10;
@@ -117,13 +127,11 @@ static void handleButtonTap(MamaHalaGestureRecognizer *sender) {
                 statusLabel.textColor = [UIColor redColor];
             }
         };
-        // بەستنەوەی ڕاستەوخۆی هاندلەر بە مێتۆدی سستەم
         class_addMethod([MamaHalaGestureRecognizer class], @selector(handleButtonTap:), (IMP)handleButtonTap, "v@:@");
         [checkGesture addTarget:checkGesture action:@selector(handleButtonTap:)];
         [checkButton addGestureRecognizer:checkGesture];
         [containerView addSubview:checkButton];
         
-        // دوگمەی تلیگرام بە هەمان شێوازی مسۆگەر
         UIView *tgButton = [[UIView alloc] initWithFrame:CGRectMake(25, 207, boxWidth - 50, 44)];
         tgButton.backgroundColor = [UIColor colorWithRed:0.11 green:0.65 blue:0.89 alpha:1.0];
         tgButton.layer.cornerRadius = 10;
