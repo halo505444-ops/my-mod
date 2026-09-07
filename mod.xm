@@ -1,16 +1,16 @@
 #import <UIKit/UIKit.h>
 
-// دروستکردنی هاوکارێک بۆ دوگمەکان بۆ ئەوەی بە بێ کێشە کار بکەن
+// دروستکردنی هاوکارێک بۆ دوگمەکان
 @interface MamaHalaTarget : NSObject
 @property (nonatomic, copy) void (^block)(void);
+- (void)_actionTapped:(id)sender;
 @end
 
 @implementation MamaHalaTarget
-- *_actionTapped:(id)sender {
+- (void)_actionTapped:(id)sender {
     if (self.block) {
         self.block();
     }
-    return nil;
 }
 @end
 
@@ -89,7 +89,7 @@ bool checkSupabaseKey(NSString *enteredKey) {
         [checkButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         checkButton.layer.cornerRadius = 8;
         
-        // بەستنەوەی کرداری دوگمەکە بە شێوەیەکی پاک و بێ کێشە بۆ کامپایل
+        // بەستنەوەی کرداری دوگمەکە
         MamaHalaTarget *target = [[MamaHalaTarget alloc] init];
         target.block = ^{
             NSString *enteredKey = keyField.text;
