@@ -51,16 +51,22 @@ bool checkSupabaseKey(NSString *enteredKey) {
         UIView *menuView = [[UIView alloc] initWithFrame:window.bounds];
         menuView.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.85];
         
-        CGFloat boxWidth = 300;
-        CGFloat boxHeight = 290; // کەمێک درێژتر کرا بۆ جێگیرکردنی دوگمەی تلیگرام
+        CGFloat boxWidth = 310;
+        CGFloat boxHeight = 290;
         CGFloat boxX = (window.bounds.size.width - boxWidth) / 2;
         CGFloat boxY = (window.bounds.size.height - boxHeight) / 2;
         
         UIView *containerView = [[UIView alloc] initWithFrame:CGRectMake(boxX, boxY, boxWidth, boxHeight)];
         containerView.backgroundColor = [UIColor colorWithRed:0.12 green:0.12 blue:0.12 alpha:0.98];
         containerView.layer.cornerRadius = 16;
-        containerView.layer.borderWidth = 1.5;
-        containerView.layer.borderColor = [UIColor redColor].CGColor;
+        containerView.layer.borderWidth = 2.0;
+        
+        // ڕەنگی سەوزی درەوشاوەی نایابی هاکینگ (Hacker Neon Green) لەگەڵ سێبەر
+        containerView.layer.borderColor = [UIColor colorWithRed:0.0 green:1.0 blue:0.35 alpha:1.0].CGColor;
+        containerView.layer.shadowColor = [UIColor colorWithRed:0.0 green:1.0 blue:0.35 alpha:0.8].CGColor;
+        containerView.layer.shadowRadius = 10.0;
+        containerView.layer.shadowOpacity = 0.9;
+        containerView.layer.shadowOffset = CGSizeZero;
         
         UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 20, boxWidth - 40, 30)];
         titleLabel.text = @"🔥 MamaHala VIP Menu 🔥";
@@ -108,17 +114,18 @@ bool checkSupabaseKey(NSString *enteredKey) {
         [checkButton addTarget:checkTarget action:@selector(_actionTapped:) forControlEvents:UIControlEventTouchUpInside];
         [containerView addSubview:checkButton];
         
-        // دروستکردنی دوگمەی Kyeeee بۆ پەیوەندیکردن بە تلیگرام
+        // دوگمەی تلیگرام بە دەق و ڕەنگی نوێ
         UIButton *tgButton = [UIButton buttonWithType:UIButtonTypeSystem];
         tgButton.frame = CGRectMake(25, 202, boxWidth - 50, 42);
-        tgButton.backgroundColor = [UIColor colorWithRed:0.11 green:0.65 blue:0.89 alpha:1.0]; // ڕەنگی تایبەتی تلیگرام
-        [tgButton setTitle:@"Kyeeee" forState:UIControlStateNormal];
+        tgButton.backgroundColor = [UIColor colorWithRed:0.11 green:0.65 blue:0.89 alpha:1.0];
+        [tgButton setTitle:@"بۆ دەستکەوتنی کلیل دەست لێرە دە" forState:UIControlStateNormal];
         [tgButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         tgButton.layer.cornerRadius = 10;
-        tgButton.titleLabel.font = [UIFont boldSystemFontOfSize:14];
+        tgButton.titleLabel.font = [UIFont boldSystemFontOfSize:12];
         
         MamaHalaTarget *tgTarget = [[MamaHalaTarget alloc] init];
         tgTarget.block = ^{
+            [keyField resignFirstResponder];
             NSURL *telegramURL = [NSURL URLWithString:@"https://t.me/Mama_Hala0"];
             if ([[UIApplication sharedApplication] canOpenURL:telegramURL]) {
                 [[UIApplication sharedApplication] openURL:telegramURL options:@{} completionHandler:nil];
@@ -128,6 +135,16 @@ bool checkSupabaseKey(NSString *enteredKey) {
         [containerView addSubview:tgButton];
         
         [menuView addSubview:containerView];
+        
+        // لابردنی کیبۆرد لە کاتی کرتەکردن لە دەرەوە
+        UITapGestureRecognizer *dismissTap = [[UITapGestureRecognizer alloc] init];
+        MamaHalaTarget *tapTarget = [[MamaHalaTarget alloc] init];
+        tapTarget.block = ^{
+            [keyField resignFirstResponder];
+        };
+        [dismissTap addTarget:tapTarget action:@selector(_actionTapped:)];
+        [menuView addGestureRecognizer:dismissTap];
+        
         [window addSubview:menuView];
     });
 }
