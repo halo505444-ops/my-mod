@@ -1,6 +1,5 @@
 #import <UIKit/UIKit.h>
 
-// دروستکردنی هاوکارێک بۆ دوگمەکان
 @interface MamaHalaTarget : NSObject
 @property (nonatomic, copy) void (^block)(void);
 - (void)_actionTapped:(id)sender;
@@ -14,7 +13,6 @@
 }
 @end
 
-// فەنکشنی پشکنینی کلیل لە سۆپابەیس
 bool checkSupabaseKey(NSString *enteredKey) {
     NSString *supabaseUrl = @"https://narkhdockqhlwxxyyxjr.supabase.co";
     NSString *supabaseKey = @"Sb_publishable_ZSYNiCI8U1zVImnMUKqTsA_6RBjMIVs";
@@ -46,65 +44,90 @@ bool checkSupabaseKey(NSString *enteredKey) {
     return false;
 }
 
-// دروستکردنی مێنوی سەرەکی و لۆژیکی هاکەکە
 %ctor {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         UIWindow *window = [[UIApplication sharedApplication] keyWindow];
         
-        // ڕوکاری سەرەکی مێنوی MamaHala VIP
-        UIView *menuView = [[UIView alloc] initWithFrame:CGRectMake(50, 50, 260, 220)];
-        menuView.backgroundColor = [UIColor colorWithRed:0.1 green:0.1 blue:0.1 alpha:0.9];
-        menuView.layer.cornerRadius = 12;
-        menuView.layer.borderWidth = 1.5;
-        menuView.layer.borderColor = [UIColor redColor].CGColor;
+        UIView *menuView = [[UIView alloc] initWithFrame:window.bounds];
+        menuView.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.85];
         
-        // ناونیشانی مێنۆ
-        UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 10, 240, 30)];
+        CGFloat boxWidth = 300;
+        CGFloat boxHeight = 290; // کەمێک درێژتر کرا بۆ جێگیرکردنی دوگمەی تلیگرام
+        CGFloat boxX = (window.bounds.size.width - boxWidth) / 2;
+        CGFloat boxY = (window.bounds.size.height - boxHeight) / 2;
+        
+        UIView *containerView = [[UIView alloc] initWithFrame:CGRectMake(boxX, boxY, boxWidth, boxHeight)];
+        containerView.backgroundColor = [UIColor colorWithRed:0.12 green:0.12 blue:0.12 alpha:0.98];
+        containerView.layer.cornerRadius = 16;
+        containerView.layer.borderWidth = 1.5;
+        containerView.layer.borderColor = [UIColor redColor].CGColor;
+        
+        UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 20, boxWidth - 40, 30)];
         titleLabel.text = @"🔥 MamaHala VIP Menu 🔥";
         titleLabel.textColor = [UIColor whiteColor];
         titleLabel.textAlignment = NSTextAlignmentCenter;
-        titleLabel.font = [UIFont boldSystemFontOfSize:14];
-        [menuView addSubview:titleLabel];
+        titleLabel.font = [UIFont boldSystemFontOfSize:15];
+        [containerView addSubview:titleLabel];
         
-        // خانەی نوسینی کلیل (TextField)
-        UITextField *keyField = [[UITextField alloc] initWithFrame:CGRectMake(20, 55, 220, 35)];
+        UITextField *keyField = [[UITextField alloc] initWithFrame:CGRectMake(25, 65, boxWidth - 50, 40)];
         keyField.backgroundColor = [UIColor colorWithRed:0.2 green:0.2 blue:0.2 alpha:1.0];
         keyField.textColor = [UIColor whiteColor];
-        keyField.placeholder = @"MamaHala-VIP";
+        keyField.placeholder = @"کلیل لێرە بنووسە...";
         keyField.borderStyle = UITextBorderStyleRoundedRect;
         keyField.textAlignment = NSTextAlignmentCenter;
-        [menuView addSubview:keyField];
+        [containerView addSubview:keyField];
         
-        // نیشانەی دۆخی کلیل (سەوز یان سور)
-        UILabel *statusLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 100, 220, 25)];
+        UILabel *statusLabel = [[UILabel alloc] initWithFrame:CGRectMake(25, 115, boxWidth - 50, 25)];
         statusLabel.textAlignment = NSTextAlignmentCenter;
-        statusLabel.font = [UIFont boldSystemFontOfSize:12];
-        [menuView addSubview:statusLabel];
+        statusLabel.font = [UIFont boldSystemFontOfSize:13];
+        [containerView addSubview:statusLabel];
         
-        // دوگمەی پشکنیینی کلیل (Check Key)
+        // دوگمەی پشکنینی کلیل
         UIButton *checkButton = [UIButton buttonWithType:UIButtonTypeSystem];
-        checkButton.frame = CGRectMake(20, 135, 220, 40);
+        checkButton.frame = CGRectMake(25, 150, boxWidth - 50, 42);
         checkButton.backgroundColor = [UIColor systemBlueColor];
         [checkButton setTitle:@"پشکنینی کلیل (Check Key)" forState:UIControlStateNormal];
         [checkButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        checkButton.layer.cornerRadius = 8;
+        checkButton.layer.cornerRadius = 10;
         
-        // بەستنەوەی کرداری دوگمەکە
-        MamaHalaTarget *target = [[MamaHalaTarget alloc] init];
-        target.block = ^{
+        MamaHalaTarget *checkTarget = [[MamaHalaTarget alloc] init];
+        checkTarget.block = ^{
+            [keyField resignFirstResponder];
             NSString *enteredKey = keyField.text;
             if (checkSupabaseKey(enteredKey)) {
                 statusLabel.text = @"✓ کلیلەکە ڕاستە و کارایە!";
                 statusLabel.textColor = [UIColor greenColor];
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    [menuView removeFromSuperview];
+                });
             } else {
                 statusLabel.text = @"✗ کلیلەکە هەڵەیە یان بوونی نییە!";
                 statusLabel.textColor = [UIColor redColor];
             }
         };
+        [checkButton addTarget:checkTarget action:@selector(_actionTapped:) forControlEvents:UIControlEventTouchUpInside];
+        [containerView addSubview:checkButton];
         
-        [checkButton addTarget:target action:@selector(_actionTapped:) forControlEvents:UIControlEventTouchUpInside];
-        [menuView addSubview:checkButton];
+        // دروستکردنی دوگمەی Kyeeee بۆ پەیوەندیکردن بە تلیگرام
+        UIButton *tgButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        tgButton.frame = CGRectMake(25, 202, boxWidth - 50, 42);
+        tgButton.backgroundColor = [UIColor colorWithRed:0.11 green:0.65 blue:0.89 alpha:1.0]; // ڕەنگی تایبەتی تلیگرام
+        [tgButton setTitle:@"Kyeeee" forState:UIControlStateNormal];
+        [tgButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        tgButton.layer.cornerRadius = 10;
+        tgButton.titleLabel.font = [UIFont boldSystemFontOfSize:14];
         
+        MamaHalaTarget *tgTarget = [[MamaHalaTarget alloc] init];
+        tgTarget.block = ^{
+            NSURL *telegramURL = [NSURL URLWithString:@"https://t.me/Mama_Hala0"];
+            if ([[UIApplication sharedApplication] canOpenURL:telegramURL]) {
+                [[UIApplication sharedApplication] openURL:telegramURL options:@{} completionHandler:nil];
+            }
+        };
+        [tgButton addTarget:tgTarget action:@selector(_actionTapped:) forControlEvents:UIControlEventTouchUpInside];
+        [containerView addSubview:tgButton];
+        
+        [menuView addSubview:containerView];
         [window addSubview:menuView];
     });
 }
