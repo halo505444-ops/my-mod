@@ -1,5 +1,19 @@
 #import <UIKit/UIKit.h>
 
+// دروستکردنی هاوکارێک بۆ دوگمەکان بۆ ئەوەی بە بێ کێشە کار بکەن
+@interface MamaHalaTarget : NSObject
+@property (nonatomic, copy) void (^block)(void);
+@end
+
+@implementation MamaHalaTarget
+- *_actionTapped:(id)sender {
+    if (self.block) {
+        self.block();
+    }
+    return nil;
+}
+@end
+
 // فەنکشنی پشکنینی کلیل لە سۆپابەیس
 bool checkSupabaseKey(NSString *enteredKey) {
     NSString *supabaseUrl = @"https://narkhdockqhlwxxyyxjr.supabase.co";
@@ -75,18 +89,20 @@ bool checkSupabaseKey(NSString *enteredKey) {
         [checkButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         checkButton.layer.cornerRadius = 8;
         
-        // چالاککردنی کرداری دوگمەکە
-        [checkButton addTargetForControlEvents:UIControlEventTouchUpInside block:^(id sender) {
+        // بەستنەوەی کرداری دوگمەکە بە شێوەیەکی پاک و بێ کێشە بۆ کامپایل
+        MamaHalaTarget *target = [[MamaHalaTarget alloc] init];
+        target.block = ^{
             NSString *enteredKey = keyField.text;
             if (checkSupabaseKey(enteredKey)) {
                 statusLabel.text = @"✓ کلیلەکە ڕاستە و کارایە!";
                 statusLabel.textColor = [UIColor greenColor];
-                // لێرەدا تایبەتمەندییەکانی هاکەکەت (وەک ESP یان Aimbot) کارا بکە
             } else {
                 statusLabel.text = @"✗ کلیلەکە هەڵەیە یان بوونی نییە!";
                 statusLabel.textColor = [UIColor redColor];
             }
-        }];
+        };
+        
+        [checkButton addTarget:target action:@selector(_actionTapped:) forControlEvents:UIControlEventTouchUpInside];
         [menuView addSubview:checkButton];
         
         [window addSubview:menuView];
