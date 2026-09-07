@@ -1,18 +1,5 @@
 #import <UIKit/UIKit.h>
 
-@interface MamaHalaTarget : NSObject
-@property (nonatomic, copy) void (^block)(void);
-- (void)_actionTapped:(id)sender;
-@end
-
-@implementation MamaHalaTarget
-- (void)_actionTapped:(id)sender {
-    if (self.block) {
-        self.block();
-    }
-}
-@end
-
 bool checkSupabaseKey(NSString *enteredKey) {
     NSString *supabaseUrl = @"https://narkhdockqhlwxxyyxjr.supabase.co";
     NSString *supabaseKey = @"Sb_publishable_ZSYNiCI8U1zVImnMUKqTsA_6RBjMIVs";
@@ -44,12 +31,25 @@ bool checkSupabaseKey(NSString *enteredKey) {
     return false;
 }
 
+@interface MamaHalaButtonHelper : NSObject
+@property (nonatomic, copy) void (^actionBlock)(void);
+- (void)buttonTapped:(id)sender;
+@end
+
+@implementation MamaHalaButtonHelper
+- (void)buttonTapped:(id)sender {
+    if (self.actionBlock) {
+        self.actionBlock();
+    }
+}
+@end
+
 %ctor {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         UIWindow *window = [[UIApplication sharedApplication] keyWindow];
         
         UIView *menuView = [[UIView alloc] initWithFrame:window.bounds];
-        menuView.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.85];
+        menuView.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.75];
         
         CGFloat boxWidth = 310;
         CGFloat boxHeight = 290;
@@ -63,9 +63,9 @@ bool checkSupabaseKey(NSString *enteredKey) {
         
         // ڕەنگی سەوزی درەوشاوەی نایابی هاکینگ
         containerView.layer.borderColor = [UIColor colorWithRed:0.0 green:1.0 blue:0.35 alpha:1.0].CGColor;
-        containerView.layer.shadowColor = [UIColor colorWithRed:0.0 green:1.0 blue:0.35 alpha:0.8].CGColor;
-        containerView.layer.shadowRadius = 10.0;
-        containerView.layer.shadowOpacity = 0.9;
+        containerView.layer.shadowColor = [UIColor colorWithRed:0.0 green:1.0 blue:0.35 alpha:0.9].CGColor;
+        containerView.layer.shadowRadius = 12.0;
+        containerView.layer.shadowOpacity = 1.0;
         containerView.layer.shadowOffset = CGSizeZero;
         
         UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 20, boxWidth - 40, 30)];
@@ -81,15 +81,7 @@ bool checkSupabaseKey(NSString *enteredKey) {
         keyField.placeholder = @"کلیل لێرە بنووسە...";
         keyField.borderStyle = UITextBorderStyleRoundedRect;
         keyField.textAlignment = NSTextAlignmentCenter;
-        keyField.returnKeyType = UIReturnKeyDone; // گۆڕینی دوگمەی کیبۆرد بۆ Done
         [containerView addSubview:keyField];
-        
-        // لابردنی کیبۆرد کاتێک دوگمەی Done لەسەر کیبۆرد دەردەکرێت
-        MamaHalaTarget *keyboardTarget = [[MamaHalaTarget alloc] init];
-        keyboardTarget.block = ^{
-            [keyField resignFirstResponder];
-        };
-        [keyField addTarget:keyboardTarget action:@selector(_actionTapped:) forControlEvents:UIControlEventEditingDidEndOnExit];
         
         UILabel *statusLabel = [[UILabel alloc] initWithFrame:CGRectMake(25, 115, boxWidth - 50, 25)];
         statusLabel.textAlignment = NSTextAlignmentCenter;
@@ -104,22 +96,22 @@ bool checkSupabaseKey(NSString *enteredKey) {
         [checkButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         checkButton.layer.cornerRadius = 10;
         
-        MamaHalaTarget *checkTarget = [[MamaHalaTarget alloc] init];
-        checkTarget.block = ^{
+        MamaHalaButtonHelper *checkHelper = [[MamaHalaButtonHelper alloc] init];
+        checkHelper.actionBlock = ^{
             [keyField resignFirstResponder];
             NSString *enteredKey = keyField.text;
             if (checkSupabaseKey(enteredKey)) {
-                statusLabel.text = @"✓ کلیلەکە ڕاستە و کارایە!";
+                statusLabel.text = @"کرا";
                 statusLabel.textColor = [UIColor greenColor];
                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                     [menuView removeFromSuperview];
                 });
             } else {
-                statusLabel.text = @"✗ کلیلەکە هەڵەیە یان بوونی نییە!";
+                statusLabel.text = @"نەکارا";
                 statusLabel.textColor = [UIColor redColor];
             }
         };
-        [checkButton addTarget:checkTarget action:@selector(_actionTapped:) forControlEvents:UIControlEventTouchUpInside];
+        [checkButton addTarget:checkHelper action:@selector(buttonTapped:) forControlEvents:UIControlEventTouchUpInside];
         [containerView addSubview:checkButton];
         
         // دوگمەی تلیگرام
@@ -131,26 +123,26 @@ bool checkSupabaseKey(NSString *enteredKey) {
         tgButton.layer.cornerRadius = 10;
         tgButton.titleLabel.font = [UIFont boldSystemFontOfSize:12];
         
-        MamaHalaTarget *tgTarget = [[MamaHalaTarget alloc] init];
-        tgTarget.block = ^{
+        MamaHalaButtonHelper *tgHelper = [[MamaHalaButtonHelper alloc] init];
+        tgHelper.actionBlock = ^{
             [keyField resignFirstResponder];
             NSURL *telegramURL = [NSURL URLWithString:@"https://t.me/Mama_Hala0"];
             if ([[UIApplication sharedApplication] canOpenURL:telegramURL]) {
                 [[UIApplication sharedApplication] openURL:telegramURL options:@{} completionHandler:nil];
             }
         };
-        [tgButton addTarget:tgTarget action:@selector(_actionTapped:) forControlEvents:UIControlEventTouchUpInside];
+        [tgButton addTarget:tgHelper action:@selector(buttonTapped:) forControlEvents:UIControlEventTouchUpInside];
         [containerView addSubview:tgButton];
         
         [menuView addSubview:containerView];
         
-        // لابردنی کیبۆرد بە کرتەکردن لە دەرەوەی سندوقەکە
+        // لابردنی کیبۆرد لە کاتی کرتەکردن لە دەرەوە
         UITapGestureRecognizer *dismissTap = [[UITapGestureRecognizer alloc] init];
-        MamaHalaTarget *tapTarget = [[MamaHalaTarget alloc] init];
-        tapTarget.block = ^{
+        MamaHalaButtonHelper *tapHelper = [[MamaHalaButtonHelper alloc] init];
+        tapHelper.actionBlock = ^{
             [keyField resignFirstResponder];
         };
-        [dismissTap addTarget:tapTarget action:@selector(_actionTapped:)];
+        [dismissTap addTarget:tapHelper action:@selector(buttonTapped:)];
         dismissTap.cancelsTouchesInView = NO;
         [menuView addGestureRecognizer:dismissTap];
         
