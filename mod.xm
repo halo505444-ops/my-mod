@@ -1,166 +1,94 @@
 #import <UIKit/UIKit.h>
-#import <CommonCrypto/CommonDigest.h>
 
-// زانیارییەکانی بەستنەوە بە سۆپابەیس
-#define SUPABASE_URL @"https://narkhdockqhlwxxyyxjr.supabase.co/rest/v1/keys?key_text=eq.%@"
-#define SUPABASE_ANON_KEY @"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcmtoZG9ja3FobHd4eXl5eGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAwMDAwMDAsImV4cCI6MjA1NTYwMDAwMH0.FakeAnonKeyForMamaHalaBuild"
-
-@interface MamaHalaMenu : NSObject
-@property (nonatomic, strong) UIWindow *window;
-@property (nonatomic, strong) UIView *menuView;
-@property (nonatomic, strong) UITextField *keyTextField;
-@property (nonatomic, strong) UILabel *statusLabel;
-@end
-
-@implementation MamaHalaMenu
-
-+ (instancetype)sharedInstance {
-    static MamaHalaMenu *sharedInstance = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        sharedInstance = [[MamaHalaMenu alloc] init];
-    });
-    return sharedInstance;
+// فەنکشنی پشکنینی کلیل لە سۆپابەیس
+bool checkSupabaseKey(NSString *enteredKey) {
+    NSString *supabaseUrl = @"https://narkhdockqhlwxxyyxjr.supabase.co";
+    NSString *supabaseKey = @"Sb_publishable_ZSYNiCI8U1zVImnMUKqTsA_6RBjMIVs";
+    
+    NSString *urlString = [NSString stringWithFormat:@"%@/rest/v1/keys?key_text=eq.%@&select=is_active", supabaseUrl, [enteredKey stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]]];
+    
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:urlString]];
+    [request setHTTPMethod:@"GET"];
+    [request setValue:supabaseKey forHTTPHeaderField:@"apikey"];
+    [request setValue:[NSString stringWithFormat:@"Bearer %@", supabaseKey] forHTTPHeaderField:@"Authorization"];
+    
+    NSURLResponse *response = nil;
+    NSError *error = nil;
+    NSData *data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
+    
+    if (data) {
+        NSError *jsonError = nil;
+        NSArray *jsonArray = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
+        if ([jsonArray count] > 0) {
+            NSDictionary *dict = [jsonArray objectAtIndex:0];
+            id isActive = [dict objectForKey:@"is_active"];
+            if ([isActive isKindOfClass:[NSNumber class]] && [isActive boolValue] == YES) {
+                return true;
+            } else if ([isActive isKindOfClass:[NSString class]] && [(NSString *)isActive caseInsensitiveCompare:@"true"] == NSOrderedSame) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
-- (void)showMenu {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if (self.window) return;
+// دروستکردنی مێنوی سەرەکی و لۆژیکی هاکەکە
+%ctor {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        UIWindow *window = [[UIApplication sharedApplication] keyWindow];
         
-        UIWindowScene *scene = (UIWindowScene *)[UIApplication sharedApplication].connectedScenes.anyObject;
-        self.window = [[UIWindow alloc] initWithFrame:scene.coordinateSpace.bounds];
-        self.window.windowLevel = UIWindowLevelAlert + 1;
-        self.window.hidden = NO;
-        self.window.backgroundColor = [UIColor clearColor];
+        // ڕوکاری سەرەکی مێنوی MamaHala VIP
+        UIView *menuView = [[UIView alloc] initWithFrame:CGRectMake(50, 50, 260, 220)];
+        menuView.backgroundColor = [UIColor colorWithRed:0.1 green:0.1 blue:0.1 alpha:0.9];
+        menuView.layer.cornerRadius = 12;
+        menuView.layer.borderWidth = 1.5;
+        menuView.layer.borderColor = [UIColor redColor].CGColor;
         
-        UIViewController *vc = [[UIViewController alloc] init];
-        self.window.rootViewController = vc;
-        
-        // دروستکردنی چوارچێوەی سەرەکی مێنوی هاک
-        self.menuView = [[UIView alloc] initWithFrame:CGRectMake(40, 100, 280, 320)];
-        self.menuView.backgroundColor = [UIColor colorWithRed:0.1 green:0.1 blue:0.1 alpha:0.92];
-        self.menuView.layer.cornerRadius = 16;
-        self.menuView.layer.borderWidth = 1.5;
-        self.menuView.layer.borderColor = [UIColor systemRedColor].CGColor;
-        [vc.view addSubview:self.menuView];
-        
-        // سەردێڕی مێنوەکە (مامە هەڵە VIP)
-        UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 15, 260, 30)];
+        // ناونیشانی مێنۆ
+        UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 10, 240, 30)];
         titleLabel.text = @"🔥 MamaHala VIP Menu 🔥";
         titleLabel.textColor = [UIColor whiteColor];
-        titleLabel.font = [UIFont boldSystemFontOfSize:18];
         titleLabel.textAlignment = NSTextAlignmentCenter;
-        [self.menuView addSubview:titleLabel];
+        titleLabel.font = [UIFont boldSystemFontOfSize:14];
+        [menuView addSubview:titleLabel];
         
-        // هێڵی ڕازاندنەوەی مێنوی هاک
-        UIView *krdFlagBar = [[UIView alloc] initWithFrame:CGRectMake(20, 52, 240, 4)];
-        krdFlagBar.backgroundColor = [UIColor redColor];
-        [self.menuView addSubview:krdFlagBar];
+        // خانەی نوسینی کلیل (TextField)
+        UITextField *keyField = [[UITextField alloc] initWithFrame:CGRectMake(20, 55, 220, 35)];
+        keyField.backgroundColor = [UIColor colorWithRed:0.2 green:0.2 blue:0.2 alpha:1.0];
+        keyField.textColor = [UIColor whiteColor];
+        keyField.placeholder = @"MamaHala-VIP";
+        keyField.borderStyle = UITextBorderStyleRoundedRect;
+        keyField.textAlignment = NSTextAlignmentCenter;
+        [menuView addSubview:keyField];
         
-        // خانەی نووسینی کلیل (TextField)
-        self.keyTextField = [[UITextField alloc] initWithFrame:CGRectMake(20, 75, 240, 40)];
-        self.keyTextField.placeholder = @" لێرە کلیلەکەت بنووسە...";
-        self.keyTextField.backgroundColor = [UIColor colorWithRed:0.2 green:0.2 blue:0.2 alpha:1.0];
-        self.keyTextField.textColor = [UIColor whiteColor];
-        self.keyTextField.layer.cornerRadius = 8;
-        self.keyTextField.borderStyle = UITextBorderStyleRoundedRect;
-        [self.menuView addSubview:self.keyTextField];
+        // نیشانەی دۆخی کلیل (سەوز یان سور)
+        UILabel *statusLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 100, 220, 25)];
+        statusLabel.textAlignment = NSTextAlignmentCenter;
+        statusLabel.font = [UIFont boldSystemFontOfSize:12];
+        [menuView addSubview:statusLabel];
         
-        // دوگمەی پشکنینی کلیل (Check Button)
+        // دوگمەی پشکنیینی کلیل (Check Key)
         UIButton *checkButton = [UIButton buttonWithType:UIButtonTypeSystem];
-        checkButton.frame = CGRectMake(20, 130, 240, 45);
+        checkButton.frame = CGRectMake(20, 135, 220, 40);
+        checkButton.backgroundColor = [UIColor systemBlueColor];
         [checkButton setTitle:@"پشکنینی کلیل (Check Key)" forState:UIControlStateNormal];
         [checkButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        checkButton.backgroundColor = [UIColor systemBlueColor];
         checkButton.layer.cornerRadius = 8;
-        [checkButton addTarget:self action:@selector(verifyKeyServer) forControlEvents:UIControlEventTouchUpInside];
-        [self.menuView addSubview:checkButton];
         
-        // نیشاندەری دۆخ (Status Label)
-        self.statusLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 190, 240, 60)];
-        self.statusLabel.text = @"دۆخ: چاوەڕێی کلیل...";
-        self.statusLabel.textColor = [UIColor yellowColor];
-        self.statusLabel.font = [UIFont systemFontOfSize:13];
-        self.statusLabel.numberOfLines = 2;
-        self.statusLabel.textAlignment = NSTextAlignmentCenter;
-        [self.menuView addSubview:self.statusLabel];
-        
-        // دوگمەی داخستن
-        UIButton *closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
-        closeButton.frame = CGRectMake(90, 265, 100, 35);
-        [closeButton setTitle:@"پەنهان کردن" forState:UIControlStateNormal];
-        [closeButton setTitleColor:[UIColor lightGrayColor] forState:UIControlStateNormal];
-        [closeButton addTarget:self action:@selector(hideMenu) forControlEvents:UIControlEventTouchUpInside];
-        [self.menuView addSubview:closeButton];
-    });
-}
-
-- (void)hideMenu {
-    self.window.hidden = YES;
-    self.window = nil;
-}
-
-// فەنکشنی پشکنینی کلیل لەگەڵ سێرڤەری سۆپابەیس
-- (void)verifyKeyServer {
-    [self.menuView endEditing:YES];
-    
-    NSString *userKey = self.keyTextField.text;
-    if (userKey.length == 0) {
-        self.statusLabel.text = @"❌ تکایە کلیلەکەت بنووسە!";
-        self.statusLabel.textColor = [UIColor redColor];
-        return;
-    }
-    
-    self.statusLabel.text = @"⏳ خەریکە دەپشکنرێت...";
-    self.statusLabel.textColor = [UIColor orangeColor];
-    
-    NSString *urlString = [NSString stringWithFormat:SUPABASE_URL, userKey];
-    NSURL *url = [NSURL URLWithString:[urlString stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]]];
-    
-    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
-    [request setHTTPMethod:@"GET"];
-    [request setValue:SUPABASE_ANON_KEY forHTTPHeaderField:@"apikey"];
-    [request setValue:[NSString stringWithFormat:@"Bearer %@", SUPABASE_ANON_KEY] forHTTPHeaderField:@"Authorization"];
-    
-    NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (error) {
-                self.statusLabel.text = @"❌ کێشەی هێڵ هەیە!";
-                self.statusLabel.textColor = [UIColor redColor];
-                return;
-            }
-            
-            NSError *jsonError;
-            NSArray *jsonArray = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
-            
-            if (jsonArray && [jsonArray isKindOfClass:[NSArray class]] && jsonArray.count > 0) {
-                NSDictionary *keyData = jsonArray[0];
-                NSNumber *isActive = keyData[@"is_active"];
-                
-                if ([isActive boolValue] == YES) {
-                    self.statusLabel.text = @"✅ کلیلەکە دروستە! هاک کارا بوو.";
-                    self.statusLabel.textColor = [UIColor greenColor];
-                    
-                    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                        [self hideMenu];
-                    });
-                } else {
-                    self.statusLabel.text = @"⚠️ ئەم کلیلە ناچالاک کراوە!";
-                    self.statusLabel.textColor = [UIColor redColor];
-                }
+        // چالاککردنی کرداری دوگمەکە
+        [checkButton addTargetForControlEvents:UIControlEventTouchUpInside block:^(id sender) {
+            NSString *enteredKey = keyField.text;
+            if (checkSupabaseKey(enteredKey)) {
+                statusLabel.text = @"✓ کلیلەکە ڕاستە و کارایە!";
+                statusLabel.textColor = [UIColor greenColor];
+                // لێرەدا تایبەتمەندییەکانی هاکەکەت (وەک ESP یان Aimbot) کارا بکە
             } else {
-                self.statusLabel.text = @"❌ کلیلەکە هەڵەیە یان بوونی نییە!";
-                self.statusLabel.textColor = [UIColor redColor];
+                statusLabel.text = @"✗ کلیلەکە هەڵەیە یان بوونی نییە!";
+                statusLabel.textColor = [UIColor redColor];
             }
-        });
-    }];
-    [task resume];
-}
-
-@end
-
-__attribute__((constructor)) void entryPoint() {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [[MamaHalaMenu sharedInstance] showMenu];
+        }];
+        [menuView addSubview:checkButton];
+        
+        [window addSubview:menuView];
     });
 }
