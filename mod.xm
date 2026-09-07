@@ -1,35 +1,41 @@
 #import <UIKit/UIKit.h>
 #import <objc/runtime.h>
 
-bool checkSupabaseKey(NSString *enteredKey) {
-    NSString *supabaseUrl = @"https://narkhdockqhlwxxyyxjr.supabase.co";
-    NSString *supabaseKey = @"Sb_publishable_ZSYNiCI8U1zVImnMUKqTsA_6RBjMIVs";
-    
-    NSString *urlString = [NSString stringWithFormat:@"%@/rest/v1/keys?key_text=eq.%@&select=is_active", supabaseUrl, [enteredKey stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]]];
-    
-    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:urlString]];
-    [request setHTTPMethod:@"GET"];
-    [request setValue:supabaseKey forHTTPHeaderField:@"apikey"];
-    [request setValue:[NSString stringWithFormat:@"Bearer %@", supabaseKey] forHTTPHeaderField:@"Authorization"];
-    
-    NSURLResponse *response = nil;
-    NSError *error = nil;
-    NSData *data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
-    
-    if (data) {
-        NSError *jsonError = nil;
-        NSArray *jsonArray = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
-        if ([jsonArray count] > 0) {
-            NSDictionary *dict = [jsonArray objectAtIndex:0];
-            id isActive = [dict objectForKey:@"is_active"];
-            if ([isActive isKindOfClass:[NSNumber class]] && [isActive boolValue] == YES) {
-                return true;
-            } else if ([isActive isKindOfClass:[NSString class]] && [(NSString *)isActive caseInsensitiveCompare:@"true"] == NSOrderedSame) {
-                return true;
+void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success)) {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        NSString *supabaseUrl = @"https://narkhdockqhlwxxyyxjr.supabase.co";
+        NSString *supabaseKey = @"Sb_publishable_ZSYNiCI8U1zVImnMUKqTsA_6RBjMIVs";
+        
+        NSString *urlString = [NSString stringWithFormat:@"%@/rest/v1/keys?key_text=eq.%@&select=is_active", supabaseUrl, [enteredKey stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]]];
+        
+        NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:urlString]];
+        [request setHTTPMethod:@"GET"];
+        [request setValue:supabaseKey forHTTPHeaderField:@"apikey"];
+        [request setValue:[NSString stringWithFormat:@"Bearer %@", supabaseKey] forHTTPHeaderField:@"Authorization"];
+        
+        NSURLResponse *response = nil;
+        NSError *error = nil;
+        NSData *data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
+        
+        bool isValid = false;
+        if (data) {
+            NSError *jsonError = nil;
+            NSArray *jsonArray = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
+            if ([jsonArray count] > 0) {
+                NSDictionary *dict = [jsonArray objectAtIndex:0];
+                id isActive = [dict objectForKey:@"is_active"];
+                if ([isActive isKindOfClass:[NSNumber class]] && [isActive boolValue] == YES) {
+                    isValid = true;
+                } else if ([isActive isKindOfClass:[NSString class]] && [(NSString *)isActive caseInsensitiveCompare:@"true"] == NSOrderedSame) {
+                    isValid = true;
+                }
             }
         }
-    }
-    return false;
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion(isValid);
+        });
+    });
 }
 
 @interface MamaHalaGestureRecognizer : UITapGestureRecognizer
@@ -116,16 +122,21 @@ static void handleButtonTap(MamaHalaGestureRecognizer *sender) {
         checkGesture.actionBlock = ^{
             [keyField resignFirstResponder];
             NSString *enteredKey = keyField.text;
-            if (checkSupabaseKey(enteredKey)) {
-                statusLabel.text = @"کرا";
-                statusLabel.textColor = [UIColor colorWithRed:0.0 green:1.0 blue:0.35 alpha:1.0];
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                    [menuView removeFromSuperview];
-                });
-            } else {
-                statusLabel.text = @"نەکارا";
-                statusLabel.textColor = [UIColor redColor];
-            }
+            statusLabel.text = @"پشکنین...";
+            statusLabel.textColor = [UIColor yellowColor];
+            
+            checkSupabaseKeyAsync(enteredKey, ^(bool success) {
+                if (success) {
+                    statusLabel.text = @"کرا";
+                    statusLabel.textColor = [UIColor colorWithRed:0.0 green:1.0 blue:0.35 alpha:1.0];
+                    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                        [menuView removeFromSuperview];
+                    });
+                } else {
+                    statusLabel.text = @"نەکارا";
+                    statusLabel.textColor = [UIColor redColor];
+                }
+            });
         };
         class_addMethod([MamaHalaGestureRecognizer class], @selector(handleButtonTap:), (IMP)handleButtonTap, "v@:@");
         [checkGesture addTarget:checkGesture action:@selector(handleButtonTap:)];
@@ -156,6 +167,17 @@ static void handleButtonTap(MamaHalaGestureRecognizer *sender) {
         [containerView addSubview:tgButton];
         
         [menuView addSubview:containerView];
+        
+        // تاچ بۆ لابردنی کیبۆرد کاتێک لە دەرەوەی خانەکە دەدەیت
+        UITapGestureRecognizer *dismissKeyboardTap = [[UITapGestureRecognizer alloc] initWithTarget:nil action:nil];
+        MamaHalaGestureRecognizer *dismissHelper = [[MamaHalaGestureRecognizer alloc] initWithTarget:nil action:@selector(handleButtonTap:)];
+        dismissHelper.actionBlock = ^{
+            [keyField resignFirstResponder];
+        };
+        [dismissKeyboardTap addTarget:dismissHelper action:@selector(handleButtonTap:)];
+        dismissKeyboardTap.cancelsTouchesInView = NO;
+        [menuView addGestureRecognizer:dismissKeyboardTap];
+        
         [window addSubview:menuView];
     });
 }
