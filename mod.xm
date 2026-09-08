@@ -1,14 +1,20 @@
 #import <UIKit/UIKit.h>
 
-@interface MamaHalaHelper : NSObject
-@property (nonatomic, copy) void (^actionBlock)(void);
-- (void)triggerAction:(id)sender;
+@interface MamaHalaTapGesture : UITapGestureRecognizer
+@property (nonatomic, copy) void (^actionBlock)(UITapGestureRecognizer *gesture);
+- (instancetype)initWithActionBlock:(void (^)(UITapGestureRecognizer *gesture))block;
 @end
 
-@implementation MamaHalaHelper
-- (void)triggerAction:(id)sender {
+@implementation MamaHalaTapGesture
+- (instancetype)initWithActionBlock:(void (^)(UITapGestureRecognizer *gesture))block {
+    if ((self = [super initWithTarget:self action:@selector(handleTap:)])) {
+        self.actionBlock = block;
+    }
+    return self;
+}
+- (void)handleTap:(UITapGestureRecognizer * __nonnull)sender {
     if (self.actionBlock) {
-        self.actionBlock();
+        self.actionBlock(sender);
     }
 }
 @end
@@ -103,20 +109,24 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
         statusLabel.font = [UIFont boldSystemFontOfSize:14];
         [containerView addSubview:statusLabel];
         
-        UIButton *checkButton = [UIButton buttonWithType:UIButtonTypeSystem];
-        checkButton.frame = CGRectMake(25, 153, boxWidth - 50, 44);
+        // دوگمەی پشکنین بە شێوازی سەلامەت و مسۆگەر (UIView + Gesture)
+        UIView *checkButton = [[UIView alloc] initWithFrame:CGRectMake(25, 153, boxWidth - 50, 44)];
         checkButton.backgroundColor = [UIColor colorWithRed:0.0 green:0.55 blue:1.0 alpha:1.0];
-        [checkButton setTitle:@"پشکنینی کلیل (Check Key)" forState:UIControlStateNormal];
-        [checkButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         checkButton.layer.cornerRadius = 10;
-        checkButton.titleLabel.font = [UIFont boldSystemFontOfSize:14];
         
-        MamaHalaHelper *checkHelper = [[MamaHalaHelper alloc] init];
+        UILabel *checkLabel = [[UILabel alloc] initWithFrame:checkButton.bounds];
+        checkLabel.text = @"پشکنینی کلیل (Check Key)";
+        checkLabel.textColor = [UIColor whiteColor];
+        checkLabel.textAlignment = NSTextAlignmentCenter;
+        checkLabel.font = [UIFont boldSystemFontOfSize:14];
+        checkLabel.userInteractionEnabled = NO;
+        [checkButton addSubview:checkLabel];
+        
         __weak UITextField *weakKeyField = keyField;
         __weak UILabel *weakStatusLabel = statusLabel;
         __weak UIView *weakMenuView = menuView;
         
-        checkHelper.actionBlock = ^{
+        MamaHalaTapGesture *checkGesture = [[MamaHalaTapGesture alloc] initWithActionBlock:^(UITapGestureRecognizer *gesture) {
             [weakKeyField resignFirstResponder];
             NSString *enteredKey = weakKeyField.text;
             if (!enteredKey || [enteredKey length] == 0) {
@@ -139,40 +149,43 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
                     weakStatusLabel.textColor = [UIColor redColor];
                 }
             });
-        };
-        [checkButton addTarget:checkHelper action:@selector(triggerAction:) forControlEvents:UIControlEventTouchUpInside];
+        }];
+        [checkButton addGestureRecognizer:checkGesture];
         [containerView addSubview:checkButton];
         
-        UIButton *tgButton = [UIButton buttonWithType:UIButtonTypeSystem];
-        tgButton.frame = CGRectMake(25, 207, boxWidth - 50, 44);
+        // دوگمەی تلیگرام
+        UIView *tgButton = [[UIView alloc] initWithFrame:CGRectMake(25, 207, boxWidth - 50, 44)];
         tgButton.backgroundColor = [UIColor colorWithRed:0.11 green:0.65 blue:0.89 alpha:1.0];
-        [tgButton setTitle:@"بۆ دەستکەوتنی کلیل دەست لێرە دە" forState:UIControlStateNormal];
-        [tgButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         tgButton.layer.cornerRadius = 10;
-        tgButton.titleLabel.font = [UIFont boldSystemFontOfSize:12];
         
-        MamaHalaHelper *tgHelper = [[MamaHalaHelper alloc] init];
-        tgHelper.actionBlock = ^{
+        UILabel *tgLabel = [[UILabel alloc] initWithFrame:tgButton.bounds];
+        tgLabel.text = @"بۆ دەستکەوتنی کلیل دەست لێرە دە";
+        tgLabel.textColor = [UIColor whiteColor];
+        tgLabel.textAlignment = NSTextAlignmentCenter;
+        tgLabel.font = [UIFont boldSystemFontOfSize:12];
+        tgLabel.userInteractionEnabled = NO;
+        [tgButton addSubview:tgLabel];
+        
+        MamaHalaTapGesture *tgGesture = [[MamaHalaTapGesture alloc] initWithActionBlock:^(UITapGestureRecognizer *gesture) {
             [weakKeyField resignFirstResponder];
             NSURL *telegramURL = [NSURL URLWithString:@"https://t.me/Mama_Hala0"];
             if ([[UIApplication sharedApplication] canOpenURL:telegramURL]) {
                 [[UIApplication sharedApplication] openURL:telegramURL options:@{} completionHandler:nil];
             }
-        };
-        [tgButton addTarget:tgHelper action:@selector(triggerAction:) forControlEvents:UIControlEventTouchUpInside];
+        }];
+        [tgButton addGestureRecognizer:tgGesture];
         [containerView addSubview:tgButton];
         
         [menuView addSubview:containerView];
         
-        // لابردنی کیبۆرد بە کلیککردن لە دەرەوە بە شێوازێکی بێ کێشە
-        UITapGestureRecognizer *dismissTap = [[UITapGestureRecognizer alloc] init];
-        MamaHalaHelper *dismissHelper = [[MamaHalaHelper alloc] init];
-        dismissHelper.actionBlock = ^{
-            [weakKeyField resignFirstResponder];
-        };
-        [dismissTap addTarget:dismissHelper action:@selector(triggerAction:)];
-        dismissTap.cancelsTouchesInView = NO;
-        [menuView addGestureRecognizer:dismissTap];
+        // لابردنی کیبۆرد تەنها کاتێک لە دەرەوەی سندوقەکە دەدەیت
+        MamaHalaTapGesture *dismissGesture = [[MamaHalaTapGesture alloc] initWithActionBlock:^(UITapGestureRecognizer *gesture) {
+            CGPoint loc = [gesture locationInView:containerView];
+            if (!CGRectContainsPoint(containerView.bounds, loc)) {
+                [weakKeyField resignFirstResponder];
+            }
+        }];
+        [menuView addGestureRecognizer:dismissGesture];
         
         [window addSubview:menuView];
     });
