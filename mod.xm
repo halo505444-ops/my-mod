@@ -28,15 +28,14 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
     NSString *supabaseUrl = @"https://narkhdockqhlwxxyyxjr.supabase.co";
     NSString *supabaseKey = @"Sb_publishable_ZSYNiCI8U1zVImnMUKqTsA_6RBjMIVs";
     
-    NSString *encodedKey = [enteredKey stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
-    if (!encodedKey) encodedKey = enteredKey;
-    
-    NSString *urlString = [NSString stringWithFormat:@"%@/rest/v1/keys?key_text=eq.%@&select=is_active", supabaseUrl, encodedKey];
+    // دروستکردنی داواکاری ڕاستەوخۆ بە بێ تێکچوونی هێماکان
+    NSString *urlString = [NSString stringWithFormat:@"%@/rest/v1/keys?select=is_active&key_text=eq.%@", supabaseUrl, enteredKey];
     
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:urlString]];
     [request setHTTPMethod:@"GET"];
     [request setValue:supabaseKey forHTTPHeaderField:@"apikey"];
     [request setValue:[NSString stringWithFormat:@"Bearer %@", supabaseKey] forHTTPHeaderField:@"Authorization"];
+    [request setValue:@"application/json" forHTTPHeaderField:@"Accept"];
     
     NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         bool isValid = false;
@@ -57,14 +56,6 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
                                 isValid = true;
                             }
                         }
-                    }
-                } else if ([jsonResponse isKindOfClass:[NSDictionary class]]) {
-                    NSDictionary *dict = (NSDictionary *)jsonResponse;
-                    id isActive = [dict objectForKey:@"is_active"];
-                    if ([isActive isKindOfClass:[NSNumber class]] && [isActive boolValue] == YES) {
-                        isValid = true;
-                    } else if ([isActive isKindOfClass:[NSString class]] && [(NSString *)isActive caseInsensitiveCompare:@"true"] == NSOrderedSame) {
-                        isValid = true;
                     }
                 }
             }
@@ -151,7 +142,7 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
         
         MamaHalaTapGesture *checkGesture = [[MamaHalaTapGesture alloc] initWithActionBlock:^(UITapGestureRecognizer *gesture) {
             [weakKeyField resignFirstResponder];
-            NSString *enteredKey = weakKeyField.text;
+            NSString *enteredKey = [weakKeyField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
             if (!enteredKey || [enteredKey length] == 0) {
                 weakStatusLabel.text = @"کلیل بنووسە!";
                 weakStatusLabel.textColor = [UIColor redColor];
