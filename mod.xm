@@ -26,7 +26,7 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
     }
     
     NSString *supabaseUrl = @"https://narkhdockqhlwxxyyxjr.supabase.co";
-    NSString *supabaseKey = @"BjPElVHIqs8Bwfmh";
+    NSString *supabaseKey = @"sb_secret__1icqNY3KLWfqzmmTvKmCA_wulgx16i";
     
     NSString *cleanKey = [enteredKey stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     NSString *encodedKey = [cleanKey stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
