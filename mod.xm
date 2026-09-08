@@ -26,12 +26,14 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
     }
     
     NSString *supabaseUrl = @"https://narkhdockqhlwxxyyxjr.supabase.co";
+    // تێبینی: دڵنیا ببەوە کە ئەم کلیلە Anon Publicـی ڕاستەقینەیە و دەست پێدەکات بە eyJ (JWT Token)
     NSString *supabaseKey = @"Sb_publishable_ZSYNiCI8U1zVImnMUKqTsA_6RBjMIVs";
     
-    // پاککردنەوەی کلیل لە هەر بوشاییەکی نائاسایی
     NSString *cleanKey = [enteredKey stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSString *encodedKey = [cleanKey stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
+    if (!encodedKey) encodedKey = cleanKey;
     
-    NSString *urlString = [NSString stringWithFormat:@"%@/rest/v1/keys?select=is_active&key_text=eq.%@", supabaseUrl, cleanKey];
+    NSString *urlString = [NSString stringWithFormat:@"%@/rest/v1/keys?select=is_active&key_text=eq.%@", supabaseUrl, encodedKey];
     
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:urlString]];
     [request setHTTPMethod:@"GET"];
@@ -42,7 +44,8 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
     NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         bool isValid = false;
         
-        if (!error && data) {
+        NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
+        if (!error && httpResponse.statusCode == 200 && data) {
             NSError *jsonError = nil;
             id jsonResponse = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
             
@@ -72,7 +75,7 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
 }
 
 %ctor {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), যাবدا: ^{
         UIWindow *window = nil;
         for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
             if ([scene isKindOfClass:[UIWindowScene class]]) {
@@ -202,6 +205,7 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
         }];
         [menuView addGestureRecognizer:dismissGesture];
         
+        [window addSubview:window ? menuView : nil]; // بۆ دڵنیابوونەوە لە window
         [window addSubview:menuView];
     });
 }
