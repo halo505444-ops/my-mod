@@ -28,8 +28,10 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
     NSString *supabaseUrl = @"https://narkhdockqhlwxxyyxjr.supabase.co";
     NSString *supabaseKey = @"Sb_publishable_ZSYNiCI8U1zVImnMUKqTsA_6RBjMIVs";
     
-    // دروستکردنی داواکاری ڕاستەوخۆ بە بێ تێکچوونی هێماکان
-    NSString *urlString = [NSString stringWithFormat:@"%@/rest/v1/keys?select=is_active&key_text=eq.%@", supabaseUrl, enteredKey];
+    // پاککردنەوەی کلیل لە هەر بوشاییەکی نائاسایی
+    NSString *cleanKey = [enteredKey stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    
+    NSString *urlString = [NSString stringWithFormat:@"%@/rest/v1/keys?select=is_active&key_text=eq.%@", supabaseUrl, cleanKey];
     
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:urlString]];
     [request setHTTPMethod:@"GET"];
@@ -39,22 +41,23 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
     
     NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         bool isValid = false;
+        
         if (!error && data) {
             NSError *jsonError = nil;
             id jsonResponse = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
             
-            if (!jsonError) {
-                if ([jsonResponse isKindOfClass:[NSArray class]]) {
-                    NSArray *jsonArray = (NSArray *)jsonResponse;
-                    if ([jsonArray count] > 0) {
-                        NSDictionary *dict = [jsonArray objectAtIndex:0];
-                        if ([dict isKindOfClass:[NSDictionary class]]) {
-                            id isActive = [dict objectForKey:@"is_active"];
-                            if ([isActive isKindOfClass:[NSNumber class]] && [isActive boolValue] == YES) {
-                                isValid = true;
-                            } else if ([isActive isKindOfClass:[NSString class]] && [(NSString *)isActive caseInsensitiveCompare:@"true"] == NSOrderedSame) {
-                                isValid = true;
-                            }
+            if (!jsonError && [jsonResponse isKindOfClass:[NSArray class]]) {
+                NSArray *jsonArray = (NSArray *)jsonResponse;
+                if ([jsonArray count] > 0) {
+                    NSDictionary *dict = [jsonArray objectAtIndex:0];
+                    if ([dict isKindOfClass:[NSDictionary class]]) {
+                        id isActive = [dict objectForKey:@"is_active"];
+                        if ([isActive isKindOfClass:[NSNumber class]] && [isActive boolValue] == YES) {
+                            isValid = true;
+                        } else if ([isActive isKindOfClass:[NSString class]] && [(NSString *)isActive caseInsensitiveCompare:@"true"] == NSOrderedSame) {
+                            isValid = true;
+                        } else if ([isActive isKindOfClass:[NSNumber class]] && [isActive intValue] == 1) {
+                            isValid = true;
                         }
                     }
                 }
@@ -142,7 +145,7 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
         
         MamaHalaTapGesture *checkGesture = [[MamaHalaTapGesture alloc] initWithActionBlock:^(UITapGestureRecognizer *gesture) {
             [weakKeyField resignFirstResponder];
-            NSString *enteredKey = [weakKeyField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+            NSString *enteredKey = weakKeyField.text;
             if (!enteredKey || [enteredKey length] == 0) {
                 weakStatusLabel.text = @"کلیل بنووسە!";
                 weakStatusLabel.textColor = [UIColor redColor];
