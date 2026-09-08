@@ -36,9 +36,10 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
     
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:urlString]];
     [request setHTTPMethod:@"GET"];
+    // ناردنی تەنها apikey بۆ کلیلە نوێیەکانی Supabase بۆ پێشگرتن لە 401
     [request setValue:supabaseKey forHTTPHeaderField:@"apikey"];
-    [request setValue:[NSString stringWithFormat:@"Bearer %@", supabaseKey] forHTTPHeaderField:@"Authorization"];
     [request setValue:@"application/json" forHTTPHeaderField:@"Accept"];
+    [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
     
     NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         if (error) {
@@ -206,7 +207,7 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
                         [weakMenuView removeFromSuperview];
                     });
                 } else {
-                    weakStatusLabel.text = debugMessage; // نیشاندانی هۆکاری ڕاستەقینە لەسەر شاشە
+                    weakStatusLabel.text = debugMessage;
                     weakStatusLabel.textColor = [UIColor redColor];
                 }
             });
