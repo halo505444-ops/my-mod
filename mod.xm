@@ -20,10 +20,18 @@
 @end
 
 void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success)) {
+    if (!enteredKey || [enteredKey length] == 0) {
+        completion(false);
+        return;
+    }
+    
     NSString *supabaseUrl = @"https://narkhdockqhlwxxyyxjr.supabase.co";
     NSString *supabaseKey = @"Sb_publishable_ZSYNiCI8U1zVImnMUKqTsA_6RBjMIVs";
     
-    NSString *urlString = [NSString stringWithFormat:@"%@/rest/v1/keys?key_text=eq.%@&select=is_active", supabaseUrl, [enteredKey stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]]];
+    NSString *encodedKey = [enteredKey stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
+    if (!encodedKey) encodedKey = enteredKey;
+    
+    NSString *urlString = [NSString stringWithFormat:@"%@/rest/v1/keys?key_text=eq.%@&select=is_active", supabaseUrl, encodedKey];
     
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:urlString]];
     [request setHTTPMethod:@"GET"];
@@ -34,14 +42,30 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
         bool isValid = false;
         if (!error && data) {
             NSError *jsonError = nil;
-            NSArray *jsonArray = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
-            if ([jsonArray count] > 0) {
-                NSDictionary *dict = [jsonArray objectAtIndex:0];
-                id isActive = [dict objectForKey:@"is_active"];
-                if ([isActive isKindOfClass:[NSNumber class]] && [isActive boolValue] == YES) {
-                    isValid = true;
-                } else if ([isActive isKindOfClass:[NSString class]] && [(NSString *)isActive caseInsensitiveCompare:@"true"] == NSOrderedSame) {
-                    isValid = true;
+            id jsonResponse = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
+            
+            if (!jsonError) {
+                if ([jsonResponse isKindOfClass:[NSArray class]]) {
+                    NSArray *jsonArray = (NSArray *)jsonResponse;
+                    if ([jsonArray count] > 0) {
+                        NSDictionary *dict = [jsonArray objectAtIndex:0];
+                        if ([dict isKindOfClass:[NSDictionary class]]) {
+                            id isActive = [dict objectForKey:@"is_active"];
+                            if ([isActive isKindOfClass:[NSNumber class]] && [isActive boolValue] == YES) {
+                                isValid = true;
+                            } else if ([isActive isKindOfClass:[NSString class]] && [(NSString *)isActive caseInsensitiveCompare:@"true"] == NSOrderedSame) {
+                                isValid = true;
+                            }
+                        }
+                    }
+                } else if ([jsonResponse isKindOfClass:[NSDictionary class]]) {
+                    NSDictionary *dict = (NSDictionary *)jsonResponse;
+                    id isActive = [dict objectForKey:@"is_active"];
+                    if ([isActive isKindOfClass:[NSNumber class]] && [isActive boolValue] == YES) {
+                        isValid = true;
+                    } else if ([isActive isKindOfClass:[NSString class]] && [(NSString *)isActive caseInsensitiveCompare:@"true"] == NSOrderedSame) {
+                        isValid = true;
+                    }
                 }
             }
         }
@@ -109,7 +133,6 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
         statusLabel.font = [UIFont boldSystemFontOfSize:14];
         [containerView addSubview:statusLabel];
         
-        // دوگمەی پشکنین بە شێوازی سەلامەت و مسۆگەر (UIView + Gesture)
         UIView *checkButton = [[UIView alloc] initWithFrame:CGRectMake(25, 153, boxWidth - 50, 44)];
         checkButton.backgroundColor = [UIColor colorWithRed:0.0 green:0.55 blue:1.0 alpha:1.0];
         checkButton.layer.cornerRadius = 10;
@@ -153,7 +176,6 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
         [checkButton addGestureRecognizer:checkGesture];
         [containerView addSubview:checkButton];
         
-        // دوگمەی تلیگرام
         UIView *tgButton = [[UIView alloc] initWithFrame:CGRectMake(25, 207, boxWidth - 50, 44)];
         tgButton.backgroundColor = [UIColor colorWithRed:0.11 green:0.65 blue:0.89 alpha:1.0];
         tgButton.layer.cornerRadius = 10;
@@ -178,7 +200,6 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
         
         [menuView addSubview:containerView];
         
-        // لابردنی کیبۆرد تەنها کاتێک لە دەرەوەی سندوقەکە دەدەیت
         MamaHalaTapGesture *dismissGesture = [[MamaHalaTapGesture alloc] initWithActionBlock:^(UITapGestureRecognizer *gesture) {
             CGPoint loc = [gesture locationInView:containerView];
             if (!CGRectContainsPoint(containerView.bounds, loc)) {
