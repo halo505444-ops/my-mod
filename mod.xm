@@ -26,7 +26,7 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
     }
     
     NSString *supabaseUrl = @"https://narkhdockqhlwxxyyxjr.supabase.co";
-    NSString *supabaseKey = @"Sb_publishable_ZSYNiCI8U1zVImnMUKqTsA_6RBjMIVs";
+    NSString *supabaseKey = @"BjPElVHIqs8Bwfmh";
     
     NSString *cleanKey = [enteredKey stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     NSString *encodedKey = [cleanKey stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
@@ -36,10 +36,9 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
     
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:urlString]];
     [request setHTTPMethod:@"GET"];
-    // ناردنی تەنها apikey بۆ کلیلە نوێیەکانی Supabase بۆ پێشگرتن لە 401
     [request setValue:supabaseKey forHTTPHeaderField:@"apikey"];
+    [request setValue:[NSString stringWithFormat:@"Bearer %@", supabaseKey] forHTTPHeaderField:@"Authorization"];
     [request setValue:@"application/json" forHTTPHeaderField:@"Accept"];
-    [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
     
     NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         if (error) {
