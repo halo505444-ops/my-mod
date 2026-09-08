@@ -19,9 +19,9 @@
 }
 @end
 
-void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success)) {
+void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success, NSString *debugMessage)) {
     if (!enteredKey || [enteredKey length] == 0) {
-        completion(false);
+        completion(false, @"کلیل بەتاڵە");
         return;
     }
     
@@ -41,34 +41,76 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
     [request setValue:@"application/json" forHTTPHeaderField:@"Accept"];
     
     NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
-        bool isValid = false;
-        
-        NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
-        if (!error && httpResponse.statusCode == 200 && data) {
-            NSError *jsonError = nil;
-            id jsonResponse = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
-            
-            if (!jsonError && [jsonResponse isKindOfClass:[NSArray class]]) {
-                NSArray *jsonArray = (NSArray *)jsonResponse;
-                if ([jsonArray count] > 0) {
-                    NSDictionary *dict = [jsonArray objectAtIndex:0];
-                    if ([dict isKindOfClass:[NSDictionary class]]) {
-                        id isActive = [dict objectForKey:@"is_active"];
-                        if ([isActive isKindOfClass:[NSNumber class]] && [isActive boolValue] == YES) {
-                            isValid = true;
-                        } else if ([isActive isKindOfClass:[NSString class]] && [(NSString *)isActive caseInsensitiveCompare:@"true"] == NSOrderedSame) {
-                            isValid = true;
-                        } else if ([isActive isKindOfClass:[NSNumber class]] && [isActive intValue] == 1) {
-                            isValid = true;
-                        }
-                    }
-                }
-            }
+        if (error) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completion(false, [NSString stringWithFormat:@"Net Err: %@", error.localizedDescription]);
+            });
+            return;
         }
         
-        dispatch_async(dispatch_get_main_queue(), ^{
-            completion(isValid);
-        });
+        NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
+        if (httpResponse.statusCode != 200) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completion(false, [NSString stringWithFormat:@"HTTP Code: %ld", (long)httpResponse.statusCode]);
+            });
+            return;
+        }
+        
+        if (!data) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completion(false, @"داتای بەتاڵ");
+            });
+            return;
+        }
+        
+        NSError *jsonError = nil;
+        id jsonResponse = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
+        
+        if (jsonError) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completion(false, @"JSON Error");
+            });
+            return;
+        }
+        
+        if ([jsonResponse isKindOfClass:[NSArray class]]) {
+            NSArray *jsonArray = (NSArray *)jsonResponse;
+            if ([jsonArray count] == 0) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    completion(false, @"کلیل نەدۆزراوەتەوە");
+                });
+                return;
+            }
+            
+            NSDictionary *dict = [jsonArray objectAtIndex:0];
+            if ([dict isKindOfClass:[NSDictionary class]]) {
+                id isActive = [dict objectForKey:@"is_active"];
+                bool activeValue = false;
+                if ([isActive isKindOfClass:[NSNumber class]]) {
+                    activeValue = [isActive boolValue] || ([isActive intValue] == 1);
+                } else if ([isActive isKindOfClass:[NSString class]]) {
+                    activeValue = [(NSString *)isActive caseInsensitiveCompare:@"true"] == NSOrderedSame;
+                }
+                
+                if (activeValue) {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        completion(true, @"سەرکەوتووە");
+                    });
+                } else {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        completion(false, @"کلیلەکە ناچالاکە");
+                    });
+                }
+            } else {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    completion(false, @"هەڵە لە قەبارەی داتا");
+                });
+            }
+        } else {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completion(false, @"وەڵامی نەگونجاو");
+            });
+        }
     }];
     [task resume];
 }
@@ -156,7 +198,7 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
             weakStatusLabel.text = @"پشکنین...";
             weakStatusLabel.textColor = [UIColor yellowColor];
             
-            checkSupabaseKeyAsync(enteredKey, ^(bool success) {
+            checkSupabaseKeyAsync(enteredKey, ^(bool success, NSString *debugMessage) {
                 if (success) {
                     weakStatusLabel.text = @"کرا";
                     weakStatusLabel.textColor = [UIColor colorWithRed:0.0 green:1.0 blue:0.35 alpha:1.0];
@@ -164,7 +206,7 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
                         [weakMenuView removeFromSuperview];
                     });
                 } else {
-                    weakStatusLabel.text = @"نەکارا";
+                    weakStatusLabel.text = debugMessage; // نیشاندانی هۆکاری ڕاستەقینە لەسەر شاشە
                     weakStatusLabel.textColor = [UIColor redColor];
                 }
             });
