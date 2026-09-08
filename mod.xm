@@ -26,7 +26,6 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
     }
     
     NSString *supabaseUrl = @"https://narkhdockqhlwxxyyxjr.supabase.co";
-    // تێبینی: دڵنیا ببەوە کە ئەم کلیلە Anon Publicـی ڕاستەقینەیە و دەست پێدەکات بە eyJ (JWT Token)
     NSString *supabaseKey = @"Sb_publishable_ZSYNiCI8U1zVImnMUKqTsA_6RBjMIVs";
     
     NSString *cleanKey = [enteredKey stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
@@ -75,7 +74,7 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
 }
 
 %ctor {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), যাবدا: ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         UIWindow *window = nil;
         for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
             if ([scene isKindOfClass:[UIWindowScene class]]) {
@@ -205,7 +204,6 @@ void checkSupabaseKeyAsync(NSString *enteredKey, void (^completion)(bool success
         }];
         [menuView addGestureRecognizer:dismissGesture];
         
-        [window addSubview:window ? menuView : nil]; // بۆ دڵنیابوونەوە لە window
         [window addSubview:menuView];
     });
 }
