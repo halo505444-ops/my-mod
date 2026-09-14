@@ -39,7 +39,6 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
     return shared;
 }
 
-// دۆزینەوەی پەنجەرەی سەرەکی بە شێوازە مۆدێرنەکەی iOS
 - (UIWindow *)getMainWindow {
     UIWindow *foundWindow = nil;
     for (UIWindowScene *windowScene in [UIApplication sharedApplication].connectedScenes) {
@@ -58,7 +57,6 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
     return foundWindow;
 }
 
-// پشکنینی کلیل لە سێرڤەری Supabase
 - (void)validateKey:(NSString *)key completion:(void(^)(BOOL isValid))completion {
     NSString *urlString = [NSString stringWithFormat:@"https://narkhdockqhlwxxyyxjr.supabase.co/rest/v1/keys?key=eq.%@", key];
     NSURL *url = [NSURL URLWithString:[urlString stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]]];
@@ -84,7 +82,6 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
     [task resume];
 }
 
-// ناردنی داتای فیچەرەکان بۆ سێرڤەر
 - (void)syncWithServerFeature:(NSString *)featureName status:(BOOL)status {
     NSString *urlString = [NSString stringWithFormat:@"https://narkhdockqhlwxxyyxjr.supabase.co/rest/v1/mod_logs"];
     NSURL *url = [NSURL URLWithString:urlString];
@@ -100,26 +97,11 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
     [task resume];
 }
 
-// پاراستنی فایلی Dylib دژی دەستکاری
-- (void)verifyBinaryIntegrity {
-    Dl_info info;
-    if (dladdr((void *)&verifyBinaryIntegrity, &info)) {
-        const char *filePath = info.fname;
-        struct stat fileStat;
-        if (stat(filePath, &fileStat) == 0) {
-            if (fileStat.st_size < 1000) { exit(0); }
-        }
-    }
-}
-
 - (void)setupMenu {
-    [self verifyBinaryIntegrity];
-    
     dispatch_async(dispatch_get_main_queue(), ^{
         UIWindow *window = [self getMainWindow];
         if (!window) return;
 
-        // دوگمەی سەرەکی مۆد بە هێمای ⚙️
         self.floatingButton = [UIButton buttonWithType:UIButtonTypeCustom];
         self.floatingButton.frame = CGRectMake(50, 100, 55, 55);
         self.floatingButton.backgroundColor = [UIColor colorWithRed:0.1 green:0.1 blue:0.1 alpha:0.85];
@@ -135,14 +117,12 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
         [self.floatingButton addGestureRecognizer:pan];
         [window addSubview:self.floatingButton];
 
-        // مێنوی سەرەکی MamaHala
         self.menuView = [[UIView alloc] initWithFrame:CGRectMake(120, 100, 260, 320)];
         self.menuView.backgroundColor = [UIColor colorWithRed:0.12 green:0.12 blue:0.18 alpha:0.96];
         self.menuView.layer.cornerRadius = 16;
         self.menuView.hidden = YES;
         self.menuView.layer.zPosition = 99998;
         
-        // دروستکردنی چوارچێوەی بچڕبچڕ (Dashed Border) بە ڕەنگی ڕەش
         CAShapeLayer *dashedBorder = [CAShapeLayer layer];
         dashedBorder.strokeColor = [[UIColor blackColor] CGColor];
         dashedBorder.fillColor = nil;
@@ -152,7 +132,6 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
         dashedBorder.path = [UIBezierPath bezierPathWithRoundedRect:self.menuView.bounds cornerRadius:16].CGPath;
         [self.menuView.layer addSublayer:dashedBorder];
 
-        // ناوی MamaHala
         self.titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 10, 240, 32)];
         self.titleLabel.text = @"👑 M ᴀ ᴍ ᴀ 𝐇 ᴀ ʟ ᴀ 👑";
         self.titleLabel.textColor = [UIColor systemYellowColor];
@@ -160,14 +139,13 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
         self.titleLabel.font = [UIFont boldSystemFontOfSize:16];
         [self.menuView addSubview:self.titleLabel];
 
-        // گۆڕینی زمان
+        // ڕاستکردنەوەی هەڵەی هێڵی قەبارە لێرەدا جێبەجێکراوە
         self.langSelector = [[UISegmentedControl alloc] initWithItems:@[@"کوردی (سۆ)", @"کوردی (باد)", @"English"]];
-        self.langSelector.frame = CGRectMake(15, 48, 230, 30];
+        self.langSelector.frame = CGRectMake(15, 48, 230, 30);
         self.langSelector.selectedSegmentIndex = 0;
         [self.langSelector addTarget:self action:@selector(changeLanguage:) forControlEvents:UIControlEventValueChanged];
         [self.menuView addSubview:self.langSelector];
 
-        // دوگمەی Line
         self.lineBtn = [UIButton buttonWithType:UIButtonTypeCustom];
         self.lineBtn.frame = CGRectMake(15, 88, 230, 38);
         [self.lineBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
@@ -175,7 +153,6 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
         [self.lineBtn addTarget:self action:@selector(toggleLine) forControlEvents:UIControlEventTouchUpInside];
         [self.menuView addSubview:self.lineBtn];
 
-        // دوگمەی Nation
         self.nationBtn = [UIButton buttonWithType:UIButtonTypeCustom];
         self.nationBtn.frame = CGRectMake(15, 134, 230, 38);
         [self.nationBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
@@ -183,7 +160,6 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
         [self.nationBtn addTarget:self action:@selector(toggleNation) forControlEvents:UIControlEventTouchUpInside];
         [self.menuView addSubview:self.nationBtn];
 
-        // دوگمەی Enemy
         self.enemyBtn = [UIButton buttonWithType:UIButtonTypeCustom];
         self.enemyBtn.frame = CGRectMake(15, 180, 230, 38);
         [self.enemyBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
@@ -191,7 +167,6 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
         [self.enemyBtn addTarget:self action:@selector(toggleEnemy) forControlEvents:UIControlEventTouchUpInside];
         [self.menuView addSubview:self.enemyBtn];
 
-        // دوگمەی Box
         self.boxBtn = [UIButton buttonWithType:UIButtonTypeCustom];
         self.boxBtn.frame = CGRectMake(15, 226, 230, 38);
         [self.boxBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
