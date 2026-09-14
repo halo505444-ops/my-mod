@@ -1,7 +1,7 @@
 #import <UIKit/UIKit.h>
-#include <mach-o/dyld.h>
-#include <sys/stat.h>
-#include <dlfcn.h>
+#import <mach-o/dyld.h>
+#import <sys/stat.h>
+#import <dlfcn.h>
 
 typedef NS_ENUM(NSInteger, AppLanguage) {
     LangSorani = 0,
@@ -37,6 +37,25 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
         shared.isAuthorized = NO;
     });
     return shared;
+}
+
+// دۆزینەوەی پەنجەرەی سەرەکی بە شێوازە مۆدێرنەکەی iOS
+- (UIWindow *)getMainWindow {
+    UIWindow *foundWindow = nil;
+    for (UIWindowScene *windowScene in [UIApplication sharedApplication].connectedScenes) {
+        if (windowScene.activationState == UISceneActivationStateForegroundActive) {
+            for (UIWindow *window in windowScene.windows) {
+                if (window.isKeyWindow) {
+                    foundWindow = window;
+                    break;
+                }
+            }
+        }
+    }
+    if (!foundWindow) {
+        foundWindow = [UIApplication sharedApplication].windows.firstObject;
+    }
+    return foundWindow;
 }
 
 // پشکنینی کلیل لە سێرڤەری Supabase
@@ -97,7 +116,7 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
     [self verifyBinaryIntegrity];
     
     dispatch_async(dispatch_get_main_queue(), ^{
-        UIWindow *window = [[UIApplication sharedApplication] keyWindow];
+        UIWindow *window = [self getMainWindow];
         if (!window) return;
 
         // دوگمەی سەرەکی مۆد بە هێمای ⚙️
@@ -127,7 +146,7 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
         CAShapeLayer *dashedBorder = [CAShapeLayer layer];
         dashedBorder.strokeColor = [[UIColor blackColor] CGColor];
         dashedBorder.fillColor = nil;
-        dashedBorder.lineDashPattern = @[@6, @4]; // شێوازی بچڕبچڕ
+        dashedBorder.lineDashPattern = @[@6, @4];
         dashedBorder.lineWidth = 2.5;
         dashedBorder.frame = self.menuView.bounds;
         dashedBorder.path = [UIBezierPath bezierPathWithRoundedRect:self.menuView.bounds cornerRadius:16].CGPath;
@@ -194,7 +213,7 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
 }
 
 - (void)showKeyPrompt {
-    UIWindow *window = [[UIApplication sharedApplication] keyWindow];
+    UIWindow *window = [self getMainWindow];
     UIViewController *rootVC = window.rootViewController;
     
     UIAlertController *keyAlert = [UIAlertController alertControllerWithTitle:@"🔑 MamaHala Key System" 
@@ -229,7 +248,7 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
 }
 
 - (void)handlePan:(UIPanGestureRecognizer *)recognizer {
-    UIWindow *window = [[UIApplication sharedApplication] keyWindow];
+    UIWindow *window = [self getMainWindow];
     CGPoint translation = [recognizer translationInView:window];
     CGPoint center = recognizer.view.center;
     recognizer.view.center = CGPointMake(center.x + translation.x, center.y + translation.y);
