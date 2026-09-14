@@ -151,31 +151,18 @@ typedef NS_ENUM(NSInteger, MenuSection) {
         [self.floatingButton addGestureRecognizer:panBtn];
         [window addSubview:self.floatingButton];
 
-        // دروستکردنی شێوەی سێگۆشەی مێنۆ
-        self.menuView = [[UIView alloc] initWithFrame:CGRectMake(110, 100, 300, 400)];
+        // دروستکردنی شێوەی چوارگۆشەی مێنۆ (Rectangle Menu with Rounded Corners & Border)
+        self.menuView = [[UIView alloc] initWithFrame:CGRectMake(100, 100, 310, 410)];
         self.menuView.backgroundColor = [UIColor colorWithRed:0.95 green:0.93 blue:0.98 alpha:0.98];
         self.menuView.hidden = YES;
         self.menuView.layer.zPosition = 99998;
-        
-        UIBezierPath *trianglePath = [UIBezierPath bezierPath];
-        [trianglePath moveToPoint:CGPointMake(150, 0)];
-        [trianglePath addLineToPoint:CGPointMake(300, 400)];
-        [trianglePath addLineToPoint:CGPointMake(0, 400)];
-        [trianglePath closePath];
-        
-        CAShapeLayer *triangleMask = [CAShapeLayer layer];
-        triangleMask.path = trianglePath.CGPath;
-        self.menuView.layer.mask = triangleMask;
-        
-        CAShapeLayer *triangleBorder = [CAShapeLayer layer];
-        triangleBorder.path = trianglePath.CGPath;
-        triangleBorder.strokeColor = [UIColor purpleColor].CGColor;
-        triangleBorder.lineWidth = 3.0;
-        triangleBorder.fillColor = nil;
-        [self.menuView.layer addSublayer:triangleBorder];
+        self.menuView.layer.cornerRadius = 14;
+        self.menuView.layer.borderWidth = 2.5;
+        self.menuView.layer.borderColor = [UIColor purpleColor].CGColor;
+        self.menuView.clipsToBounds = YES;
 
         // ناونیشان
-        self.titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(50, 40, 200, 30)];
+        self.titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(55, 12, 200, 30)];
         self.titleLabel.text = @"👑 M ᴀ ᴍ ᴀ 𝐇 ᴀ ʟ ᴀ 👑";
         self.titleLabel.textColor = [UIColor purpleColor];
         self.titleLabel.textAlignment = NSTextAlignmentCenter;
@@ -183,7 +170,7 @@ typedef NS_ENUM(NSInteger, MenuSection) {
         [self.menuView addSubview:self.titleLabel];
 
         // بەشەکانی سەرەوە (Tabs)
-        self.tabStackView = [[UIStackView alloc] initWithFrame:CGRectMake(25, 80, 250, 32)];
+        self.tabStackView = [[UIStackView alloc] initWithFrame:CGRectMake(15, 52, 280, 32)];
         self.tabStackView.axis = UILayoutConstraintAxisHorizontal;
         self.tabStackView.distribution = UIStackViewDistributionFillEqually;
         self.tabStackView.spacing = 4;
@@ -203,14 +190,14 @@ typedef NS_ENUM(NSInteger, MenuSection) {
         [self.menuView addSubview:self.tabStackView];
 
         // شوێنی سکڕۆڵ بۆ ناوەڕۆک
-        self.contentScrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(35, 125, 230, 240)];
+        self.contentScrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(15, 96, 280, 300)];
         self.contentScrollView.showsVerticalScrollIndicator = YES;
         [self.menuView addSubview:self.contentScrollView];
 
-        self.contentStackView = [[UIStackView alloc] initWithFrame:CGRectMake(0, 0, 230, 240)];
+        self.contentStackView = [[UIStackView alloc] initWithFrame:CGRectMake(0, 0, 280, 300)];
         self.contentStackView.axis = UILayoutConstraintAxisVertical;
         self.contentStackView.distribution = UIStackViewDistributionFillEqually;
-        self.contentStackView.spacing = 10;
+        self.contentStackView.spacing = 8;
         [self.contentScrollView addSubview:self.contentStackView];
 
         // جووڵاندنی مێنۆ بە دەست
@@ -287,18 +274,18 @@ typedef NS_ENUM(NSInteger, MenuSection) {
 }
 
 - (void)addSwitchRowToStack:(NSString *)title status:(BOOL)status action:(SEL)action {
-    UIView *rowView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 230, 40)];
+    UIView *rowView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 280, 42)];
     rowView.backgroundColor = [UIColor whiteColor];
     rowView.layer.cornerRadius = 10;
     rowView.layer.borderWidth = 1.5;
     rowView.layer.borderColor = [UIColor purpleColor].CGColor;
     
-    UISwitch *sw = [[UISwitch alloc] initWithFrame:CGRectMake(12, 5, 50, 30)];
+    UISwitch *sw = [[UISwitch alloc] initWithFrame:CGRectMake(15, 6, 50, 30)];
     sw.on = status;
     [sw addTarget:self action:action forControlEvents:UIControlEventValueChanged];
     [rowView addSubview:sw];
     
-    UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(75, 5, 140, 30)];
+    UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(80, 6, 180, 30)];
     lbl.text = title;
     lbl.font = [UIFont boldSystemFontOfSize:13];
     lbl.textColor = [UIColor darkTextColor];
@@ -363,7 +350,6 @@ typedef NS_ENUM(NSInteger, MenuSection) {
         if ([[UIApplication sharedApplication] canOpenURL:telegramURL]) {
             [[UIApplication sharedApplication] openURL:telegramURL options:@{} completionHandler:nil];
         }
-        // دوبارە پیشاندانەوەی مێنۆی کلیل تا بەکارهێنەر کلیلەکەی تێدا بنووسێت پاش هاتنەوە
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             [self showKeyPrompt];
         });
