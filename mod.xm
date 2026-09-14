@@ -78,7 +78,6 @@ static UIWindow *shazaWindow = nil;
     
     if ([currentText isEqualToString:@"SHAZAViP"]) {
         isAuthorized = YES;
-        // داخستنی پەنجەرەکە کاتێک کۆدەکە ڕاستە
         shazaWindow.hidden = YES;
         shazaWindow = nil;
     }
@@ -99,20 +98,20 @@ static UIWindow *shazaWindow = nil;
 %ctor {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_page(), ^{
         if (!isAuthorized) {
-            // دروستکردنی پەنجەرەی تایبەت بە خۆی بێ کێشەی deprecated
-            for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
-                if (scene.activationState == UISceneActivationStateForegroundActive) {
-                    shazaWindow = [[UIWindow alloc] initWithWindowScene:scene];
+            UIWindowScene *activeScene = nil;
+            for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+                if ([scene isKindOfClass:[UIWindowScene class]] && scene.activationState == UISceneActivationStateForegroundActive) {
+                    activeScene = (UIWindowScene *)scene;
                     break;
                 }
             }
-            if (!shazaWindow) {
-                shazaWindow = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-            }
             
-            shazaWindow.rootViewController = [[ShazaLoginController alloc] init];
-            shazaWindow.windowLevel = UIWindowLevelAlert + 1;
-            [shazaWindow makeKeyAndVisible];
+            if (activeScene) {
+                shazaWindow = [[UIWindow alloc] initWithWindowScene:activeScene];
+                shazaWindow.rootViewController = [[ShazaLoginController alloc] init];
+                shazaWindow.windowLevel = UIWindowLevelAlert + 1;
+                [shazaWindow makeKeyAndVisible];
+            }
         }
     });
 }
