@@ -40,7 +40,7 @@
         mainView.layer.borderColor = [UIColor systemBlueColor].CGColor;
         [vc.view addSubview:mainView];
         
-        // تایتڵی مۆد مینیو
+        // تایتڵی مۆد مینیو (بە ناوی MamaHala)
         UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 15, 260, 30)];
         titleLabel.text = @"MamaHala Mod Menu";
         titleLabel.textColor = [UIColor whiteColor];
@@ -48,7 +48,7 @@
         titleLabel.textAlignment = NSTextAlignmentCenter;
         [mainView addSubview:titleLabel];
         
-        // دووگمەی داخستنەوە (Close Button)
+        // دووگمەی داخستنەوە (Close Button - X)
         UIButton *closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
         closeButton.frame = CGRectMake(255, 12, 35, 35);
         [closeButton setTitle:@"✕" forState:UIControlStateNormal];
@@ -118,7 +118,7 @@
 
 @end
 
-// بانگکردنەوەی مینیوەکە لە کاتی کردنەوەی یارییەکەدا
+// بانگکردنەوە و نیشاندانی مینیوەکە دوای کرانەوەی یارییەکە
 static void (*old_applicationDidFinishLaunching)(id, SEL, id, id);
 void new_applicationDidFinishLaunching(id self, SEL _cmd, id application, id launchOptions) {
     old_applicationDidFinishLaunching(self, _cmd, application, launchOptions);
@@ -126,4 +126,8 @@ void new_applicationDidFinishLaunching(id self, SEL _cmd, id application, id lau
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [[ModMenuManager sharedInstance] showMenu];
     });
+}
+
+%ctor {
+    %init();
 }
