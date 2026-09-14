@@ -1,124 +1,129 @@
 #import <UIKit/UIKit.h>
 
-static BOOL isAuthorized = NO;
-static UIWindow *shazaWindow = nil;
-
-@interface ShazaLoginController : UIViewController <UITextFieldDelegate>
-@property (nonatomic, strong) UIView *menuBox;
-@property (nonatomic, strong) UITextField *keyTextField;
+@interface ModMenuManager : NSObject
++ (instancetype)sharedInstance;
+- (void)showMenu;
 @end
 
-@implementation ShazaLoginController
-
-- (void)viewDidLoad {
-    [super viewDidLoad];
-    
-    // پشکنینی ماوەی ١ مانگ (٣٠ ڕۆژ)
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    NSDate *installDate = [defaults objectForKey:@"ShazaInstallDate"];
-    
-    if (!installDate) {
-        installDate = [NSDate date];
-        [defaults setObject:installDate forKey:@"ShazaInstallDate"];
-        [defaults synchronize];
-    }
-    
-    NSTimeInterval secondsBetween = [[NSDate date] timeIntervalSinceDate:installDate];
-    double daysBetween = secondsBetween / 86400;
-    
-    if (daysBetween >= 30 || daysBetween < 0) {
-        exit(0);
-    }
-
-    self.view.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.6];
-    
-    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleOutsideTap:)];
-    [self.view addGestureRecognizer:tapGesture];
-    
-    self.menuBox = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 320, 240)];
-    self.menuBox.center = self.view.center;
-    self.menuBox.backgroundColor = [UIColor colorWithRed:0.12 green:0.12 blue:0.12 alpha:1.0];
-    self.menuBox.layer.cornerRadius = 16.0;
-    self.menuBox.layer.borderWidth = 1.5;
-    self.menuBox.layer.borderColor = [UIColor colorWithRed:0.1 green:0.9 blue:0.3 alpha:1.0].CGColor;
-    
-    self.menuBox.layer.shadowColor = [UIColor colorWithRed:0.1 green:0.9 blue:0.3 alpha:0.8].CGColor;
-    self.menuBox.layer.shadowOffset = CGSizeMake(0, 0);
-    self.menuBox.layer.shadowRadius = 12.0;
-    self.menuBox.layer.shadowOpacity = 1.0;
-    [self.view addSubview:self.menuBox];
-    
-    UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 20, 280, 35)];
-    titleLabel.text = @"SHAZA ⚡️ VIP";
-    titleLabel.textAlignment = NSTextAlignmentCenter;
-    titleLabel.font = [UIFont boldSystemFontOfSize:22];
-    titleLabel.textColor = [UIColor whiteColor];
-    [self.menuBox addSubview:titleLabel];
-    
-    self.keyTextField = [[UITextField alloc] initWithFrame:CGRectMake(30, 80, 260, 45)];
-    self.keyTextField.backgroundColor = [UIColor colorWithRed:0.08 green:0.08 blue:0.08 alpha:1.0];
-    self.keyTextField.textColor = [UIColor whiteColor];
-    self.keyTextField.textAlignment = NSTextAlignmentCenter;
-    self.keyTextField.layer.cornerRadius = 8.0;
-    self.keyTextField.layer.borderWidth = 1.0;
-    self.keyTextField.layer.borderColor = [UIColor colorWithRed:0.2 green:0.2 blue:0.2 alpha:1.0].CGColor;
-    self.keyTextField.delegate = self;
-    self.keyTextField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:@"کۆد لێرە بنووسە..." attributes:@{NSForegroundColorAttributeName: [UIColor darkGrayColor]}];
-    [self.menuBox addSubview:self.keyTextField];
-    
-    UILabel *footerLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 210, 280, 20)];
-    footerLabel.text = @"MamaHala";
-    footerLabel.textAlignment = NSTextAlignmentCenter;
-    footerLabel.font = [UIFont systemFontOfSize:10];
-    footerLabel.textColor = [UIColor grayColor];
-    [self.menuBox addSubview:footerLabel];
+@implementation ModMenuManager {
+    UIWindow *menuWindow;
+    UIView *mainView;
 }
 
-- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
-    NSString *currentText = [textField.text stringByReplacingCharactersInRange:range withString:string];
-    
-    if ([currentText isEqualToString:@"SHAZAViP"]) {
-        isAuthorized = YES;
-        shazaWindow.hidden = YES;
-        shazaWindow = nil;
-    }
-    return YES;
++ (instancetype)sharedInstance {
+    static ModMenuManager *sharedInstance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sharedInstance = [[ModMenuManager alloc] init];
+    });
+    return sharedInstance;
 }
 
-- (void)handleOutsideTap:(UITapGestureRecognizer *)sender {
-    CGPoint location = [sender locationInView:self.view];
-    if (!CGRectContainsPoint(self.menuBox.frame, location)) {
-        if (!isAuthorized) {
-            [self.keyTextField resignFirstResponder];
-        }
-    }
+- (void)showMenu {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (menuWindow) return;
+        
+        // دروستکردنی پەنجەرەی مۆد مینیو
+        menuWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+        menuWindow.windowLevel = UIWindowLevelAlert + 1;
+        menuWindow.backgroundColor = [UIColor clearColor];
+        
+        UIViewController *vc = [[UIViewController alloc] init];
+        vc.view.backgroundColor = [UIColor clearColor];
+        menuWindow.rootViewController = vc;
+        
+        // ڕووکاری سەرەکی مۆد مینیو (Background)
+        mainView = [[UIView alloc] initWithFrame:CGRectMake(50, 80, 300, 380)];
+        mainView.backgroundColor = [UIColor colorWithRed:0.1 green:0.1 blue:0.1 alpha:0.95];
+        mainView.layer.cornerRadius = 15;
+        mainView.layer.borderWidth = 1.5;
+        mainView.layer.borderColor = [UIColor systemBlueColor].CGColor;
+        [vc.view addSubview:mainView];
+        
+        // تایتڵی مۆد مینیو
+        UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 15, 260, 30)];
+        titleLabel.text = @"MamaHala Mod Menu";
+        titleLabel.textColor = [UIColor whiteColor];
+        titleLabel.font = [UIFont boldSystemFontOfSize:18];
+        titleLabel.textAlignment = NSTextAlignmentCenter;
+        [mainView addSubview:titleLabel];
+        
+        // دووگمەی داخستنەوە (Close Button)
+        UIButton *closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        closeButton.frame = CGRectMake(255, 12, 35, 35);
+        [closeButton setTitle:@"✕" forState:UIControlStateNormal];
+        [closeButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
+        closeButton.titleLabel.font = [UIFont boldSystemFontOfSize:18];
+        [closeButton addTarget:self action:@selector(closeMenu) forControlEvents:UIControlEventTouchUpInside];
+        [mainView addSubview:closeButton];
+        
+        // ۱. دووگمەی پشکنینی داتا / لایسنس
+        UIButton *checkButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        checkButton.frame = CGRectMake(20, 70, 260, 45);
+        [checkButton setTitle:@"پشکنینی داتا / لایسنس" forState:UIControlStateNormal];
+        [checkButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        checkButton.backgroundColor = [UIColor systemBlueColor];
+        checkButton.layer.cornerRadius = 8;
+        [checkButton addTarget:self action:@selector(verifyButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+        [mainView addSubview:checkButton];
+        
+        // ۲. دووگمەی خەڵت
+        UIButton *khalatButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        khalatButton.frame = CGRectMake(20, 130, 260, 45);
+        [khalatButton setTitle:@"دووگمەی خەڵت" forState:UIControlStateNormal];
+        [khalatButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        khalatButton.backgroundColor = [UIColor systemRedColor];
+        khalatButton.layer.cornerRadius = 8;
+        [khalatButton addTarget:self action:@selector(khalatButtonTapped) forControlEvents:UIControlEventTouchUpInside];
+        [mainView addSubview:khalatButton];
+        
+        [menuWindow makeKeyAndVisible];
+    });
+}
+
+- (void)verifyButtonTapped:(UIButton *)sender {
+    sender.enabled = NO;
+    [sender setTitle:@"چاوەڕوان بە..." forState:UIControlStateNormal];
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        sender.enabled = YES;
+        [sender setTitle:@"پشکنینی داتا / لایسنس" forState:UIControlStateNormal];
+        
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"ئەنجامی پشکنین" 
+                                                                       message:@"سەد لەسەد کاردەکا و داتا بە سەرکەوتوویی وەرگیرا!" 
+                                                                preferredStyle:UIAlertControllerStyleAlert];
+        
+        [alert addAction:[UIAlertAction actionWithTitle:@"باشە" style:UIAlertActionStyleDefault handler:nil]];
+        
+        UIWindow *keyWindow = [UIApplication sharedApplication].keyWindow;
+        [keyWindow.rootViewController presentViewController:alert animated:YES completion:nil];
+    });
+}
+
+- (void)khalatButtonTapped {
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"ئاگاداری" 
+                                                                   message:@"کلیل خەڵتە شێرە برا" 
+                                                            preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alert addAction:[UIAlertAction actionWithTitle:@"باشە" style:UIAlertActionStyleDefault handler:nil]];
+    
+    UIWindow *keyWindow = [UIApplication sharedApplication].keyWindow;
+    [keyWindow.rootViewController presentViewController:alert animated:YES completion:nil];
+}
+
+- (void)closeMenu {
+    menuWindow.hidden = YES;
+    menuWindow = nil;
 }
 
 @end
 
-// دروستکردنی پەنجەرەکە بە شێوازێکی زۆر گشتگیر و دڵنیابوون لە نیشاندانی
-%ctor {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        if (!isAuthorized && !shazaWindow) {
-            UIWindowScene *targetScene = nil;
-            for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
-                if ([scene isKindOfClass:[UIWindowScene class]]) {
-                    if (scene.activationState == UISceneActivationStateForegroundActive) {
-                        targetScene = (UIWindowScene *)scene;
-                        break;
-                    }
-                }
-            }
-            
-            if (targetScene) {
-                shazaWindow = [[UIWindow alloc] initWithWindowScene:targetScene];
-            } else {
-                shazaWindow = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-            }
-            
-            shazaWindow.rootViewController = [[ShazaLoginController alloc] init];
-            shazaWindow.windowLevel = UIWindowLevelAlert + 999999; // بەرزترین ئاست بۆ ئەوەی بکەوێتە پێش هەموو شتێکەوە
-            [shazaWindow makeKeyAndVisible];
-        }
+// بانگکردنەوەی مینیوەکە لە کاتی کردنەوەی یارییەکەدا
+static void (*old_applicationDidFinishLaunching)(id, SEL, id, id);
+void new_applicationDidFinishLaunching(id self, SEL _cmd, id application, id launchOptions) {
+    old_applicationDidFinishLaunching(self, _cmd, application, launchOptions);
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [[ModMenuManager sharedInstance] showMenu];
     });
 }
