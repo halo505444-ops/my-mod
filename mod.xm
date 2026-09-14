@@ -58,7 +58,8 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
 }
 
 - (void)validateKey:(NSString *)key completion:(void(^)(BOOL isValid))completion {
-    NSString *urlString = [NSString stringWithFormat:@"https://narkhdockqhlwxxyyxjr.supabase.co/rest/v1/keys?key=eq.%@", key];
+    // ڕاستکردنەوەی ناوی ستوون لە `key` بۆ `key_text` با لەگەڵ سێرڤەرەکەت بگونجێت
+    NSString *urlString = [NSString stringWithFormat:@"https://narkhdockqhlwxxyyxjr.supabase.co/rest/v1/keys?key_text=eq.%@", key];
     NSURL *url = [NSURL URLWithString:[urlString stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]]];
     
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
@@ -102,14 +103,14 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
         UIWindow *window = [self getMainWindow];
         if (!window) return;
 
+        // دوگمەی سەرەکی بە بێ هیچ بازنەیەک (سادە)
         self.floatingButton = [UIButton buttonWithType:UIButtonTypeCustom];
-        self.floatingButton.frame = CGRectMake(50, 100, 55, 55);
-        self.floatingButton.backgroundColor = [UIColor colorWithRed:0.1 green:0.1 blue:0.1 alpha:0.85];
+        self.floatingButton.frame = CGRectMake(50, 100, 50, 50);
+        self.floatingButton.backgroundColor = [UIColor clearColor];
         [self.floatingButton setTitle:@"⚙️" forState:UIControlStateNormal];
-        self.floatingButton.titleLabel.font = [UIFont systemFontOfSize:28];
-        self.floatingButton.layer.cornerRadius = 27.5;
-        self.floatingButton.layer.borderWidth = 1.5;
-        self.floatingButton.layer.borderColor = [[UIColor systemCyanColor] CGColor];
+        self.floatingButton.titleLabel.font = [UIFont systemFontOfSize:32];
+        self.floatingButton.layer.borderWidth = 0.0;
+        self.floatingButton.layer.borderColor = [UIColor clearColor].CGColor;
         self.floatingButton.layer.zPosition = 99999;
         [self.floatingButton addTarget:self action:@selector(handleFloatingButtonTapped) forControlEvents:UIControlEventTouchUpInside];
         
@@ -139,7 +140,6 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
         self.titleLabel.font = [UIFont boldSystemFontOfSize:16];
         [self.menuView addSubview:self.titleLabel];
 
-        // ڕاستکردنەوەی هەڵەی هێڵی قەبارە لێرەدا جێبەجێکراوە
         self.langSelector = [[UISegmentedControl alloc] initWithItems:@[@"کوردی (سۆ)", @"کوردی (باد)", @"English"]];
         self.langSelector.frame = CGRectMake(15, 48, 230, 30);
         self.langSelector.selectedSegmentIndex = 0;
