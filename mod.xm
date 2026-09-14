@@ -26,7 +26,6 @@ static UIWindow *shazaWindow = nil;
     NSTimeInterval secondsBetween = [[NSDate date] timeIntervalSinceDate:installDate];
     double daysBetween = secondsBetween / 86400;
     
-    // ئەگەر ٣٠ ڕۆژ (١ مانگ) تەواو بوو، فایلەکە ڕەتدەبێتەوە و یارییەکە دەکوژێتەوە
     if (daysBetween >= 30 || daysBetween < 0) {
         exit(0);
     }
@@ -97,8 +96,9 @@ static UIWindow *shazaWindow = nil;
 
 @end
 
+// نیشاندانی ڕاستەخۆ (دایریک) بێ چاوەڕوانی
 %ctor {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    dispatch_async(dispatch_get_main_queue(), ^{
         if (!isAuthorized) {
             UIWindowScene *activeScene = nil;
             for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
