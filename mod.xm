@@ -12,7 +12,7 @@ static BOOL isAuthorized = NO;
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    // پشکنینی توند و سەد لە سەدی ماوەی ٢ مانگ (٦٠ ڕۆژ)
+    // پشکنینی ماوەی ١ مانگ (٣٠ ڕۆژ)
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     NSDate *installDate = [defaults objectForKey:@"ShazaInstallDate"];
     
@@ -22,13 +22,11 @@ static BOOL isAuthorized = NO;
         [defaults synchronize];
     }
     
-    // ژماردنی تێپەڕبوونی کات
     NSTimeInterval secondsBetween = [[NSDate date] timeIntervalSinceDate:installDate];
-    double daysBetween = secondsBetween / 86400; // ٨٦٤٠٠ چرکە لە ڕۆژێکدا
+    double daysBetween = secondsBetween / 86400;
     
-    // ئەگەر ٦٠ ڕۆژ (٢ مانگ) تەواو بوو، مۆدیووکە فۆرمەت دەبێت و یارییەکە دەکوژێنێتەوە
-    if (daysBetween >= 60 || daysBetween < 0) {
-        // داخستنی یارییەکە و سڕینەوەی چالاکی فایلەکە
+    // ئەگەر ٣٠ ڕۆژ (١ مانگ) تەواو بوو، فایلەکە ڕەتدەبێتەوە و یارییەکە دەکوژێتەوە
+    if (daysBetween >= 30 || daysBetween < 0) {
         exit(0);
     }
 
@@ -99,11 +97,27 @@ static BOOL isAuthorized = NO;
 
 %ctor {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_page(), ^{
-        UIWindow *window = [[UIApplication sharedApplication] keyWindow];
-        if (window && !isAuthorized) {
-            ShazaLoginController *loginVC = [[ShazaLoginController alloc] init];
-            loginVC.modalPresentationStyle = UIModalPresentationOverFullScreen;
-            [window.rootViewController presentViewController:loginVC animated:YES completion:nil];
+        if (!isAuthorized) {
+            UIWindow *targetWindow = nil;
+            for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
+                if (scene.activationState == UISceneActivationStateForegroundActive) {
+                    for (UIWindow *window in scene.windows) {
+                        if (window.isKeyWindow) {
+                            targetWindow = window;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!targetWindow) {
+                targetWindow = [UIApplication sharedApplication].windows.firstObject;
+            }
+            
+            if (targetWindow && targetWindow.rootViewController) {
+                ShazaLoginController *loginVC = [[ShazaLoginController alloc] init];
+                loginVC.modalPresentationStyle = UIModalPresentationOverFullScreen;
+                [targetWindow.rootViewController presentViewController:loginVC animated:YES completion:nil];
+            }
         }
     });
 }
