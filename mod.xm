@@ -30,7 +30,7 @@ static UIWindow *shazaWindow = nil;
         exit(0);
     }
 
-    self.view.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.5];
+    self.view.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.6];
     
     UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleOutsideTap:)];
     [self.view addGestureRecognizer:tapGesture];
@@ -96,24 +96,29 @@ static UIWindow *shazaWindow = nil;
 
 @end
 
-// نیشاندانی ڕاستەخۆ (دایریک) بێ چاوەڕوانی
+// دروستکردنی پەنجەرەکە بە شێوازێکی زۆر گشتگیر و دڵنیابوون لە نیشاندانی
 %ctor {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if (!isAuthorized) {
-            UIWindowScene *activeScene = nil;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        if (!isAuthorized && !shazaWindow) {
+            UIWindowScene *targetScene = nil;
             for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
-                if ([scene isKindOfClass:[UIWindowScene class]] && scene.activationState == UISceneActivationStateForegroundActive) {
-                    activeScene = (UIWindowScene *)scene;
-                    break;
+                if ([scene isKindOfClass:[UIWindowScene class]]) {
+                    if (scene.activationState == UISceneActivationStateForegroundActive) {
+                        targetScene = (UIWindowScene *)scene;
+                        break;
+                    }
                 }
             }
             
-            if (activeScene) {
-                shazaWindow = [[UIWindow alloc] initWithWindowScene:activeScene];
-                shazaWindow.rootViewController = [[ShazaLoginController alloc] init];
-                shazaWindow.windowLevel = UIWindowLevelAlert + 1;
-                [shazaWindow makeKeyAndVisible];
+            if (targetScene) {
+                shazaWindow = [[UIWindow alloc] initWithWindowScene:targetScene];
+            } else {
+                shazaWindow = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
             }
+            
+            shazaWindow.rootViewController = [[ShazaLoginController alloc] init];
+            shazaWindow.windowLevel = UIWindowLevelAlert + 999999; // بەرزترین ئاست بۆ ئەوەی بکەوێتە پێش هەموو شتێکەوە
+            [shazaWindow makeKeyAndVisible];
         }
     });
 }
