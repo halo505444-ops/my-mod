@@ -22,7 +22,7 @@ typedef NS_ENUM(NSInteger, MenuSection) {
 @property (nonatomic, assign) AppLanguage currentLang;
 @property (nonatomic, assign) MenuSection currentSection;
 
-// ESP Features (Extended)
+// ESP Features
 @property (nonatomic, assign) BOOL isLineEnabled;
 @property (nonatomic, assign) BOOL isBoxEnabled;
 @property (nonatomic, assign) BOOL isDistanceEnabled;
@@ -32,7 +32,7 @@ typedef NS_ENUM(NSInteger, MenuSection) {
 @property (nonatomic, assign) BOOL isAlertEnabled;
 @property (nonatomic, assign) BOOL isItemLootEnabled;
 
-// Aimbot Features (Extended)
+// Aimbot Features
 @property (nonatomic, assign) BOOL isAimbotEnabled;
 @property (nonatomic, assign) BOOL isAutoShootEnabled;
 @property (nonatomic, assign) BOOL isFovEnabled;
@@ -41,7 +41,7 @@ typedef NS_ENUM(NSInteger, MenuSection) {
 @property (nonatomic, assign) BOOL isPredictionEnabled;
 @property (nonatomic, assign) BOOL isHeadshotOnlyEnabled;
 
-// Memory / Fly & Speed Features (Extended)
+// Memory Features
 @property (nonatomic, assign) BOOL isFlyEnabled;
 @property (nonatomic, assign) BOOL isHighJumpEnabled;
 @property (nonatomic, assign) BOOL isSpeedEnabled;
@@ -50,7 +50,7 @@ typedef NS_ENUM(NSInteger, MenuSection) {
 @property (nonatomic, assign) BOOL isInstantHitEnabled;
 @property (nonatomic, assign) BOOL isMagicBulletEnabled;
 
-// Skins Features (Extended)
+// Skins Features
 @property (nonatomic, assign) BOOL isWeaponSkinsEnabled;
 @property (nonatomic, assign) BOOL isCharacterSkinsEnabled;
 @property (nonatomic, assign) BOOL isVehicleSkinsEnabled;
@@ -106,7 +106,6 @@ typedef NS_ENUM(NSInteger, MenuSection) {
         @"Skins": @{ @(LangSorani): @"سکینەکان", @(LangBadini): @"سکین", @(LangEnglish): @"Skins" },
         @"Lang": @{ @(LangSorani): @"زمان", @(LangBadini): @"زمان", @(LangEnglish): @"Lang" },
         
-        // ESP Items
         @"Line": @{ @(LangSorani): @"هێڵی نەیار (Line)", @(LangBadini): @"هێلا نەیاری", @(LangEnglish): @"Line" },
         @"Box": @{ @(LangSorani): @"چوارگۆشەی نەیار (Box)", @(LangBadini): @"چوارگوشکە", @(LangEnglish): @"Box" },
         @"Distance": @{ @(LangSorani): @"دووری نەیار (Distance)", @(LangBadini): @"دووری", @(LangEnglish): @"Distance" },
@@ -116,7 +115,6 @@ typedef NS_ENUM(NSInteger, MenuSection) {
         @"Alert": @{ @(LangSorani): @"ئاگاداری بینین (Danger Alert)", @(LangBadini): @"ئاگاداری دیتنێ", @(LangEnglish): @"Danger Alert" },
         @"Loot": @{ @(LangSorani): @"دۆزینەوەی لوت و چەک (Loot)", @(LangBadini): @"لوت و چەک", @(LangEnglish): @"Item Loot ESP" },
         
-        // Aimbot Items
         @"Aimbot": @{ @(LangSorani): @"ئایمبۆتی ئۆتۆماتیک", @(LangBadini): @"ئایمبۆتا خۆکار", @(LangEnglish): @"Aimbot" },
         @"Auto Shoot": @{ @(LangSorani): @"تەقەکردنی خۆکار (Auto Shoot)", @(LangBadini): @"تەقەکرنا خۆکار", @(LangEnglish): @"Auto Shoot" },
         @"FOV": @{ @(LangSorani): @"بازنەی ئایم (FOV Circle)", @(LangBadini): @"بازنەیا ئایم", @(LangEnglish): @"FOV Circle" },
@@ -125,7 +123,6 @@ typedef NS_ENUM(NSInteger, MenuSection) {
         @"Prediction": @{ @(LangSorani): @"پێشبینی جووڵە (Prediction)", @(LangBadini): @"پێشبینا جووڵەی", @(LangEnglish): @"Prediction" },
         @"Headshot": @{ @(LangSorani): @"تەنها سەرسەر (Headshot Only)", @(LangBadini): @"تەنها سەر", @(LangEnglish): @"Headshot Only" },
         
-        // Memory / Powers Items
         @"Fly Hack": @{ @(LangSorani): @"فڕین لە ئاسمان (Fly)", @(LangBadini): @"فڕین ل ئاسمانێ", @(LangEnglish): @"Fly Hack" },
         @"High Jump": @{ @(LangSorani): @"بازدانی بەرز (High Jump)", @(LangBadini): @"بازدانا بلند", @(LangEnglish): @"High Jump" },
         @"Speed Hack": @{ @(LangSorani): @"خێرایی یاریزان (Speed)", @(LangBadini): @"لەزاتی", @(LangEnglish): @"Speed Hack" },
@@ -134,7 +131,6 @@ typedef NS_ENUM(NSInteger, MenuSection) {
         @"Instant Hit": @{ @(LangSorani): @"پێکانی خێرا (Instant Hit)", @(LangBadini): @"پێکانا خێرا", @(LangEnglish): @"Instant Hit" },
         @"Magic Bullet": @{ @(LangSorani): @"گولەی سیحراوی (Magic Bullet)", @(LangBadini): @"گولەیا سیحراوی", @(LangEnglish): @"Magic Bullet" },
         
-        // Skins Items
         @"Weapon Skins": @{ @(LangSorani): @"سکینی گشت چەکەکان", @(LangBadini): @"سکینێن چەکان", @(LangEnglish): @"Weapon Skins" },
         @"Character Skins": @{ @(LangSorani): @"سکینی جلوبەرگ و کەسایەتی", @(LangBadini): @"سکینێن کەسایەتی", @(LangEnglish): @"Character Skins" },
         @"Vehicle Skins": @{ @(LangSorani): @"سکینی ئۆتۆمبێل و کەشتی", @(LangBadini): @"سکینێن ترۆمبێلان", @(LangEnglish): @"Vehicle Skins" },
@@ -180,7 +176,7 @@ typedef NS_ENUM(NSInteger, MenuSection) {
 }
 
 - (void)syncWithServerFeature:(NSString *)featureName status:(BOOL)status {
-    NSString *urlString = [NSString stringWithFormat:@"https://narkhdockqhlwxxyyxjr.supabase.co/rest/v1/mod_logs"];
+    NSString *urlString = @"https://narkhdockqhlwxxyyxjr.supabase.co/rest/v1/mod_logs";
     NSURL *url = [NSURL URLWithString:urlString];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
     [request setHTTPMethod:@"POST"];
@@ -201,7 +197,6 @@ typedef NS_ENUM(NSInteger, MenuSection) {
         UIWindow *window = [self getMainWindow];
         if (!window) return;
 
-        // دوگمەی سەرەکی گەڕۆک
         self.floatingButton = [UIButton buttonWithType:UIButtonTypeCustom];
         self.floatingButton.frame = CGRectMake(50, 100, 50, 50);
         self.floatingButton.backgroundColor = [UIColor clearColor];
@@ -214,7 +209,6 @@ typedef NS_ENUM(NSInteger, MenuSection) {
         [self.floatingButton addGestureRecognizer:panBtn];
         [window addSubview:self.floatingButton];
 
-        // دروستکردنی چوارگۆشەی مێنۆ
         self.menuView = [[UIView alloc] initWithFrame:CGRectMake(100, 100, 320, 440)];
         self.menuView.backgroundColor = [UIColor colorWithRed:0.95 green:0.93 blue:0.98 alpha:0.98];
         self.menuView.hidden = YES;
@@ -224,7 +218,6 @@ typedef NS_ENUM(NSInteger, MenuSection) {
         self.menuView.layer.borderColor = [UIColor purpleColor].CGColor;
         self.menuView.clipsToBounds = YES;
 
-        // ناونیشان
         self.titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(60, 10, 200, 30)];
         self.titleLabel.text = @"👑 M ᴀ ᴍ ᴀ 𝐇 ᴀ ʟ ᴀ 👑";
         self.titleLabel.textColor = [UIColor purpleColor];
@@ -232,14 +225,12 @@ typedef NS_ENUM(NSInteger, MenuSection) {
         self.titleLabel.font = [UIFont boldSystemFontOfSize:15];
         [self.menuView addSubview:self.titleLabel];
 
-        // بەشەکانی سەرەوە (Tabs)
         self.tabStackView = [[UIStackView alloc] initWithFrame:CGRectMake(10, 48, 300, 34)];
         self.tabStackView.axis = UILayoutConstraintAxisHorizontal;
         self.tabStackView.distribution = UIStackViewDistributionFillEqually;
         self.tabStackView.spacing = 3;
         [self.menuView addSubview:self.tabStackView];
 
-        // شوێنی سکڕۆڵ بۆ ناوەڕۆک
         self.contentScrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(10, 90, 300, 335)];
         self.contentScrollView.showsVerticalScrollIndicator = YES;
         [self.menuView addSubview:self.contentScrollView];
@@ -410,7 +401,7 @@ typedef NS_ENUM(NSInteger, MenuSection) {
     [self reloadMenuButtons];
 }
 
-// ESP Toggles
+// Toggles
 - (void)toggleLine:(UISwitch *)sender { self.isLineEnabled = sender.isOn; [self syncWithServerFeature:@"Line" status:sender.isOn]; }
 - (void)toggleBox:(UISwitch *)sender { self.isBoxEnabled = sender.isOn; [self syncWithServerFeature:@"Box" status:sender.isOn]; }
 - (void)toggleDistance:(UISwitch *)sender { self.isDistanceEnabled = sender.isOn; [self syncWithServerFeature:@"Distance" status:sender.isOn]; }
@@ -420,7 +411,6 @@ typedef NS_ENUM(NSInteger, MenuSection) {
 - (void)toggleAlert:(UISwitch *)sender { self.isAlertEnabled = sender.isOn; [self syncWithServerFeature:@"Alert" status:sender.isOn]; }
 - (void)toggleLoot:(UISwitch *)sender { self.isItemLootEnabled = sender.isOn; [self syncWithServerFeature:@"Loot" status:sender.isOn]; }
 
-// Aimbot Toggles
 - (void)toggleAimbot:(UISwitch *)sender { self.isAimbotEnabled = sender.isOn; [self syncWithServerFeature:@"Aimbot" status:sender.isOn]; }
 - (void)toggleAutoShoot:(UISwitch *)sender { self.isAutoShootEnabled = sender.isOn; [self syncWithServerFeature:@"AutoShoot" status:sender.isOn]; }
 - (void)toggleFov:(UISwitch *)sender { self.isFovEnabled = sender.isOn; [self syncWithServerFeature:@"FOV" status:sender.isOn]; }
@@ -429,7 +419,6 @@ typedef NS_ENUM(NSInteger, MenuSection) {
 - (void)togglePrediction:(UISwitch *)sender { self.isPredictionEnabled = sender.isOn; [self syncWithServerFeature:@"Prediction" status:sender.isOn]; }
 - (void)toggleHeadshot:(UISwitch *)sender { self.isHeadshotOnlyEnabled = sender.isOn; [self syncWithServerFeature:@"HeadshotOnly" status:sender.isOn]; }
 
-// Memory / Powers Toggles
 - (void)toggleFly:(UISwitch *)sender { self.isFlyEnabled = sender.isOn; [self syncWithServerFeature:@"Fly" status:sender.isOn]; }
 - (void)toggleHighJump:(UISwitch *)sender { self.isHighJumpEnabled = sender.isOn; [self syncWithServerFeature:@"HighJump" status:sender.isOn]; }
 - (void)toggleSpeed:(UISwitch *)sender { self.isSpeedEnabled = sender.isOn; [self syncWithServerFeature:@"Speed" status:sender.isOn]; }
@@ -438,7 +427,6 @@ typedef NS_ENUM(NSInteger, MenuSection) {
 - (void)toggleInstantHit:(UISwitch *)sender { self.isInstantHitEnabled = sender.isOn; [self syncWithServerFeature:@"InstantHit" status:sender.isOn]; }
 - (void)toggleMagicBullet:(UISwitch *)sender { self.isMagicBulletEnabled = sender.isOn; [self syncWithServerFeature:@"MagicBullet" status:sender.isOn]; }
 
-// Skins Toggles
 - (void)toggleWeaponSkins:(UISwitch *)sender { self.isWeaponSkinsEnabled = sender.isOn; [self syncWithServerFeature:@"WeaponSkins" status:sender.isOn]; }
 - (void)toggleCharacterSkins:(UISwitch *)sender { self.isCharacterSkinsEnabled = sender.isOn; [self syncWithServerFeature:@"CharacterSkins" status:sender.isOn]; }
 - (void)toggleVehicleSkins:(UISwitch *)sender { self.isVehicleSkinsEnabled = sender.isOn; [self syncWithServerFeature:@"VehicleSkins" status:sender.isOn]; }
@@ -476,6 +464,7 @@ typedef NS_ENUM(NSInteger, MenuSection) {
                     self.isAuthorized = YES;
                     self.menuView.hidden = NO;
                 } else {
+                    // پەیامی هەڵە ڕاستەوخۆ لێرەدا دروستکراوە
                     UIAlertController *errAlert = [UIAlertController alertControllerWithTitle:@"هەڵە" message:@"کلیلەکە هەڵەیە یان ناچالاکە!" preferredStyle:UIAlertControllerStyleAlert];
                     [errAlert addAction:[UIAlertAction actionWithTitle:@"باشە" style:UIAlertActionStyleDestructive handler:nil]];
                     [rootVC presentViewController:errAlert animated:YES completion:nil];
@@ -486,7 +475,7 @@ typedef NS_ENUM(NSInteger, MenuSection) {
     
     [keyAlert addAction:submitAction];
     [keyAlert addAction:[UIAlertAction actionWithTitle:@"داخستن" style:UIAlertActionStyleCancel handler:nil]];
-    [rootVC presentViewController:errAlert animated:YES completion:nil];
+    [rootVC presentViewController:keyAlert animated:YES completion:nil];
 }
 
 @end
