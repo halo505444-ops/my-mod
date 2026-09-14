@@ -9,21 +9,49 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
     LangEnglish
 };
 
+typedef NS_ENUM(NSInteger, MenuSection) {
+    SectionESP = 0,
+    SectionAimbot,
+    SectionMemory,
+    SectionSkins,
+    SectionSettings
+};
+
 @interface ModMenuManager : NSObject
 @property (nonatomic, assign) BOOL isAuthorized;
 @property (nonatomic, assign) AppLanguage currentLang;
+@property (nonatomic, assign) MenuSection currentSection;
+
+// ESP Features
 @property (nonatomic, assign) BOOL isLineEnabled;
-@property (nonatomic, assign) BOOL isNationEnabled;
-@property (nonatomic, assign) BOOL isEnemyEnabled;
 @property (nonatomic, assign) BOOL isBoxEnabled;
+@property (nonatomic, assign) BOOL isDistanceEnabled;
+@property (nonatomic, assign) BOOL isHealthEnabled;
+
+// Aimbot Features
+@property (nonatomic, assign) BOOL isAimbotEnabled;
+@property (nonatomic, assign) BOOL isAutoShootEnabled;
+@property (nonatomic, assign) BOOL isFovEnabled;
+@property (nonatomic, assign) BOOL isRecoilEnabled;
+
+// Memory / Fly & Speed Features
+@property (nonatomic, assign) BOOL isFlyEnabled;
+@property (nonatomic, assign) BOOL isHighJumpEnabled;
+@property (nonatomic, assign) BOOL isSpeedEnabled;
+@property (nonatomic, assign) BOOL isWallHackEnabled;
+
+// Skins Features
+@property (nonatomic, assign) BOOL isWeaponSkinsEnabled;
+@property (nonatomic, assign) BOOL isCharacterSkinsEnabled;
+@property (nonatomic, assign) BOOL isVehicleSkinsEnabled;
+
+// UI Elements
 @property (nonatomic, strong) UIButton *floatingButton;
 @property (nonatomic, strong) UIView *menuView;
 @property (nonatomic, strong) UILabel *titleLabel;
-@property (nonatomic, strong) UISegmentedControl *langSelector;
-@property (nonatomic, strong) UIButton *lineBtn;
-@property (nonatomic, strong) UIButton *nationBtn;
-@property (nonatomic, strong) UIButton *enemyBtn;
-@property (nonatomic, strong) UIButton *boxBtn;
+@property (nonatomic, strong) UIScrollView *contentScrollView;
+@property (nonatomic, strong) UIStackView *tabStackView;
+@property (nonatomic, strong) UIStackView *contentStackView;
 @end
 
 @implementation ModMenuManager
@@ -34,6 +62,7 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
     dispatch_once(&onceToken, ^{
         shared = [[ModMenuManager alloc] init];
         shared.currentLang = LangSorani;
+        shared.currentSection = SectionESP;
         shared.isAuthorized = NO;
     });
     return shared;
@@ -109,78 +138,87 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
         UIWindow *window = [self getMainWindow];
         if (!window) return;
 
+        // دوگمەی سەرەکی گەڕۆک
         self.floatingButton = [UIButton buttonWithType:UIButtonTypeCustom];
         self.floatingButton.frame = CGRectMake(50, 100, 50, 50);
         self.floatingButton.backgroundColor = [UIColor clearColor];
         [self.floatingButton setTitle:@"⚙️" forState:UIControlStateNormal];
         self.floatingButton.titleLabel.font = [UIFont systemFontOfSize:32];
-        self.floatingButton.layer.borderWidth = 0.0;
-        self.floatingButton.layer.borderColor = [UIColor clearColor].CGColor;
         self.floatingButton.layer.zPosition = 99999;
         [self.floatingButton addTarget:self action:@selector(handleFloatingButtonTapped) forControlEvents:UIControlEventTouchUpInside];
         
-        UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePan:)];
-        [self.floatingButton addGestureRecognizer:pan];
+        UIPanGestureRecognizer *panBtn = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePanButton:)];
+        [self.floatingButton addGestureRecognizer:panBtn];
         [window addSubview:self.floatingButton];
 
-        self.menuView = [[UIView alloc] initWithFrame:CGRectMake(120, 100, 260, 320)];
-        self.menuView.backgroundColor = [UIColor colorWithRed:0.12 green:0.12 blue:0.18 alpha:0.96];
-        self.menuView.layer.cornerRadius = 16;
+        // دروستکردنی شێوەی سێگۆشەی مێنۆ
+        self.menuView = [[UIView alloc] initWithFrame:CGRectMake(110, 100, 300, 400)];
+        self.menuView.backgroundColor = [UIColor colorWithRed:0.95 green:0.93 blue:0.98 alpha:0.98];
         self.menuView.hidden = YES;
         self.menuView.layer.zPosition = 99998;
         
-        CAShapeLayer *dashedBorder = [CAShapeLayer layer];
-        dashedBorder.strokeColor = [[UIColor blackColor] CGColor];
-        dashedBorder.fillColor = nil;
-        dashedBorder.lineDashPattern = @[@6, @4];
-        dashedBorder.lineWidth = 2.5;
-        dashedBorder.frame = self.menuView.bounds;
-        dashedBorder.path = [UIBezierPath bezierPathWithRoundedRect:self.menuView.bounds cornerRadius:16].CGPath;
-        [self.menuView.layer addSublayer:dashedBorder];
+        UIBezierPath *trianglePath = [UIBezierPath bezierPath];
+        [trianglePath moveToPoint:CGPointMake(150, 0)];
+        [trianglePath addLineToPoint:CGPointMake(300, 400)];
+        [trianglePath addLineToPoint:CGPointMake(0, 400)];
+        [trianglePath closePath];
+        
+        CAShapeLayer *triangleMask = [CAShapeLayer layer];
+        triangleMask.path = trianglePath.CGPath;
+        self.menuView.layer.mask = triangleMask;
+        
+        CAShapeLayer *triangleBorder = [CAShapeLayer layer];
+        triangleBorder.path = trianglePath.CGPath;
+        triangleBorder.strokeColor = [UIColor purpleColor].CGColor;
+        triangleBorder.lineWidth = 3.0;
+        triangleBorder.fillColor = nil;
+        [self.menuView.layer addSublayer:triangleBorder];
 
-        self.titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 10, 240, 32)];
+        // ناونیشان
+        self.titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(50, 40, 200, 30)];
         self.titleLabel.text = @"👑 M ᴀ ᴍ ᴀ 𝐇 ᴀ ʟ ᴀ 👑";
-        self.titleLabel.textColor = [UIColor systemYellowColor];
+        self.titleLabel.textColor = [UIColor purpleColor];
         self.titleLabel.textAlignment = NSTextAlignmentCenter;
-        self.titleLabel.font = [UIFont boldSystemFontOfSize:16];
+        self.titleLabel.font = [UIFont boldSystemFontOfSize:15];
         [self.menuView addSubview:self.titleLabel];
 
-        self.langSelector = [[UISegmentedControl alloc] initWithItems:@[@"کوردی (سۆ)", @"کوردی (باد)", @"English"]];
-        self.langSelector.frame = CGRectMake(15, 48, 230, 30);
-        self.langSelector.selectedSegmentIndex = 0;
-        [self.langSelector addTarget:self action:@selector(changeLanguage:) forControlEvents:UIControlEventValueChanged];
-        [self.menuView addSubview:self.langSelector];
+        // بەشەکانی سەرەوە (Tabs)
+        self.tabStackView = [[UIStackView alloc] initWithFrame:CGRectMake(25, 80, 250, 32)];
+        self.tabStackView.axis = UILayoutConstraintAxisHorizontal;
+        self.tabStackView.distribution = UIStackViewDistributionFillEqually;
+        self.tabStackView.spacing = 4;
+        
+        NSArray *tabs = @[@"ESP", @"Aim", @"Fly", @"Skins", @"Lang"];
+        for (int i = 0; i < tabs.count; i++) {
+            UIButton *tabBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+            [tabBtn setTitle:tabs[i] forState:UIControlStateNormal];
+            tabBtn.titleLabel.font = [UIFont boldSystemFontOfSize:11];
+            [tabBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+            tabBtn.backgroundColor = [UIColor darkGrayColor];
+            tabBtn.layer.cornerRadius = 6;
+            tabBtn.tag = i;
+            [tabBtn addTarget:self action:@selector(switchTab:) forControlEvents:UIControlEventTouchUpInside];
+            [self.tabStackView addArrangedSubview:tabBtn];
+        }
+        [self.menuView addSubview:self.tabStackView];
 
-        self.lineBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-        self.lineBtn.frame = CGRectMake(15, 88, 230, 38);
-        [self.lineBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        self.lineBtn.layer.cornerRadius = 8;
-        [self.lineBtn addTarget:self action:@selector(toggleLine) forControlEvents:UIControlEventTouchUpInside];
-        [self.menuView addSubview:self.lineBtn];
+        // شوێنی سکڕۆڵ بۆ ناوەڕۆک
+        self.contentScrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(35, 125, 230, 240)];
+        self.contentScrollView.showsVerticalScrollIndicator = YES;
+        [self.menuView addSubview:self.contentScrollView];
 
-        self.nationBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-        self.nationBtn.frame = CGRectMake(15, 134, 230, 38);
-        [self.nationBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        self.nationBtn.layer.cornerRadius = 8;
-        [self.nationBtn addTarget:self action:@selector(toggleNation) forControlEvents:UIControlEventTouchUpInside];
-        [self.menuView addSubview:self.nationBtn];
+        self.contentStackView = [[UIStackView alloc] initWithFrame:CGRectMake(0, 0, 230, 240)];
+        self.contentStackView.axis = UILayoutConstraintAxisVertical;
+        self.contentStackView.distribution = UIStackViewDistributionFillEqually;
+        self.contentStackView.spacing = 10;
+        [self.contentScrollView addSubview:self.contentStackView];
 
-        self.enemyBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-        self.enemyBtn.frame = CGRectMake(15, 180, 230, 38);
-        [self.enemyBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        self.enemyBtn.layer.cornerRadius = 8;
-        [self.enemyBtn addTarget:self action:@selector(toggleEnemy) forControlEvents:UIControlEventTouchUpInside];
-        [self.menuView addSubview:self.enemyBtn];
-
-        self.boxBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-        self.boxBtn.frame = CGRectMake(15, 226, 230, 38);
-        [self.boxBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        self.boxBtn.layer.cornerRadius = 8;
-        [self.boxBtn addTarget:self action:@selector(toggleBox) forControlEvents:UIControlEventTouchUpInside];
-        [self.menuView addSubview:self.boxBtn];
+        // جووڵاندنی مێنۆ بە دەست
+        UIPanGestureRecognizer *panMenu = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePanMenu:)];
+        [self.menuView addGestureRecognizer:panMenu];
 
         [window addSubview:self.menuView];
-        [self updateUITexts];
+        [self reloadMenuButtons];
     });
 }
 
@@ -192,6 +230,121 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
     }
 }
 
+- (void)handlePanButton:(UIPanGestureRecognizer *)recognizer {
+    UIWindow *window = [self getMainWindow];
+    CGPoint translation = [recognizer translationInView:window];
+    CGPoint center = recognizer.view.center;
+    recognizer.view.center = CGPointMake(center.x + translation.x, center.y + translation.y);
+    [recognizer setTranslation:CGPointZero inView:window];
+}
+
+- (void)handlePanMenu:(UIPanGestureRecognizer *)recognizer {
+    UIWindow *window = [self getMainWindow];
+    CGPoint translation = [recognizer translationInView:window];
+    CGPoint center = recognizer.view.center;
+    recognizer.view.center = CGPointMake(center.x + translation.x, center.y + translation.y);
+    [recognizer setTranslation:CGPointZero inView:window];
+}
+
+- (void)switchTab:(UIButton *)sender {
+    self.currentSection = (MenuSection)sender.tag;
+    [self reloadMenuButtons];
+}
+
+- (void)reloadMenuButtons {
+    for (UIView *subview in self.contentStackView.arrangedSubviews) {
+        [subview removeFromSuperview];
+    }
+    
+    if (self.currentSection == SectionESP) {
+        [self addSwitchRowToStack:@"Line" status:self.isLineEnabled action:@selector(toggleLine:)];
+        [self addSwitchRowToStack:@"Box" status:self.isBoxEnabled action:@selector(toggleBox:)];
+        [self addSwitchRowToStack:@"Distance" status:self.isDistanceEnabled action:@selector(toggleDistance:)];
+        [self addSwitchRowToStack:@"Health" status:self.isHealthEnabled action:@selector(toggleHealth:)];
+    } 
+    else if (self.currentSection == SectionAimbot) {
+        [self addSwitchRowToStack:@"Aimbot" status:self.isAimbotEnabled action:@selector(toggleAimbot:)];
+        [self addSwitchRowToStack:@"Auto Shoot" status:self.isAutoShootEnabled action:@selector(toggleAutoShoot:)];
+        [self addSwitchRowToStack:@"FOV Circle" status:self.isFovEnabled action:@selector(toggleFov:)];
+        [self addSwitchRowToStack:@"No Recoil" status:self.isRecoilEnabled action:@selector(toggleRecoil:)];
+    } 
+    else if (self.currentSection == SectionMemory) {
+        [self addSwitchRowToStack:@"Fly Hack" status:self.isFlyEnabled action:@selector(toggleFly:)];
+        [self addSwitchRowToStack:@"High Jump" status:self.isHighJumpEnabled action:@selector(toggleHighJump:)];
+        [self addSwitchRowToStack:@"Speed Hack" status:self.isSpeedEnabled action:@selector(toggleSpeed:)];
+        [self addSwitchRowToStack:@"WallHack" status:self.isWallHackEnabled action:@selector(toggleWallHack:)];
+    } 
+    else if (self.currentSection == SectionSkins) {
+        [self addSwitchRowToStack:@"Weapon Skins" status:self.isWeaponSkinsEnabled action:@selector(toggleWeaponSkins:)];
+        [self addSwitchRowToStack:@"Character Skins" status:self.isCharacterSkinsEnabled action:@selector(toggleCharacterSkins:)];
+        [self addSwitchRowToStack:@"Vehicle Skins" status:self.isVehicleSkinsEnabled action:@selector(toggleVehicleSkins:)];
+    } 
+    else if (self.currentSection == SectionSettings) {
+        [self addLangButtonToStack:@"کوردی (سۆرانى)" langIndex:LangSorani];
+        [self addLangButtonToStack:@"کوردی (بادینی)" langIndex:LangBadini];
+        [self addLangButtonToStack:@"English" langIndex:LangEnglish];
+    }
+}
+
+- (void)addSwitchRowToStack:(NSString *)title status:(BOOL)status action:(SEL)action {
+    UIView *rowView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 230, 40)];
+    rowView.backgroundColor = [UIColor whiteColor];
+    rowView.layer.cornerRadius = 10;
+    rowView.layer.borderWidth = 1.5;
+    rowView.layer.borderColor = [UIColor purpleColor].CGColor;
+    
+    UISwitch *sw = [[UISwitch alloc] initWithFrame:CGRectMake(12, 5, 50, 30)];
+    sw.on = status;
+    [sw addTarget:self action:action forControlEvents:UIControlEventValueChanged];
+    [rowView addSubview:sw];
+    
+    UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(75, 5, 140, 30)];
+    lbl.text = title;
+    lbl.font = [UIFont boldSystemFontOfSize:13];
+    lbl.textColor = [UIColor darkTextColor];
+    [rowView addSubview:lbl];
+    
+    [self.contentStackView addArrangedSubview:rowView];
+}
+
+- (void)addLangButtonToStack:(NSString *)title langIndex:(AppLanguage)lang {
+    UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
+    BOOL isSelected = (self.currentLang == lang);
+    [btn setTitle:[NSString stringWithFormat:@"%@%@", title, isSelected ? @" ✔" : @""] forState:UIControlStateNormal];
+    btn.titleLabel.font = [UIFont boldSystemFontOfSize:12];
+    [btn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    btn.backgroundColor = isSelected ? [UIColor systemBlueColor] : [UIColor darkGrayColor];
+    btn.layer.cornerRadius = 8;
+    btn.tag = lang;
+    [btn addTarget:self action:@selector(selectLanguage:) forControlEvents:UIControlEventTouchUpInside];
+    [self.contentStackView addArrangedSubview:btn];
+}
+
+- (void)selectLanguage:(id)sender {
+    self.currentLang = (AppLanguage)((UIView *)sender).tag;
+    [self reloadMenuButtons];
+}
+
+// تووگلەکانی Switch
+- (void)toggleLine:(UISwitch *)sender { self.isLineEnabled = sender.isOn; [self syncWithServerFeature:@"Line" status:sender.isOn]; }
+- (void)toggleBox:(UISwitch *)sender { self.isBoxEnabled = sender.isOn; [self syncWithServerFeature:@"Box" status:sender.isOn]; }
+- (void)toggleDistance:(UISwitch *)sender { self.isDistanceEnabled = sender.isOn; [self syncWithServerFeature:@"Distance" status:sender.isOn]; }
+- (void)toggleHealth:(UISwitch *)sender { self.isHealthEnabled = sender.isOn; [self syncWithServerFeature:@"Health" status:sender.isOn]; }
+
+- (void)toggleAimbot:(UISwitch *)sender { self.isAimbotEnabled = sender.isOn; [self syncWithServerFeature:@"Aimbot" status:sender.isOn]; }
+- (void)toggleAutoShoot:(UISwitch *)sender { self.isAutoShootEnabled = sender.isOn; [self syncWithServerFeature:@"AutoShoot" status:sender.isOn]; }
+- (void)toggleFov:(UISwitch *)sender { self.isFovEnabled = sender.isOn; [self syncWithServerFeature:@"FOV" status:sender.isOn]; }
+- (void)toggleRecoil:(UISwitch *)sender { self.isRecoilEnabled = sender.isOn; [self syncWithServerFeature:@"NoRecoil" status:sender.isOn]; }
+
+- (void)toggleFly:(UISwitch *)sender { self.isFlyEnabled = sender.isOn; [self syncWithServerFeature:@"Fly" status:sender.isOn]; }
+- (void)toggleHighJump:(UISwitch *)sender { self.isHighJumpEnabled = sender.isOn; [self syncWithServerFeature:@"HighJump" status:sender.isOn]; }
+- (void)toggleSpeed:(UISwitch *)sender { self.isSpeedEnabled = sender.isOn; [self syncWithServerFeature:@"Speed" status:sender.isOn]; }
+- (void)toggleWallHack:(UISwitch *)sender { self.isWallHackEnabled = sender.isOn; [self syncWithServerFeature:@"WallHack" status:sender.isOn]; }
+
+- (void)toggleWeaponSkins:(UISwitch *)sender { self.isWeaponSkinsEnabled = sender.isOn; [self syncWithServerFeature:@"WeaponSkins" status:sender.isOn]; }
+- (void)toggleCharacterSkins:(UISwitch *)sender { self.isCharacterSkinsEnabled = sender.isOn; [self syncWithServerFeature:@"CharacterSkins" status:sender.isOn]; }
+- (void)toggleVehicleSkins:(UISwitch *)sender { self.isVehicleSkinsEnabled = sender.isOn; [self syncWithServerFeature:@"VehicleSkins" status:sender.isOn]; }
+
 - (void)showKeyPrompt {
     UIWindow *window = [self getMainWindow];
     UIViewController *rootVC = window.rootViewController;
@@ -202,8 +355,20 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
         
     [keyAlert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
         textField.placeholder = @"کلیل لێرە بنووسە...";
-        textField.secureTextEntry = NO;
     }];
+    
+    // دوگمەی بۆ دەستکەوتنی کلیل (تێلیگرام)
+    UIAlertAction *telegramAction = [UIAlertAction actionWithTitle:@"💬 بۆ دەست کەوتنی کلیل دەست لێرە دە" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        NSURL *telegramURL = [NSURL URLWithString:@"https://t.me/MAMA_HALA0"];
+        if ([[UIApplication sharedApplication] canOpenURL:telegramURL]) {
+            [[UIApplication sharedApplication] openURL:telegramURL options:@{} completionHandler:nil];
+        }
+        // دوبارە پیشاندانەوەی مێنۆی کلیل تا بەکارهێنەر کلیلەکەی تێدا بنووسێت پاش هاتنەوە
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [self showKeyPrompt];
+        });
+    }];
+    [keyAlert addAction:telegramAction];
     
     UIAlertAction *submitAction = [UIAlertAction actionWithTitle:@"پشکنین" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         NSString *enteredKey = keyAlert.textFields.firstObject.text;
@@ -213,9 +378,8 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
                     self.isAuthorized = YES;
                     self.menuView.hidden = NO;
                 } else {
-                    UIAlertAction *errAction = [UIAlertAction actionWithTitle:@"باشە" style:UIAlertActionStyleDestructive handler:nil];
                     UIAlertController *errAlert = [UIAlertController alertControllerWithTitle:@"هەڵە" message:@"کلیلەکە هەڵەیە یان ناچالاکە!" preferredStyle:UIAlertControllerStyleAlert];
-                    [errAlert addAction:errAction];
+                    [errAlert addAction:[UIAlertAction actionWithTitle:@"باشە" style:UIAlertActionStyleDestructive handler:nil]];
                     [rootVC presentViewController:errAlert animated:YES completion:nil];
                 }
             });
@@ -225,67 +389,6 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
     [keyAlert addAction:submitAction];
     [keyAlert addAction:[UIAlertAction actionWithTitle:@"داخستن" style:UIAlertActionStyleCancel handler:nil]];
     [rootVC presentViewController:keyAlert animated:YES completion:nil];
-}
-
-- (void)handlePan:(UIPanGestureRecognizer *)recognizer {
-    UIWindow *window = [self getMainWindow];
-    CGPoint translation = [recognizer translationInView:window];
-    CGPoint center = recognizer.view.center;
-    recognizer.view.center = CGPointMake(center.x + translation.x, center.y + translation.y);
-    [recognizer setTranslation:CGPointZero inView:window];
-}
-
-- (void)changeLanguage:(UISegmentedControl *)sender {
-    self.currentLang = (AppLanguage)sender.selectedSegmentIndex;
-    [self updateUITexts];
-}
-
-- (void)updateUITexts {
-    if (self.currentLang == LangSorani) {
-        [self.lineBtn setTitle:self.isLineEnabled ? @"هێڵی کێشان: داگیرسێنراوە" : @"هێڵی کێشان: کوژاوەتەوە" forState:UIControlStateNormal];
-        [self.nationBtn setTitle:self.isNationEnabled ? @"نەتەوە: داگیرسێنراوە" : @"نەتەوە: کوژاوەتەوە" forState:UIControlStateNormal];
-        [self.enemyBtn setTitle:self.isEnemyEnabled ? @"دوژمن: داگیرسێنراوە" : @"دوژمن: کوژاوەتەوە" forState:UIControlStateNormal];
-        [self.boxBtn setTitle:self.isBoxEnabled ? @"قوتووی ESP: داگیرسێنراوە" : @"قوتووی ESP: کوژاوەتەوە" forState:UIControlStateNormal];
-    } else if (self.currentLang == LangBadini) {
-        [self.lineBtn setTitle:self.isLineEnabled ? @"هێڵ: پڕکراوە" : @"هێڵ: ڤالا یە" forState:UIControlStateNormal];
-        [self.nationBtn setTitle:self.isNationEnabled ? @"نەتەوە: پڕکراوە" : @"نەتەوە: ڤالا یە" forState:UIControlStateNormal];
-        [self.enemyBtn setTitle:self.isEnemyEnabled ? @"دوژمن: پڕکراوە" : @"دوژمن: ڤالا یە" forState:UIControlStateNormal];
-        [self.boxBtn setTitle:self.isBoxEnabled ? @"قوتو: پڕکراوە" : @"قوتو: ڤالا یە" forState:UIControlStateNormal];
-    } else {
-        [self.lineBtn setTitle:self.isLineEnabled ? @"Line: ON" : @"Line: OFF" forState:UIControlStateNormal];
-        [self.nationBtn setTitle:self.isNationEnabled ? @"Nation: ON" : @"Nation: OFF" forState:UIControlStateNormal];
-        [self.enemyBtn setTitle:self.isEnemyEnabled ? @"Enemy: ON" : @"Enemy: OFF" forState:UIControlStateNormal];
-        [self.boxBtn setTitle:self.isBoxEnabled ? @"Box: ON" : @"Box: OFF" forState:UIControlStateNormal];
-    }
-    
-    self.lineBtn.backgroundColor = self.isLineEnabled ? [UIColor colorWithRed:0.1 green:0.6 blue:0.2 alpha:1.0] : [UIColor colorWithRed:0.4 green:0.15 blue:0.15 alpha:1.0];
-    self.nationBtn.backgroundColor = self.isNationEnabled ? [UIColor colorWithRed:0.1 green:0.6 blue:0.2 alpha:1.0] : [UIColor colorWithRed:0.4 green:0.15 blue:0.15 alpha:1.0];
-    self.enemyBtn.backgroundColor = self.isEnemyEnabled ? [UIColor colorWithRed:0.1 green:0.6 blue:0.2 alpha:1.0] : [UIColor colorWithRed:0.4 green:0.15 blue:0.15 alpha:1.0];
-    self.boxBtn.backgroundColor = self.isBoxEnabled ? [UIColor colorWithRed:0.1 green:0.6 blue:0.2 alpha:1.0] : [UIColor colorWithRed:0.4 green:0.15 blue:0.15 alpha:1.0];
-}
-
-- (void)toggleLine {
-    self.isLineEnabled = !self.isLineEnabled;
-    [self updateUITexts];
-    [self syncWithServerFeature:@"Line" status:self.isLineEnabled];
-}
-
-- (void)toggleNation {
-    self.isNationEnabled = !self.isNationEnabled;
-    [self updateUITexts];
-    [self syncWithServerFeature:@"Nation" status:self.isNationEnabled];
-}
-
-- (void)toggleEnemy {
-    self.isEnemyEnabled = !self.isEnemyEnabled;
-    [self updateUITexts];
-    [self syncWithServerFeature:@"Enemy" status:self.isEnemyEnabled];
-}
-
-- (void)toggleBox {
-    self.isBoxEnabled = !self.isBoxEnabled;
-    [self updateUITexts];
-    [self syncWithServerFeature:@"Box" status:self.isBoxEnabled];
 }
 
 @end
