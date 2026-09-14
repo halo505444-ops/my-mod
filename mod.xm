@@ -58,13 +58,14 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
 }
 
 - (void)validateKey:(NSString *)key completion:(void(^)(BOOL isValid))completion {
-    // ڕاستکردنەوەی ناوی ستوون لە `key` بۆ `key_text` با لەگەڵ سێرڤەرەکەت بگونجێت
     NSString *urlString = [NSString stringWithFormat:@"https://narkhdockqhlwxxyyxjr.supabase.co/rest/v1/keys?key_text=eq.%@", key];
     NSURL *url = [NSURL URLWithString:[urlString stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]]];
     
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
     [request setHTTPMethod:@"GET"];
     [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+    [request setValue:@"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcmtoZG9ja3FobHd4eHl5eGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MjM3MTMsImV4cCI6MjEwNDI5OTcxM30.F_1g9fcQgSFoMGiqp6hjfanOU6gAxZkTJ35qBa0wuUA" forHTTPHeaderField:@"apikey"];
+    [request setValue:@"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcmtoZG9ja3FobHd4eHl5eGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MjM3MTMsImV4cCI6MjEwNDI5OTcxM30.F_1g9fcQgSFoMGiqp6hjfanOU6gAxZkTJ35qBa0wuUA" forHTTPHeaderField:@"Authorization"];
     
     NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         if (error || !data) {
@@ -75,10 +76,13 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
         NSError *jsonError;
         NSArray *jsonArray = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
         if (!jsonError && [jsonArray isKindOfClass:[NSArray class]] && jsonArray.count > 0) {
-            completion(YES);
-        } else {
-            completion(NO);
+            NSDictionary *keyData = jsonArray[0];
+            if ([keyData[@"is_active"] boolValue] == YES) {
+                completion(YES);
+                return;
+            }
         }
+        completion(NO);
     }];
     [task resume];
 }
@@ -89,6 +93,8 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
     [request setHTTPMethod:@"POST"];
     [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+    [request setValue:@"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcmtoZG9ja3FobHd4eHl5eGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MjM3MTMsImV4cCI6MjEwNDI5OTcxM30.F_1g9fcQgSFoMGiqp6hjfanOU6gAxZkTJ35qBa0wuUA" forHTTPHeaderField:@"apikey"];
+    [request setValue:@"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcmtoZG9ja3FobHd4eHl5eGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MjM3MTMsImV4cCI6MjEwNDI5OTcxM30.F_1g9fcQgSFoMGiqp6hjfanOU6gAxZkTJ35qBa0wuUA" forHTTPHeaderField:@"Authorization"];
     
     NSDictionary *jsonBody = @{@"feature": featureName, @"status": status ? @(YES) : @(NO)};
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:jsonBody options:0 error:nil];
@@ -103,7 +109,6 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
         UIWindow *window = [self getMainWindow];
         if (!window) return;
 
-        // دوگمەی سەرەکی بە بێ هیچ بازنەیەک (سادە)
         self.floatingButton = [UIButton buttonWithType:UIButtonTypeCustom];
         self.floatingButton.frame = CGRectMake(50, 100, 50, 50);
         self.floatingButton.backgroundColor = [UIColor clearColor];
@@ -209,7 +214,7 @@ typedef NS_ENUM(NSInteger, AppLanguage) {
                     self.menuView.hidden = NO;
                 } else {
                     UIAlertAction *errAction = [UIAlertAction actionWithTitle:@"باشە" style:UIAlertActionStyleDestructive handler:nil];
-                    UIAlertController *errAlert = [UIAlertController alertControllerWithTitle:@"هەڵە" message:@"کلیلەکە هەڵەیە یان بوونی نییە!" preferredStyle:UIAlertControllerStyleAlert];
+                    UIAlertController *errAlert = [UIAlertController alertControllerWithTitle:@"هەڵە" message:@"کلیلەکە هەڵەیە یان ناچالاکە!" preferredStyle:UIAlertControllerStyleAlert];
                     [errAlert addAction:errAction];
                     [rootVC presentViewController:errAlert animated:YES completion:nil];
                 }
