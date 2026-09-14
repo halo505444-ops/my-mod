@@ -457,7 +457,7 @@ typedef NS_ENUM(NSInteger, MenuSection) {
         textField.placeholder = @"کلیل لێرە بنووسە...";
     }];
     
-    UIAlertAction *telegramAction = [UIAlertAction actionWithTitle:@"💬 بۆ دەست کەوتنی کلیل دەست لێرە دە" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    UIAlertAction *telegramAction = [UIAlertAction actionWithTitle:@"💬 بۆ دەست کەوتنی کلیل دەست لێرە بدە" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         NSURL *telegramURL = [NSURL URLWithString:@"https://t.me/MAMA_HALA0"];
         if ([[UIApplication sharedApplication] canOpenURL:telegramURL]) {
             [[UIApplication sharedApplication] openURL:telegramURL options:@{} completionHandler:nil];
