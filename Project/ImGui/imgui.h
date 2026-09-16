@@ -49,7 +49,7 @@ namespace ImGui {
     
     bool Button(const char* label, const ImVec2& size = ImVec2(0,0));
     bool Checkbox(const char* label, bool* v);
-    bool SliderFloat(const char* label, float* v, float v_min, float v_max, const char* format = "%.3f", নিজেকে flags = 0);
+    bool SliderFloat(const char* label, float* v, float v_min, float v_max, const char* format = "%.3f", ImGuiSliderFlags flags = 0);
     
     void Text(const char* fmt, ...);
     void SameLine(float offset_from_start_x = 0.0f, float spacing = -1.0f);
