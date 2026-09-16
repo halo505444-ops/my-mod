@@ -11,6 +11,17 @@
 #include "Project/Offset/Offset.hpp"
 #include "Project/Main/ESP.hpp"
 
+// MinimalViewInfo Structure Definition to prevent compiler errors
+typedef struct {
+    struct {
+        float X, Y, Z;
+    } Location;
+    struct {
+        float X, Y, Z;
+    } Rotation;
+    float FOV;
+} MinimalViewInfo;
+
 // Global Variables for Features
 BOOL IsLine = NO, IsBox = NO, IsDistance = NO, IsHealth = NO, IsBone = NO, IsName = NO, IsAlert360 = NO, IsWeapon = NO;
 BOOL IsAimbot = NO, IsAutoShoot = NO, IsFov = NO, IsRecoil = NO, IsSilentAim = NO, IsPrediction = NO, IsHeadshotOnly = NO;
