@@ -83,7 +83,10 @@ typedef NS_ENUM(NSInteger, MenuSection) {
         }
     }
     if (!foundWindow) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
         foundWindow = [UIApplication sharedApplication].windows.firstObject;
+#pragma clang diagnostic pop
     }
     return foundWindow;
 }
