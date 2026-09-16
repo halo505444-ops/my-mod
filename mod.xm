@@ -15,29 +15,19 @@ static int currentLanguage = 0; // 0: سۆرانی, 1: بادینی, 2: English
     });
 }
 
-// پشکنینی ڕاستەقینەی سێرفەر و پشکنینی وادە (30 ڕۆژ اوفلاین)
 + (void)verifyServerAndSetup {
     NSString *urlString = @"https://narkhdockqhlwxxyyyxjr.supabase.co/rest/v1/licenses?select=*";
     NSURL *url = [NSURL URLWithString:urlString];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
     
-    // بەستنەوەی تۆکنی تایبەتی سێرفەرەکەت
     NSString *apiKey = @"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcmtoZG9ja3FobHd4eHl5eGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MjM3MTMsImV4cCI6MjEwNDI5OTcxM30.F_1g9fcQgSFoMGiqp6hjfanOU6gAxZkTJ35qBa0wuUA";
     [request setValue:apiKey forHTTPHeaderField:@"apikey"];
     [request setValue:[NSString stringWithFormat:@"Bearer %@", apiKey] forHTTPHeaderField:@"Authorization"];
     
     NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
-        if (!error && data) {
-            // لێرەدا سەرکەوتوو بوو لە پەیوەندی کردن بە سێرفەر
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self createFloatingButton];
-            });
-        } else {
-            // ئەگەر سێرفەر نەبەسترا یان هێڵ کێشەی هەبوو، لێرەدا دەتوانرێت سنوردار بکرێت
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self createFloatingButton]; // بۆ تاقیکردنەوە دەیخەینە کار
-            });
-        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self createFloatingButton];
+        });
     }];
     [task resume];
 }
@@ -66,14 +56,12 @@ static int currentLanguage = 0; // 0: سۆرانی, 1: بادینی, 2: English
         return;
     }
     
-    // دیزاینی سەرەکی مینۆکە
     floatingMenu = [[UIView alloc] initWithFrame:CGRectMake(40, 75, 330, 490)];
     floatingMenu.backgroundColor = [UIColor colorWithRed:0.06 green:0.06 blue:0.06 alpha:0.97];
     floatingMenu.layer.cornerRadius = 16;
     floatingMenu.layer.borderWidth = 1.8;
     floatingMenu.layer.borderColor = [UIColor systemCyanColor].CGColor;
     
-    // ناونیشانی سەرەکی بە ناوی خۆت
     UILabel *title = [[UILabel alloc] initWithFrame:CGRectMake(20, 12, 290, 30)];
     title.text = @"⚡️ MAMA HALA VIP ⚡️";
     title.textColor = [UIColor systemYellowColor];
@@ -81,22 +69,19 @@ static int currentLanguage = 0; // 0: سۆرانی, 1: بادینی, 2: English
     title.font = [UIFont boldSystemFontOfSize:18];
     [floatingMenu addSubview:title];
     
-    // دوگمەی داخستن (X) بە شێوازێکی جوان
     UIButton *closeBtn = [UIButton buttonWithType:UIButtonTypeCustom];
     [closeBtn setTitle:@"✕" forState:UIControlStateNormal];
     [closeBtn setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
-    closeBtn.frame = CGRectMake(285, 12, 35, 35];
+    closeBtn.frame = CGRectMake(285, 12, 35, 35);
     [closeBtn addTarget:self action:@selector(toggleMenu) forControlEvents:UIControlEventTouchUpInside];
     [floatingMenu addSubview:closeBtn];
     
-    // دوگمەکانی گۆڕینی زمان (سۆرانی / بادینی / ئینگلیزی)
-    UISegmentedControl *langSelector = [[UISegmentedControl alloc] initWithItems:@[@"کوردی (سۆرانی)", @"کوردی (بادینی)", @"English"]];
-    langSelector.frame = CGRectMake(15, 52, 300, 32];
+    UISegmentedControl *langSelector = [[UISegmentedControl alloc] initWithItems:@[@"سۆرانی", @"بادینی", @"English"]];
+    langSelector.frame = CGRectMake(15, 52, 300, 32);
     langSelector.selectedSegmentIndex = currentLanguage;
     [langSelector addTarget:self action:@selector(changeLanguage:) forControlEvents:UIControlEventValueChanged];
     [floatingMenu addSubview:langSelector];
     
-    // دروستکردنی تایبەتمەندییەکان
     [self setupFeaturesInView:floatingMenu];
     
     [window addSubview:floatingMenu];
@@ -109,7 +94,7 @@ static int currentLanguage = 0; // 0: سۆرانی, 1: بادینی, 2: English
     [self toggleMenu];
 }
 
-+ (void)setupFeaturesInView:(UIView * )menuView {
++ (void)setupFeaturesInView:(UIView *)menuView {
     NSArray *espTitles;
     NSArray *aimTitles;
     
@@ -121,11 +106,10 @@ static int currentLanguage = 0; // 0: سۆرانی, 1: بادینی, 2: English
         aimTitles = @[@"ئایم بۆت سەری (Head)", @"ئایم بۆت سنگ (Chest)"];
     } else {
         espTitles = @[@"ESP Box", @"ESP Line", @"ESP Distance"];
-        aimTitles = @[@"AimBot Head", @ "AimBot Chest"];
+        aimTitles = @[@"AimBot Head", @"AimBot Chest"];
     }
     
-    // بەشی ESP
-    UILabel *espHeader = [[UILabel alloc] initWithFrame:CGRectMake(15, 96, 300, 20];
+    UILabel *espHeader = [[UILabel alloc] initWithFrame:CGRectMake(15, 96, 300, 20)];
     espHeader.text = (currentLanguage == 1) ? @"--- تایبەتمەندیێن ئێس پی ---" : ((currentLanguage == 0) ? @"--- بەشی ئێس پی (ESP) ---" : @"--- ESP Features ---");
     espHeader.textColor = [UIColor systemCyanColor];
     espHeader.font = [UIFont boldSystemFontOfSize:13];
@@ -143,8 +127,7 @@ static int currentLanguage = 0; // 0: سۆرانی, 1: بادینی, 2: English
         [menuView addSubview:lbl];
     }
     
-    // بەشی AimBot
-    UILabel *aimHeader = [[UILabel alloc] initWithFrame:CGRectMake(15, 240, 300, 20];
+    UILabel *aimHeader = [[UILabel alloc] initWithFrame:CGRectMake(15, 240, 300, 20)];
     aimHeader.text = (currentLanguage == 1) ? @"--- تایبەتمەندیێن ئایم بۆتی ---" : ((currentLanguage == 0) ? @"--- بەشی ئایم بۆت (AimBot) ---" : @"--- AimBot Features ---");
     aimHeader.textColor = [UIColor systemGreenColor];
     aimHeader.font = [UIFont boldSystemFontOfSize:13];
@@ -162,22 +145,17 @@ static int currentLanguage = 0; // 0: سۆرانی, 1: بادینی, 2: English
         [menuView addSubview:lbl];
     }
     
-    // کۆنتڕۆڵی دوری و مەودای ئایم بۆت (Slider)
-    UILabel *sliderLbl = [[UILabel alloc] initWithFrame:CGRectMake(15, 350, 300, 20];
+    UILabel *sliderLbl = [[UILabel alloc] initWithFrame:CGRectMake(15, 350, 300, 20)];
     sliderLbl.text = (currentLanguage == 1) ? @"دویراتی و مەودای ئایم بۆتی:" : ((currentLanguage == 0) ? @"مەودا و دوری ئایم بۆت (Range):" : @"AimBot Distance & Range:");
     sliderLbl.textColor = [UIColor lightGrayColor];
     sliderLbl.font = [UIFont systemFontOfSize:12];
     [menuView addSubview:sliderLbl];
     
-    UISlider *rangeSlider = [[UISlider alloc] initWithFrame:CGRectMake(15, 375, 300, 20];
-    rangeSlider.minimumValue = 50;
-    rangeSlider.maximumValue = 400;
-    rangeSlider.value = 150;
+    UISlider *rangeSlider = [[UISlider alloc] initWithFrame:CGRectMake(15, 375, 300, 20)];
     [rangeSlider addTarget:self action:@selector(sliderChanged:) forControlEvents:UIControlEventValueChanged];
     [menuView addSubview:rangeSlider];
     
-    // لۆگۆی کۆتایی بە ناوی MamaHala
-    UILabel *footer = [[UILabel alloc] initWithFrame:CGRectMake(15, 455, 300, 20];
+    UILabel *footer = [[UILabel alloc] initWithFrame:CGRectMake(15, 455, 300, 20)];
     footer.text = @"Developer: MamaHala ⚡️ VIP Edition";
     footer.textColor = [UIColor systemYellowColor];
     footer.textAlignment = NSTextAlignmentCenter;
@@ -185,17 +163,17 @@ static int currentLanguage = 0; // 0: سۆرانی, 1: بادینی, 2: English
     [menuView addSubview:footer];
 }
 
-+ (void)featureToggled:(UISwitch * )sender {
++ (void)featureToggled:(UISwitch *)sender {
     if (sender.isOn) {
-        // لێرەدا سەح کرا (هەڵکردنی تایبەتمەندی)
+        // کارپێکردن
     } else {
-        // لێرەدا سەح لادرا (کوژاندنەوەی تایبەتمەندی)
+        // کوژاندنەوە
     }
 }
 
-+ (void)sliderChanged:(UISlider * )sender {
++ (void)sliderChanged:(UISlider *)sender {
     float val = sender.value;
-    // کۆنتڕۆڵکردنی مەودای ئایم بۆت لێرە جێبەجێ دەبێت
+    // کۆنتڕۆڵی مەودا
 }
 
 @end
