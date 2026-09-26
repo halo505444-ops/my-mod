@@ -6,7 +6,6 @@
 @end
 
 @implementation ObsidianFloatingButton
-
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:CGRectMake(50, 100, 50, 50)];
     if (self) {
@@ -14,55 +13,44 @@
         self.layer.cornerRadius = 25;
         self.layer.borderWidth = 2.0;
         self.layer.borderColor = [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0].CGColor;
-        
         [self setTitle:@"⚙️" forState:UIControlStateNormal];
         self.titleLabel.font = [UIFont systemFontOfSize:22];
-        
-        UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePan:)];
-        [self addGestureRecognizer:pan];
+        [self addGestureRecognizer:[[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePan:)]];
     }
     return self;
 }
-
-- (void)handlePan:(UIPanGestureRecognizer *)gesture {
-    CGPoint translation = [gesture translationInView:self.superview];
-    self.center = CGPointMake(self.center.x + translation.x, self.center.y + translation.y);
-    [gesture setTranslation:CGPointZero inView:self.superview];
+- (void)handlePan:(UIPanGestureRecognizer *)g {
+    CGPoint t = [g translationInView:self.superview];
+    self.center = CGPointMake(self.center.x + t.x, self.center.y + t.y);
+    [g setTranslation:CGPointZero inView:self.superview];
 }
-
 @end
 
 
 // 2. کۆدی سلایدەری بازنەیی (Circular Slider) بۆ FOV، AimDis و iPadView
 @interface CircularSlider : UIControl
-@property (nonatomic, assign) float value;
-@property (nonatomic, assign) float minimumValue;
-@property (nonatomic, assign) float maximumValue;
-@property (nonatomic, strong) UILabel *valueLabel;
-@property (nonatomic, strong) UILabel *titleLabel;
+@property (nonatomic, assign) float value, minimumValue, maximumValue;
+@property (nonatomic, strong) UILabel *valueLabel, *titleLabel;
 @end
 
 @implementation CircularSlider
-
 - (instancetype)initWithFrame:(CGRect)frame title:(NSString *)title min:(float)min max:(float)max val:(float)val {
     self = [super initWithFrame:frame];
     if (self) {
-        self.minimumValue = min;
-        self.maximumValue = max;
-        self.value = val;
+        self.minimumValue = min; self.maximumValue = max; self.value = val;
         self.backgroundColor = [UIColor clearColor];
         
         self.titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, -18, frame.size.width, 20)];
-        self.titleLabel.text = title;
+        self.titleLabel.text = title; 
         self.titleLabel.textColor = [UIColor whiteColor];
-        self.titleLabel.font = [UIFont boldSystemFontOfSize:11];
+        self.titleLabel.font = [UIFont boldSystemFontOfSize:11]; 
         self.titleLabel.textAlignment = NSTextAlignmentCenter;
         [self addSubview:self.titleLabel];
         
         self.valueLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, (frame.size.height/2) - 10, frame.size.width, 20)];
         self.valueLabel.text = [NSString stringWithFormat:@"%d", (int)self.value];
         self.valueLabel.textColor = [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0];
-        self.valueLabel.font = [UIFont boldSystemFontOfSize:13];
+        self.valueLabel.font = [UIFont boldSystemFontOfSize:13]; 
         self.valueLabel.textAlignment = NSTextAlignmentCenter;
         [self addSubview:self.valueLabel];
     }
@@ -71,38 +59,25 @@
 
 - (void)drawRect:(CGRect)rect {
     [super drawRect:rect];
-    CGContextRef context = UIGraphicsGetCurrentContext();
-    CGContextSetStrokeColorWithColor(context, [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:0.9].CGColor);
-    CGContextSetLineWidth(context, 4.0);
-    CGRect circleRect = CGRectInset(self.bounds, 8, 8);
-    CGContextAddEllipseInRect(context, circleRect);
-    CGContextStrokePath(context);
+    CGContextRef c = UIGraphicsGetCurrentContext();
+    CGContextSetStrokeColorWithColor(c, [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:0.9].CGColor);
+    CGContextSetLineWidth(c, 4.0);
+    CGContextAddEllipseInRect(c, CGRectInset(self.bounds, 8, 8));
+    CGContextStrokePath(c);
 }
 
-- (BOOL)beginTrackingWithTouch:(UITouch *)touch withEvent:(UIEvent *)event {
-    [self updateValueWithTouch:touch];
-    return YES;
-}
+- (BOOL)beginTrackingWithTouch:(UITouch *)touch withEvent:(UIEvent *)event { [self updateVal:touch]; return YES; }
+- (BOOL)continueTrackingWithTouch:(UITouch *)touch withEvent:(UIEvent *)event { [self updateVal:touch]; return YES; }
 
-- (BOOL)continueTrackingWithTouch:(UITouch *)touch withEvent:(UIEvent *)event {
-    [self updateValueWithTouch:touch];
-    return YES;
-}
-
-- (void)updateValueWithTouch:(UITouch *)touch {
-    CGPoint point = [touch locationInView:self];
+- (void)updateVal:(UITouch *)touch {
+    CGPoint p = [touch locationInView:self];
     CGPoint center = CGPointMake(self.bounds.size.width/2, self.bounds.size.height/2);
-    CGFloat dx = point.x - center.x;
-    CGFloat dy = point.y - center.y;
-    CGFloat angle = atan2(dy, dx) + M_PI_2;
+    CGFloat angle = atan2(p.y - center.y, p.x - center.x) + M_PI_2;
     if (angle < 0) angle += 2 * M_PI;
-    
-    CGFloat percentage = angle / (2 * M_PI);
-    self.value = self.minimumValue + percentage * (self.maximumValue - self.minimumValue);
+    self.value = self.minimumValue + (angle / (2 * M_PI)) * (self.maximumValue - self.minimumValue);
     self.valueLabel.text = [NSString stringWithFormat:@"%d", (int)self.value];
     [self sendActionsForControlEvents:UIControlEventValueChanged];
 }
-
 @end
 
 
@@ -111,7 +86,6 @@
 @end
 
 @implementation ObsidianHomeTab
-
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
@@ -121,7 +95,7 @@
         [langBtn setTitleColor:[UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0] forState:UIControlStateNormal];
         langBtn.titleLabel.font = [UIFont boldSystemFontOfSize:11];
         langBtn.backgroundColor = [UIColor colorWithRed:0.15 green:0.15 blue:0.2 alpha:1.0];
-        langBtn.layer.cornerRadius = 6;
+        langBtn.layer.cornerRadius = 6; 
         langBtn.layer.borderWidth = 1.0;
         langBtn.layer.borderColor = [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0].CGColor;
         [self addSubview:langBtn];
@@ -159,21 +133,6 @@
         handcamBtn.layer.borderColor = [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0].CGColor;
         [self addSubview:handcamBtn];
         
-        UIButton *chkBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-        chkBtn.frame = CGRectMake(20, 60, 110, 25];
-        [chkBtn setTitle:@"  iPadView" forState:UIControlStateNormal];
-        [chkBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        chkBtn.titleLabel.font = [UIFont systemFontOfSize:12];
-        chkBtn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
-        
-        UIView *box = [[UIView alloc] initWithFrame:CGRectMake(0, 4, 16, 16)];
-        box.layer.borderWidth = 1.0;
-        box.layer.borderColor = [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0].CGColor;
-        box.layer.cornerRadius = 3;
-        box.backgroundColor = [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0];
-        [chkBtn addSubview:box];
-        [self addSubview:chkBtn];
-        
         CircularSlider *ipadSlider = [[CircularSlider alloc] initWithFrame:CGRectMake(35, 95, 75, 75) title:@"iPadView" min:70 max:120 val:90];
         [self addSubview:ipadSlider];
         
@@ -185,7 +144,6 @@
     }
     return self;
 }
-
 @end
 
 
@@ -194,17 +152,13 @@
 @end
 
 @implementation ObsidianESPTab
-
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
         NSArray *leftColumn = @[@"ESP", @"Line", @"Health", @"Name", @"Distance", @"Weapon"];
-        NSArray *rightColumn = @[@"Bone", @"HideBot", @"Alert360"];
-        
         for (int i = 0; i < leftColumn.count; i++) {
-            CGFloat yPos = 15 + (i * 35);
             UIButton *swBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-            swBtn.frame = CGRectMake(15, yPos, 70, 26);
+            swBtn.frame = CGRectMake(15, 15 + (i * 35), 70, 26);
             [swBtn setTitle:@"ON ⚡️" forState:UIControlStateNormal];
             [swBtn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
             swBtn.titleLabel.font = [UIFont boldSystemFontOfSize:11];
@@ -212,45 +166,15 @@
             swBtn.layer.cornerRadius = 13;
             [self addSubview:swBtn];
             
-            UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(95, yPos + 3, 100, 20)];
+            UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(95, 15 + (i * 35) + 3, 100, 20)];
             lbl.text = leftColumn[i];
             lbl.textColor = [UIColor whiteColor];
             lbl.font = [UIFont boldSystemFontOfSize:12];
             [self addSubview:lbl];
         }
-        
-        for (int i = 0; i < rightColumn.count; i++) {
-            CGFloat yPos = 15 + (i * 35);
-            UIButton *swBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-            swBtn.frame = CGRectMake(210, yPos, 70, 26);
-            [swBtn setTitle:(i == 0 ? @"ON ⚡️" : @"OFF") forState:UIControlStateNormal];
-            [swBtn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-            swBtn.titleLabel.font = [UIFont boldSystemFontOfSize:11];
-            swBtn.backgroundColor = (i == 0) ? [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0] : [UIColor colorWithRed:0.3 green:0.3 blue:0.3 alpha:1.0];
-            swBtn.layer.cornerRadius = 13;
-            [self addSubview:swBtn];
-            
-            UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(290, yPos + 3, 100, 20)];
-            lbl.text = rightColumn[i];
-            lbl.textColor = [UIColor whiteColor];
-            lbl.font = [UIFont boldSystemFontOfSize:12];
-            [self addSubview:lbl];
-        }
-        
-        UIButton *settingsBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-        settingsBtn.frame = CGRectMake(210, 125, 140, 32];
-        [settingsBtn setTitle:@"ESP Settings" forState:UIControlStateNormal];
-        [settingsBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        settingsBtn.titleLabel.font = [UIFont boldSystemFontOfSize:12];
-        settingsBtn.backgroundColor = [UIColor colorWithRed:0.35 green:0.25 blue:0.15 alpha:1.0];
-        settingsBtn.layer.cornerRadius = 6;
-        settingsBtn.layer.borderWidth = 1.0;
-        settingsBtn.layer.borderColor = [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0].CGColor;
-        [self addSubview:settingsBtn];
     }
     return self;
 }
-
 @end
 
 
@@ -259,105 +183,29 @@
 @end
 
 @implementation ObsidianAIMTab
-
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        CircularSlider *fovSlider = [[CircularSlider alloc] initWithFrame:CGRectMake(80, 10, 75, 75) title:@"FOV" min:0 max:360 val:144];
-        [self addSubview:fovSlider];
+        CircularSlider *fov = [[CircularSlider alloc] initWithFrame:CGRectMake(80, 10, 75, 75) title:@"FOV" min:0 max:360 val:144];
+        [self addSubview:fov];
         
-        CircularSlider *aimDisSlider = [[CircularSlider alloc] initWithFrame:CGRectMake(220, 10, 75, 75) title:@"AimDis" min:50 max:500 val:105];
-        [self addSubview:aimDisSlider];
-        
-        NSArray *checkboxOptions = @[@"AimBot", @"Skip Bot", @"Skip Knock", @"Slient aim", @"Show Fov"];
-        NSArray *frames = @[
-            [NSValue valueWithCGRect:CGRectMake(50, 100, 110, 25)],
-            [NSValue valueWithCGRect:CGRectMake(170, 100, 110, 25)],
-            [NSValue valueWithCGRect:CGRectMake(290, 100, 110, 25)],
-            [NSValue valueWithCGRect:CGRectMake(110, 128, 110, 25)],
-            [NSValue valueWithCGRect:CGRectMake(230, 128, 110, 25)]
-        ];
-        
-        for (int i = 0; i < checkboxOptions.count; i++) {
-            CGRect btnRect = [frames[i] CGRectValue];
-            UIButton *chkBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-            chkBtn.frame = btnRect;
-            [chkBtn setTitle:[NSString stringWithFormat:@"  %@", checkboxOptions[i]] forState:UIControlStateNormal];
-            [chkBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-            chkBtn.titleLabel.font = [UIFont systemFontOfSize:11];
-            chkBtn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
-            
-            UIView *box = [[UIView alloc] initWithFrame:CGRectMake(0, 4, 16, 16)];
-            box.layer.borderWidth = 1.0;
-            box.layer.borderColor = [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0].CGColor;
-            box.layer.cornerRadius = 3;
-            box.tag = 99;
-            [chkBtn addSubview:box];
-            
-            [chkBtn addTarget:self action:@selector(checkboxTapped:) forControlEvents:UIControlEventTouchUpInside];
-            [self addSubview:chkBtn];
-        }
-        
-        NSArray *titles = @[@"Mode", @"Target", @"AIM Mode"];
-        NSArray *options1 = @[@"Fire", @"Scope", @"Both"];
-        NSArray *options2 = @[@"Head", @"Body"];
-        NSArray *options3 = @[@"Risk", @"Mid", @"Safe"];
-        NSArray *allOpts = @[options1, options2, options3];
-        
-        for (int i = 0; i < titles.count; i++) {
-            UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(15, 160 + (i * 32), 70, 25)];
-            lbl.text = titles[i];
-            lbl.textColor = [UIColor whiteColor];
-            lbl.font = [UIFont boldSystemFontOfSize:11];
-            [self addSubview:lbl];
-            
-            NSArray *opts = allOpts[i];
-            for (int j = 0; j < opts.count; j++) {
-                UIButton *optBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-                optBtn.frame = CGRectMake(95 + (j * 95), 160 + (i * 32), 85, 25);
-                [optBtn setTitle:opts[j] forState:UIControlStateNormal];
-                [optBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-                optBtn.titleLabel.font = [UIFont systemFontOfSize:11];
-                optBtn.backgroundColor = (j == 0) ? [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0] : [UIColor colorWithRed:0.15 green:0.15 blue:0.2 alpha:1.0];
-                if(j == 0) [optBtn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-                optBtn.layer.cornerRadius = 6;
-                [self addSubview:optBtn];
-            }
-        }
+        CircularSlider *aimDis = [[CircularSlider alloc] initWithFrame:CGRectMake(220, 10, 75, 75) title:@"AimDis" min:50 max:500 val:105];
+        [self addSubview:aimDis];
     }
     return self;
 }
-
-- (void)checkboxTapped:(UIButton *)sender {
-    UIView *box = [sender viewWithTag:99];
-    if (box.backgroundColor == [UIColor clearColor]) {
-        box.backgroundColor = [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0];
-        box.layer.borderColor = [UIColor whiteColor].CGColor;
-    } else {
-        box.backgroundColor = [UIColor clearColor];
-        box.layer.borderColor = [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0].CGColor;
-    }
-}
-
 @end
 
 
-// 6. فەنکشنی دەنگی خۆکار (Voice Greeting) لە کاتی کردنەوەی یارییەکەدا
+// 6. فەنکشنی دەنگی پێشوازیکردن لە کاتی کردنەوەی یارییەکەدا
 %ctor {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         AVSpeechSynthesizer *synth = [[AVSpeechSynthesizer alloc] init];
-        AVSpeechUtterance *utterance = [[AVSpeechUtterance alloc] initWithString:@"بەخێر بێی بۆ مۆد مێنۆی مامە هەڵە، بەهیوای یارییەکی خۆش"];
-        utterance.rate = 0.48f;
-        utterance.pitchMultiplier = 1.0f;
-        
-        AVSpeechSynthesisVoice *voice = [AVSpeechSynthesisVoice voiceWithLanguage:@"ku-IQ"];
-        if (!voice) {
-            voice = [AVSpeechSynthesisVoice voiceWithLanguage:@"ar-IQ"];
-        }
-        if (voice) {
-            utterance.voice = voice;
-        }
-        
-        [synth speakUtterance:utterance];
+        AVSpeechUtterance *utt = [[AVSpeechUtterance alloc] initWithString:@"بەخێر بێی بۆ مۆد مێنۆی مامە هەڵە، بەهیوای یارییەکی خۆش"];
+        utt.rate = 0.48f;
+        AVSpeechSynthesisVoice *v = [AVSpeechSynthesisVoice voiceWithLanguage:@"ku-IQ"];
+        if (!v) v = [AVSpeechSynthesisVoice voiceWithLanguage:@"ar-IQ"];
+        if (v) utt.voice = v;
+        [synth speakUtterance:utt];
     });
 }
