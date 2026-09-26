@@ -1,5 +1,4 @@
 #import <UIKit/UIKit.h>
-#import <AVFoundation/AVFoundation.h>
 
 @interface ObsidianFloatingButton : UIButton
 @end
@@ -185,15 +184,3 @@
     return self;
 }
 @end
-
-%ctor {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        AVSpeechSynthesizer *synth = [[AVSpeechSynthesizer alloc] init];
-        AVSpeechUtterance *utt = [[AVSpeechUtterance alloc] initWithString:@"بەخێر بێی بۆ مۆد مێنۆی مامە هەڵە، بەهیوای یارییەکی خۆش"];
-        utt.rate = 0.48f;
-        AVSpeechSynthesisVoice *v = [AVSpeechSynthesisVoice voiceWithLanguage:@"ku-IQ"];
-        if (!v) v = [AVSpeechSynthesisVoice voiceWithLanguage:@"ar-IQ"];
-        if (v) utt.voice = v;
-        [synth speakUtterance:utt];
-    });
-}
