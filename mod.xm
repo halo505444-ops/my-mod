@@ -1,7 +1,6 @@
 #import <UIKit/UIKit.h>
 #import <AVFoundation/AVFoundation.h>
 
-// 1. دووگمەی مەلەوانی (Floating Menu Button) بە ⚙️
 @interface ObsidianFloatingButton : UIButton
 @end
 
@@ -26,8 +25,6 @@
 }
 @end
 
-
-// 2. کۆدی سلایدەری بازنەیی (Circular Slider) بۆ FOV، AimDis و iPadView
 @interface CircularSlider : UIControl
 @property (nonatomic, assign) float value, minimumValue, maximumValue;
 @property (nonatomic, strong) UILabel *valueLabel, *titleLabel;
@@ -39,7 +36,6 @@
     if (self) {
         self.minimumValue = min; self.maximumValue = max; self.value = val;
         self.backgroundColor = [UIColor clearColor];
-        
         self.titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, -18, frame.size.width, 20)];
         self.titleLabel.text = title; 
         self.titleLabel.textColor = [UIColor whiteColor];
@@ -80,8 +76,6 @@
 }
 @end
 
-
-// 3. بەشی Home Tab
 @interface ObsidianHomeTab : UIView
 @end
 
@@ -101,7 +95,7 @@
         [self addSubview:langBtn];
         
         UIButton *resetBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-        resetBtn.frame = CGRectMake(180, 15, 110, 32];
+        resetBtn.frame = CGRectMake(180, 15, 110, 32);
         [resetBtn setTitle:@"Reset guest" forState:UIControlStateNormal];
         [resetBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         resetBtn.titleLabel.font = [UIFont boldSystemFontOfSize:12];
@@ -112,7 +106,7 @@
         [self addSubview:resetBtn];
         
         UIButton *hideBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-        hideBtn.frame = CGRectMake(310, 15, 110, 32];
+        hideBtn.frame = CGRectMake(310, 15, 110, 32);
         [hideBtn setTitle:@"Hide Hack" forState:UIControlStateNormal];
         [hideBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         hideBtn.titleLabel.font = [UIFont boldSystemFontOfSize:12];
@@ -123,7 +117,7 @@
         [self addSubview:hideBtn];
         
         UIButton *handcamBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-        handcamBtn.frame = CGRectMake(240, 58, 110, 32];
+        handcamBtn.frame = CGRectMake(240, 58, 110, 32);
         [handcamBtn setTitle:@"Handcam" forState:UIControlStateNormal];
         [handcamBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         handcamBtn.titleLabel.font = [UIFont boldSystemFontOfSize:12];
@@ -146,8 +140,6 @@
 }
 @end
 
-
-// 4. بەشی ESP Tab
 @interface ObsidianESPTab : UIView
 @end
 
@@ -177,8 +169,6 @@
 }
 @end
 
-
-// 5. بەشی AIM Tab
 @interface ObsidianAIMTab : UIView
 @end
 
@@ -196,8 +186,6 @@
 }
 @end
 
-
-// 6. فەنکشنی دەنگی پێشوازیکردن لە کاتی کردنەوەی یارییەکەدا
 %ctor {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         AVSpeechSynthesizer *synth = [[AVSpeechSynthesizer alloc] init];
