@@ -1,495 +1,364 @@
 #import <UIKit/UIKit.h>
-#import <mach-o/dyld.h>
-#import <sys/stat.h>
-#import <dlfcn.h>
-#include <array>
+#import <AVFoundation/AVFoundation.h>
 
-#include "Project/ImGui/imgui.h"
-#include "Project/Extra/Bone.hpp"
-#include "Project/Extra/utf.hpp"
-#include "Project/Extra/Obfuscate.h"
-#include "Project/Offset/Offset.hpp"
-#include "Project/Main/ESP.hpp"
+// 1. دووگمەی مەلەوانی (Floating Menu Button) بە ⚙️
+@interface ObsidianFloatingButton : UIButton
+@end
 
-// MinimalViewInfo Structure Definition to prevent compiler errors
-typedef struct {
-    struct {
-        float X, Y, Z;
-    } Location;
-    struct {
-        float X, Y, Z;
-    } Rotation;
-    float FOV;
-} MinimalViewInfo;
+@implementation ObsidianFloatingButton
 
-// Global Variables for Features
-BOOL IsLine = NO, IsBox = NO, IsDistance = NO, IsHealth = NO, IsBone = NO, IsName = NO, IsAlert360 = NO, IsWeapon = NO;
-BOOL IsAimbot = NO, IsAutoShoot = NO, IsFov = NO, IsRecoil = NO, IsSilentAim = NO, IsPrediction = NO, IsHeadshotOnly = NO;
-BOOL IsFly = NO, IsHighJump = NO, IsSpeed = NO, IsWallHack = NO, IsFastReload = NO, IsInstantHit = NO, IsMagicBullet = NO;
-BOOL IsWeaponSkins = NO, IsCharacterSkins = NO, IsVehicleSkins = NO, IsMythicEffect = NO, IsCustomEmote = NO;
-BOOL IsBulletTrack = NO, IsIgnoreKnock = NO;
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:CGRectMake(50, 100, 50, 50)];
+    if (self) {
+        self.backgroundColor = [UIColor colorWithRed:0.1 green:0.1 blue:0.15 alpha:0.9];
+        self.layer.cornerRadius = 25;
+        self.layer.borderWidth = 2.0;
+        self.layer.borderColor = [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0].CGColor;
+        
+        [self setTitle:@"⚙️" forState:UIControlStateNormal];
+        self.titleLabel.font = [UIFont systemFontOfSize:22];
+        
+        UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePan:)];
+        [self addGestureRecognizer:pan];
+    }
+    return self;
+}
 
-// Core Engine Variables
-static long GWorld, UName, Engine, PersistentLevel, PlayerController, Character, PlayerCameraManager, ControlRotation, MyHUD;
-static MinimalViewInfo POV;
-float IsRadius = 160.0f;
-float IsSpeedVal = 1.0f;
-float IsThicknessLine = 1.0f;
-float IsThicknessBone = 1.0f;
-int IsStyle = 0;
-bool drawOutline = true;
-float IsFontDraw = 12.0f;
-int IsEnglish = 0;
+- (void)handlePan:(UIPanGestureRecognizer *)gesture {
+    CGPoint translation = [gesture translationInView:self.superview];
+    self.center = CGPointMake(self.center.x + translation.x, self.center.y + translation.y);
+    [gesture setTranslation:CGPointZero inView:self.superview];
+}
 
-typedef NS_ENUM(NSInteger, AppLanguage) {
-    LangSorani = 0,
-    LangBadini,
-    LangEnglish
-};
+@end
 
-typedef NS_ENUM(NSInteger, MenuSection) {
-    SectionESP = 0,
-    SectionAimbot,
-    SectionMemory,
-    SectionSkins,
-    SectionSettings
-};
 
-@interface ModMenuManager : NSObject
-@property (nonatomic, assign) BOOL isAuthorized;
-@property (nonatomic, assign) AppLanguage currentLang;
-@property (nonatomic, assign) MenuSection currentSection;
-
-@property (nonatomic, strong) UIButton *floatingButton;
-@property (nonatomic, strong) UIView *menuView;
+// 2. کۆدی سلایدەری بازنەیی (Circular Slider) بۆ FOV، AimDis و iPadView
+@interface CircularSlider : UIControl
+@property (nonatomic, assign) float value;
+@property (nonatomic, assign) float minimumValue;
+@property (nonatomic, assign) float maximumValue;
+@property (nonatomic, strong) UILabel *valueLabel;
 @property (nonatomic, strong) UILabel *titleLabel;
-@property (nonatomic, strong) UIScrollView *contentScrollView;
-@property (nonatomic, strong) UIStackView *tabStackView;
-@property (nonatomic, strong) UIStackView *contentStackView;
 @end
 
-@implementation ModMenuManager
+@implementation CircularSlider
 
-+ (instancetype)sharedInstance {
-    static ModMenuManager *shared = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        shared = [[ModMenuManager alloc] init];
-        shared.currentLang = LangSorani;
-        shared.currentSection = SectionESP;
-        shared.isAuthorized = NO;
-    });
-    return shared;
-}
-
-- (UIWindow *)getMainWindow {
-    UIWindow *foundWindow = nil;
-    for (UIWindowScene *windowScene in [UIApplication sharedApplication].connectedScenes) {
-        if (windowScene.activationState == UISceneActivationStateForegroundActive) {
-            for (UIWindow *window in windowScene.windows) {
-                if (window.isKeyWindow) {
-                    foundWindow = window;
-                    break;
-                }
-            }
-        }
-    }
-    if (!foundWindow) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-        foundWindow = [UIApplication sharedApplication].windows.firstObject;
-#pragma clang diagnostic pop
-    }
-    return foundWindow;
-}
-
-- (NSString *)localizedStringForKey:(NSString *)key {
-    NSDictionary *translations = @{
-        @"ESP": @{ @(LangSorani): @"بینینی نەیار (ESP)", @(LangBadini): @"دیتنا نەیاران", @(LangEnglish): @"ESP" },
-        @"Aim": @{ @(LangSorani): @"ئایمبۆت", @(LangBadini): @"ئایمبۆت", @(LangEnglish): @"Aim" },
-        @"Fly": @{ @(LangSorani): @"هێز و خێرایی", @(LangBadini): @"فڕین و لەزاتی", @(LangEnglish): @"Powers" },
-        @"Skins": @{ @(LangSorani): @"سکینەکان", @(LangBadini): @"سکین", @(LangEnglish): @"Skins" },
-        @"Lang": @{ @(LangSorani): @"زمان", @(LangBadini): @"زمان", @(LangEnglish): @"Lang" },
+- (instancetype)initWithFrame:(CGRect)frame title:(NSString *)title min:(float)min max:(float)max val:(float)val {
+    self = [super initWithFrame:frame];
+    if (self) {
+        self.minimumValue = min;
+        self.maximumValue = max;
+        self.value = val;
+        self.backgroundColor = [UIColor clearColor];
         
-        @"Line": @{ @(LangSorani): @"هێڵی نەیار (Line)", @(LangBadini): @"هێلا نەیاری", @(LangEnglish): @"Line" },
-        @"Box": @{ @(LangSorani): @"چوارگۆشەی نەیار (Box)", @(LangBadini): @"چوارگوشکە", @(LangEnglish): @"Box" },
-        @"Distance": @{ @(LangSorani): @"دووری نەیار (Distance)", @(LangBadini): @"دووری", @(LangEnglish): @"Distance" },
-        @"Health": @{ @(LangSorani): @"تەندروستی نەیار (Health)", @(LangBadini): @"تەندروستی", @(LangEnglish): @"Health" },
-        @"Skeleton": @{ @(LangSorani): @"ئێسکی لەش (Skeleton)", @(LangBadini): @"ئێسکی لەش", @(LangEnglish): @"Skeleton" },
-        @"Name": @{ @(LangSorani): @"ناوی نەیار (Name)", @(LangBadini): @"ناڤێ نەیاری", @(LangEnglish): @"Name ESP" },
-        @"Alert": @{ @(LangSorani): @"ئاگاداری بینین (Danger Alert)", @(LangBadini): @"ئاگاداری دیتنێ", @(LangEnglish): @"Danger Alert" },
-        @"Loot": @{ @(LangSorani): @"دۆزینەوەی لوت و چەک (Loot)", @(LangBadini): @"لوت و چەک", @(LangEnglish): @"Item Loot ESP" },
-        
-        @"Aimbot": @{ @(LangSorani): @"ئایمبۆتی ئۆتۆماتیک", @(LangBadini): @"ئایمبۆتا خۆکار", @(LangEnglish): @"Aimbot" },
-        @"Auto Shoot": @{ @(LangSorani): @"تەقەکردنی خۆکار (Auto Shoot)", @(LangBadini): @"تەقەکرنا خۆکار", @(LangEnglish): @"Auto Shoot" },
-        @"FOV": @{ @(LangSorani): @"بازنەی ئایم (FOV Circle)", @(LangBadini): @"بازنەیا ئایم", @(LangEnglish): @"FOV Circle" },
-        @"Recoil": @{ @(LangSorani): @"بێ پاشگەزبوونەوە (No Recoil)", @(LangBadini): @"بێ پاشگەزبوون", @(LangEnglish): @"No Recoil" },
-        @"Silent": @{ @(LangSorani): @"سایلێنت ئایم (Silent Aim)", @(LangBadini): @"سایلێنت ئایم", @(LangEnglish): @"Silent Aim" },
-        @"Prediction": @{ @(LangSorani): @"پێشبینی جووڵە (Prediction)", @(LangBadini): @"پێشبینا جووڵەی", @(LangEnglish): @"Prediction" },
-        @"Headshot": @{ @(LangSorani): @"تەنها سەرسەر (Headshot Only)", @(LangBadini): @"تەنها سەر", @(LangEnglish): @"Headshot Only" },
-        
-        @"Fly Hack": @{ @(LangSorani): @"فڕین لە ئاسمان (Fly)", @(LangBadini): @"فڕین ل ئاسمانێ", @(LangEnglish): @"Fly Hack" },
-        @"High Jump": @{ @(LangSorani): @"بازدانی بەرز (High Jump)", @(LangBadini): @"بازدانا بلند", @(LangEnglish): @"High Jump" },
-        @"Speed Hack": @{ @(LangSorani): @"خێرایی یاریزان (Speed)", @(LangBadini): @"لەزاتی", @(LangEnglish): @"Speed Hack" },
-        @"WallHack": @{ @(LangSorani): @"بینین لەپشت دیوار (WallHack)", @(LangBadini): @"دیتن ژ پاش دیواران", @(LangEnglish): @"WallHack" },
-        @"Fast Reload": @{ @(LangSorani): @"پڕکردنەوەی خێرای چەک (Fast Reload)", @(LangBadini): @"ڕێلۆدا خێرا", @(LangEnglish): @"Fast Reload" },
-        @"Instant Hit": @{ @(LangSorani): @"پێکانی خێرا (Instant Hit)", @(LangBadini): @"پێکانا خێرا", @(LangEnglish): @"Instant Hit" },
-        @"Magic Bullet": @{ @(LangSorani): @"گولەی سیحراوی (Magic Bullet)", @(LangBadini): @"گولەیا سیحراوی", @(LangEnglish): @"Magic Bullet" },
-        
-        @"Weapon Skins": @{ @(LangSorani): @"سکینی گشت چەکەکان", @(LangBadini): @"سکینێن چەکان", @(LangEnglish): @"Weapon Skins" },
-        @"Character Skins": @{ @(LangSorani): @"سکینی جلوبەرگ و کەسایەتی", @(LangBadini): @"سکینێن کەسایەتی", @(LangEnglish): @"Character Skins" },
-        @"Vehicle Skins": @{ @(LangSorani): @"سکینی ئۆتۆمبێل و کەشتی", @(LangBadini): @"سکینێن ترۆمبێلان", @(LangEnglish): @"Vehicle Skins" },
-        @"Mythic Effect": @{ @(LangSorani): @"تایبەتمەندی مایتیک و پلەبەرز", @(LangBadini): @"مایتیک ئێفێکت", @(LangEnglish): @"Mythic Effects" },
-        @"Emotes": @{ @(LangSorani): @"سەمای کراوە و ئەیمۆت", @(LangBadini): @"سەما و ئەیمۆت", @(LangEnglish): @"Unlock Emotes" }
-    };
-    
-    NSDictionary *langDict = translations[key];
-    if (langDict && langDict[@(self.currentLang)]) {
-        return langDict[@(self.currentLang)];
-    }
-    return key;
-}
-
-- (void)validateKey:(NSString *)key completion:(void(^)(BOOL isValid))completion {
-    NSString *urlString = [NSString stringWithFormat:@"https://narkhdockqhlwxxyyxjr.supabase.co/rest/v1/keys?key_text=eq.%@", key];
-    NSURL *url = [NSURL URLWithString:[urlString stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]]];
-    
-    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
-    [request setHTTPMethod:@"GET"];
-    [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
-    [request setValue:@"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcmtoZG9ja3FobHd4eHl5eGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MjM3MTMsImV4cCI6MjEwNDI5OTcxM30.F_1g9fcQgSFoMGiqp6hjfanOU6gAxZkTJ35qBa0wuUA" forHTTPHeaderField:@"apikey"];
-    [request setValue:@"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcmtoZG9ja3FobHd4eHl5eGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MjM3MTMsImV4cCI6MjEwNDI5OTcxM30.F_1g9fcQgSFoMGiqp6hjfanOU6gAxZkTJ35qBa0wuUA" forHTTPHeaderField:@"Authorization"];
-    
-    NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
-        if (error || !data) {
-            completion(NO);
-            return;
-        }
-        
-        NSError *jsonError;
-        NSArray *jsonArray = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
-        if (!jsonError && [jsonArray isKindOfClass:[NSArray class]] && jsonArray.count > 0) {
-            NSDictionary *keyData = jsonArray[0];
-            if ([keyData[@"is_active"] boolValue] == YES) {
-                completion(YES);
-                return;
-            }
-        }
-        completion(NO);
-    }];
-    [task resume];
-}
-
-- (void)syncWithServerFeature:(NSString *)featureName status:(BOOL)status {
-    NSString *urlString = @"https://narkhdockqhlwxxyyxjr.supabase.co/rest/v1/mod_logs";
-    NSURL *url = [NSURL URLWithString:urlString];
-    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
-    [request setHTTPMethod:@"POST"];
-    [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
-    [request setValue:@"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcmtoZG9ja3FobHd4eHl5eGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MjM3MTMsImV4cCI6MjEwNDI5OTcxM30.F_1g9fcQgSFoMGiqp6hjfanOU6gAxZkTJ35qBa0wuUA" forHTTPHeaderField:@"apikey"];
-    [request setValue:@"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcmtoZG9ja3FobHd4eHl5eGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MjM3MTMsImV4cCI6MjEwNDI5OTcxM30.F_1g9fcQgSFoMGiqp6hjfanOU6gAxZkTJ35qBa0wuUA" forHTTPHeaderField:@"Authorization"];
-    
-    NSDictionary *jsonBody = @{@"feature": featureName, @"status": status ? @(YES) : @(NO)};
-    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:jsonBody options:0 error:nil];
-    [request setHTTPBody:jsonData];
-    
-    NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {}];
-    [task resume];
-}
-
-- (void)setupMenu {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        UIWindow *window = [self getMainWindow];
-        if (!window) return;
-
-        self.floatingButton = [UIButton buttonWithType:UIButtonTypeCustom];
-        self.floatingButton.frame = CGRectMake(50, 100, 50, 50);
-        self.floatingButton.backgroundColor = [UIColor clearColor];
-        [self.floatingButton setTitle:@"⚙️" forState:UIControlStateNormal];
-        self.floatingButton.titleLabel.font = [UIFont systemFontOfSize:32];
-        self.floatingButton.layer.zPosition = 99999;
-        [self.floatingButton addTarget:self action:@selector(handleFloatingButtonTapped) forControlEvents:UIControlEventTouchUpInside];
-        
-        UIPanGestureRecognizer *panBtn = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePanButton:)];
-        [self.floatingButton addGestureRecognizer:panBtn];
-        [window addSubview:self.floatingButton];
-
-        self.menuView = [[UIView alloc] initWithFrame:CGRectMake(100, 100, 320, 440)];
-        self.menuView.backgroundColor = [UIColor colorWithRed:0.95 green:0.93 blue:0.98 alpha:0.98];
-        self.menuView.hidden = YES;
-        self.menuView.layer.zPosition = 99998;
-        self.menuView.layer.cornerRadius = 14;
-        self.menuView.layer.borderWidth = 2.5;
-        self.menuView.layer.borderColor = [UIColor purpleColor].CGColor;
-        self.menuView.clipsToBounds = YES;
-
-        self.titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(60, 10, 200, 30)];
-        self.titleLabel.text = @"👑 M ᴀ ᴍ ᴀ 𝐇 ᴀ ʟ ᴀ 👑";
-        self.titleLabel.textColor = [UIColor purpleColor];
+        self.titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, -18, frame.size.width, 20)];
+        self.titleLabel.text = title;
+        self.titleLabel.textColor = [UIColor whiteColor];
+        self.titleLabel.font = [UIFont boldSystemFontOfSize:11];
         self.titleLabel.textAlignment = NSTextAlignmentCenter;
-        self.titleLabel.font = [UIFont boldSystemFontOfSize:15];
-        [self.menuView addSubview:self.titleLabel];
-
-        self.tabStackView = [[UIStackView alloc] initWithFrame:CGRectMake(10, 48, 300, 34)];
-        self.tabStackView.axis = UILayoutConstraintAxisHorizontal;
-        self.tabStackView.distribution = UIStackViewDistributionFillEqually;
-        self.tabStackView.spacing = 3;
-        [self.menuView addSubview:self.tabStackView];
-
-        self.contentScrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(10, 90, 300, 335)];
-        self.contentScrollView.showsVerticalScrollIndicator = YES;
-        [self.menuView addSubview:self.contentScrollView];
-
-        self.contentStackView = [[UIStackView alloc] initWithFrame:CGRectMake(0, 0, 300, 520)];
-        self.contentStackView.axis = UILayoutConstraintAxisVertical;
-        self.contentStackView.distribution = UIStackViewDistributionFillEqually;
-        self.contentStackView.spacing = 6;
-        [self.contentScrollView addSubview:self.contentStackView];
-
-        UIPanGestureRecognizer *panMenu = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePanMenu:)];
-        [self.menuView addGestureRecognizer:panMenu];
-
-        [window addSubview:self.menuView];
-        [self reloadTabs];
-        [self reloadMenuButtons];
-    });
-}
-
-- (void)reloadTabs {
-    for (UIView *subview in self.tabStackView.arrangedSubviews) {
-        [subview removeFromSuperview];
+        [self addSubview:self.titleLabel];
+        
+        self.valueLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, (frame.size.height/2) - 10, frame.size.width, 20)];
+        self.valueLabel.text = [NSString stringWithFormat:@"%d", (int)self.value];
+        self.valueLabel.textColor = [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0];
+        self.valueLabel.font = [UIFont boldSystemFontOfSize:13];
+        self.valueLabel.textAlignment = NSTextAlignmentCenter;
+        [self addSubview:self.valueLabel];
     }
-    
-    NSArray *tabsKeys = @[@"ESP", @"Aim", @"Fly", @"Skins", @"Lang"];
-    for (int i = 0; i < tabsKeys.count; i++) {
-        UIButton *tabBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-        [tabBtn setTitle:[self localizedStringForKey:tabsKeys[i]] forState:UIControlStateNormal];
-        tabBtn.titleLabel.font = [UIFont boldSystemFontOfSize:10];
-        [tabBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        tabBtn.backgroundColor = (self.currentSection == i) ? [UIColor systemBlueColor] : [UIColor darkGrayColor];
-        tabBtn.layer.cornerRadius = 6;
-        tabBtn.tag = i;
-        [tabBtn addTarget:self action:@selector(switchTab:) forControlEvents:UIControlEventTouchUpInside];
-        [self.tabStackView addArrangedSubview:tabBtn];
-    }
+    return self;
 }
 
-- (void)handleFloatingButtonTapped {
-    if (!self.isAuthorized) {
-        [self showKeyPrompt];
-    } else {
-        self.menuView.hidden = !self.menuView.hidden;
-    }
+- (void)drawRect:(CGRect)rect {
+    [super drawRect:rect];
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    CGContextSetStrokeColorWithColor(context, [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:0.9].CGColor);
+    CGContextSetLineWidth(context, 4.0);
+    CGRect circleRect = CGRectInset(self.bounds, 8, 8);
+    CGContextAddEllipseInRect(context, circleRect);
+    CGContextStrokePath(context);
 }
 
-- (void)handlePanButton:(UIPanGestureRecognizer *)recognizer {
-    UIWindow *window = [self getMainWindow];
-    CGPoint translation = [recognizer translationInView:window];
-    CGPoint center = recognizer.view.center;
-    recognizer.view.center = CGPointMake(center.x + translation.x, center.y + translation.y);
-    [recognizer setTranslation:CGPointZero inView:window];
+- (BOOL)beginTrackingWithTouch:(UITouch *)touch withEvent:(UIEvent *)event {
+    [self updateValueWithTouch:touch];
+    return YES;
 }
 
-- (void)handlePanMenu:(UIPanGestureRecognizer *)recognizer {
-    UIWindow *window = [self getMainWindow];
-    CGPoint translation = [recognizer translationInView:window];
-    CGPoint center = recognizer.view.center;
-    recognizer.view.center = CGPointMake(center.x + translation.x, center.y + translation.y);
-    [recognizer setTranslation:CGPointZero inView:window];
+- (BOOL)continueTrackingWithTouch:(UITouch *)touch withEvent:(UIEvent *)event {
+    [self updateValueWithTouch:touch];
+    return YES;
 }
 
-- (void)switchTab:(UIButton *)sender {
-    self.currentSection = (MenuSection)sender.tag;
-    [self reloadTabs];
-    [self reloadMenuButtons];
-}
-
-- (void)reloadMenuButtons {
-    for (UIView *subview in self.contentStackView.arrangedSubviews) {
-        [subview removeFromSuperview];
-    }
+- (void)updateValueWithTouch:(UITouch *)touch {
+    CGPoint point = [touch locationInView:self];
+    CGPoint center = CGPointMake(self.bounds.size.width/2, self.bounds.size.height/2);
+    CGFloat dx = point.x - center.x;
+    CGFloat dy = point.y - center.y;
+    CGFloat angle = atan2(dy, dx) + M_PI_2;
+    if (angle < 0) angle += 2 * M_PI;
     
-    if (self.currentSection == SectionESP) {
-        self.contentStackView.frame = CGRectMake(0, 0, 300, 360);
-        self.contentScrollView.contentSize = CGSizeMake(300, 360);
-        
-        [self addSwitchRowToStack:@"Line" status:IsLine action:@selector(toggleLine:)];
-        [self addSwitchRowToStack:@"Box" status:IsBox action:@selector(toggleBox:)];
-        [self addSwitchRowToStack:@"Distance" status:IsDistance action:@selector(toggleDistance:)];
-        [self addSwitchRowToStack:@"Health" status:IsHealth action:@selector(toggleHealth:)];
-        [self addSwitchRowToStack:@"Skeleton" status:IsBone action:@selector(toggleSkeleton:)];
-        [self addSwitchRowToStack:@"Name" status:IsName action:@selector(toggleName:)];
-        [self addSwitchRowToStack:@"Alert" status:IsAlert360 action:@selector(toggleAlert:)];
-        [self addSwitchRowToStack:@"Loot" status:IsWeapon action:@selector(toggleLoot:)];
-    } 
-    else if (self.currentSection == SectionAimbot) {
-        self.contentStackView.frame = CGRectMake(0, 0, 300, 320);
-        self.contentScrollView.contentSize = CGSizeMake(300, 320);
-        
-        [self addSwitchRowToStack:@"Aimbot" status:IsAimbot action:@selector(toggleAimbot:)];
-        [self addSwitchRowToStack:@"Auto Shoot" status:IsAutoShoot action:@selector(toggleAutoShoot:)];
-        [self addSwitchRowToStack:@"FOV" status:IsFov action:@selector(toggleFov:)];
-        [self addSwitchRowToStack:@"Recoil" status:IsRecoil action:@selector(toggleRecoil:)];
-        [self addSwitchRowToStack:@"Silent" status:IsSilentAim action:@selector(toggleSilent:)];
-        [self addSwitchRowToStack:@"Prediction" status:IsPrediction action:@selector(togglePrediction:)];
-        [self addSwitchRowToStack:@"Headshot" status:IsHeadshotOnly action:@selector(toggleHeadshot:)];
-    } 
-    else if (self.currentSection == SectionMemory) {
-        self.contentStackView.frame = CGRectMake(0, 0, 300, 320);
-        self.contentScrollView.contentSize = CGSizeMake(300, 320);
-        
-        [self addSwitchRowToStack:@"Fly Hack" status:IsFly action:@selector(toggleFly:)];
-        [self addSwitchRowToStack:@"High Jump" status:IsHighJump action:@selector(toggleHighJump:)];
-        [self addSwitchRowToStack:@"Speed Hack" status:IsSpeed action:@selector(toggleSpeed:)];
-        [self addSwitchRowToStack:@"WallHack" status:IsWallHack action:@selector(toggleWallHack:)];
-        [self addSwitchRowToStack:@"Fast Reload" status:IsFastReload action:@selector(toggleFastReload:)];
-        [self addSwitchRowToStack:@"Instant Hit" status:IsInstantHit action:@selector(toggleInstantHit:)];
-        [self addSwitchRowToStack:@"Magic Bullet" status:IsMagicBullet action:@selector(toggleMagicBullet:)];
-    } 
-    else if (self.currentSection == SectionSkins) {
-        self.contentStackView.frame = CGRectMake(0, 0, 300, 230);
-        self.contentScrollView.contentSize = CGSizeMake(300, 230);
-        
-        [self addSwitchRowToStack:@"Weapon Skins" status:IsWeaponSkins action:@selector(toggleWeaponSkins:)];
-        [self addSwitchRowToStack:@"Character Skins" status:IsCharacterSkins action:@selector(toggleCharacterSkins:)];
-        [self addSwitchRowToStack:@"Vehicle Skins" status:IsVehicleSkins action:@selector(toggleVehicleSkins:)];
-        [self addSwitchRowToStack:@"Mythic Effect" status:IsMythicEffect action:@selector(toggleMythicEffect:)];
-        [self addSwitchRowToStack:@"Emotes" status:IsCustomEmote action:@selector(toggleEmotes:)];
-    } 
-    else if (self.currentSection == SectionSettings) {
-        self.contentStackView.frame = CGRectMake(0, 0, 300, 140);
-        self.contentScrollView.contentSize = CGSizeMake(300, 140);
-        
-        [self addLangButtonToStack:@"کوردی (سۆرانى)" langIndex:LangSorani];
-        [self addLangButtonToStack:@"کوردی (بادینی)" langIndex:LangBadini];
-        [self addLangButtonToStack:@"English" langIndex:LangEnglish];
-    }
-}
-
-- (void)addSwitchRowToStack:(NSString *)key status:(BOOL)status action:(SEL)action {
-    UIView *rowView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 300, 40)];
-    rowView.backgroundColor = [UIColor whiteColor];
-    rowView.layer.cornerRadius = 8;
-    rowView.layer.borderWidth = 1.2;
-    rowView.layer.borderColor = [UIColor purpleColor].CGColor;
-    
-    UISwitch *sw = [[UISwitch alloc] initWithFrame:CGRectMake(12, 5, 50, 30)];
-    sw.on = status;
-    [sw addTarget:self action:action forControlEvents:UIControlEventValueChanged];
-    [rowView addSubview:sw];
-    
-    UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(75, 5, 215, 30)];
-    lbl.text = [self localizedStringForKey:key];
-    lbl.font = [UIFont boldSystemFontOfSize:12];
-    lbl.textColor = [UIColor darkTextColor];
-    [rowView addSubview:lbl];
-    
-    [self.contentStackView addArrangedSubview:rowView];
-}
-
-- (void)addLangButtonToStack:(NSString *)title langIndex:(AppLanguage)lang {
-    UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
-    BOOL isSelected = (self.currentLang == lang);
-    [btn setTitle:[NSString stringWithFormat:@"%@%@", title, isSelected ? @" ✔" : @""] forState:UIControlStateNormal];
-    btn.titleLabel.font = [UIFont boldSystemFontOfSize:12];
-    [btn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    btn.backgroundColor = isSelected ? [UIColor systemBlueColor] : [UIColor darkGrayColor];
-    btn.layer.cornerRadius = 8;
-    btn.tag = lang;
-    [btn addTarget:self action:@selector(selectLanguage:) forControlEvents:UIControlEventTouchUpInside];
-    [self.contentStackView addArrangedSubview:btn];
-}
-
-- (void)selectLanguage:(id)sender {
-    self.currentLang = (AppLanguage)((UIView *)sender).tag;
-    IsEnglish = (self.currentLang == LangEnglish) ? 1 : 0;
-    [self reloadTabs];
-    [self reloadMenuButtons];
-}
-
-// Toggles for ESP
-- (void)toggleLine:(UISwitch *)sender { IsLine = sender.isOn; [self syncWithServerFeature:@"Line" status:sender.isOn]; }
-- (void)toggleBox:(UISwitch *)sender { IsBox = sender.isOn; [self syncWithServerFeature:@"Box" status:sender.isOn]; }
-- (void)toggleDistance:(UISwitch *)sender { IsDistance = sender.isOn; [self syncWithServerFeature:@"Distance" status:sender.isOn]; }
-- (void)toggleHealth:(UISwitch *)sender { IsHealth = sender.isOn; [self syncWithServerFeature:@"Health" status:sender.isOn]; }
-- (void)toggleSkeleton:(UISwitch *)sender { IsBone = sender.isOn; [self syncWithServerFeature:@"Skeleton" status:sender.isOn]; }
-- (void)toggleName:(UISwitch *)sender { IsName = sender.isOn; [self syncWithServerFeature:@"Name" status:sender.isOn]; }
-- (void)toggleAlert:(UISwitch *)sender { IsAlert360 = sender.isOn; [self syncWithServerFeature:@"Alert" status:sender.isOn]; }
-- (void)toggleLoot:(UISwitch *)sender { IsWeapon = sender.isOn; [self syncWithServerFeature:@"Loot" status:sender.isOn]; }
-
-// Toggles for Aimbot
-- (void)toggleAimbot:(UISwitch *)sender { IsAimbot = sender.isOn; [self syncWithServerFeature:@"Aimbot" status:sender.isOn]; }
-- (void)toggleAutoShoot:(UISwitch *)sender { IsAutoShoot = sender.isOn; [self syncWithServerFeature:@"AutoShoot" status:sender.isOn]; }
-- (void)toggleFov:(UISwitch *)sender { IsFov = sender.isOn; [self syncWithServerFeature:@"FOV" status:sender.isOn]; }
-- (void)toggleRecoil:(UISwitch *)sender { IsRecoil = sender.isOn; [self syncWithServerFeature:@"NoRecoil" status:sender.isOn]; }
-- (void)toggleSilent:(UISwitch *)sender { IsSilentAim = sender.isOn; [self syncWithServerFeature:@"SilentAim" status:sender.isOn]; }
-- (void)togglePrediction:(UISwitch *)sender { IsPrediction = sender.isOn; [self syncWithServerFeature:@"Prediction" status:sender.isOn]; }
-- (void)toggleHeadshot:(UISwitch *)sender { IsHeadshotOnly = sender.isOn; [self syncWithServerFeature:@"HeadshotOnly" status:sender.isOn]; }
-
-// Toggles for Memory / Powers
-- (void)toggleFly:(UISwitch *)sender { IsFly = sender.isOn; [self syncWithServerFeature:@"Fly" status:sender.isOn]; }
-- (void)toggleHighJump:(UISwitch *)sender { IsHighJump = sender.isOn; [self syncWithServerFeature:@"HighJump" status:sender.isOn]; }
-- (void)toggleSpeed:(UISwitch *)sender { IsSpeed = sender.isOn; [self syncWithServerFeature:@"Speed" status:sender.isOn]; }
-- (void)toggleWallHack:(UISwitch *)sender { IsWallHack = sender.isOn; [self syncWithServerFeature:@"WallHack" status:sender.isOn]; }
-- (void)toggleFastReload:(UISwitch *)sender { IsFastReload = sender.isOn; [self syncWithServerFeature:@"FastReload" status:sender.isOn]; }
-- (void)toggleInstantHit:(UISwitch *)sender { IsInstantHit = sender.isOn; [self syncWithServerFeature:@"InstantHit" status:sender.isOn]; }
-- (void)toggleMagicBullet:(UISwitch *)sender { IsMagicBullet = sender.isOn; [self syncWithServerFeature:@"MagicBullet" status:sender.isOn]; }
-
-// Toggles for Skins
-- (void)toggleWeaponSkins:(UISwitch *)sender { IsWeaponSkins = sender.isOn; [self syncWithServerFeature:@"WeaponSkins" status:sender.isOn]; }
-- (void)toggleCharacterSkins:(UISwitch *)sender { IsCharacterSkins = sender.isOn; [self syncWithServerFeature:@"CharacterSkins" status:sender.isOn]; }
-- (void)toggleVehicleSkins:(UISwitch *)sender { IsVehicleSkins = sender.isOn; [self syncWithServerFeature:@"VehicleSkins" status:sender.isOn]; }
-- (void)toggleMythicEffect:(UISwitch *)sender { IsMythicEffect = sender.isOn; [self syncWithServerFeature:@"MythicEffect" status:sender.isOn]; }
-- (void)toggleEmotes:(UISwitch *)sender { IsCustomEmote = sender.isOn; [self syncWithServerFeature:@"Emotes" status:sender.isOn]; }
-
-- (void)showKeyPrompt {
-    UIWindow *window = [self getMainWindow];
-    UIViewController *rootVC = window.rootViewController;
-    
-    UIAlertController *keyAlert = [UIAlertController alertControllerWithTitle:@"🔑 MamaHala Key System" 
-        message:@"تکایە کلیلی چالاککردن بنووسە:" 
-        preferredStyle:UIAlertControllerStyleAlert];
-        
-    [keyAlert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
-        textField.placeholder = @"کلیل لێرە بنووسە...";
-    }];
-    
-    UIAlertAction *telegramAction = [UIAlertAction actionWithTitle:@"💬 بۆ دەست کەوتنی کلیل دەست لێرە بدە" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        NSURL *telegramURL = [NSURL URLWithString:@"https://t.me/MAMA_HALA0"];
-        if ([[UIApplication sharedApplication] canOpenURL:telegramURL]) {
-            [[UIApplication sharedApplication] openURL:telegramURL options:@{} completionHandler:nil];
-        }
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [self showKeyPrompt];
-        });
-    }];
-    [keyAlert addAction:telegramAction];
-    
-    UIAlertAction *submitAction = [UIAlertAction actionWithTitle:@"پشکنین" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        NSString *enteredKey = keyAlert.textFields.firstObject.text;
-        [self validateKey:enteredKey completion:^(BOOL isValid) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if (isValid) {
-                    self.isAuthorized = YES;
-                    self.menuView.hidden = NO;
-                } else {
-                    UIAlertController *errAlert = [UIAlertController alertControllerWithTitle:@"هەڵە" message:@"کلیلەکە هەڵەیە یان ناچالاکە!" preferredStyle:UIAlertControllerStyleAlert];
-                    [errAlert addAction:[UIAlertAction actionWithTitle:@"باشە" style:UIAlertActionStyleDestructive handler:nil]];
-                    [rootVC presentViewController:errAlert animated:YES completion:nil];
-                }
-            });
-        }];
-    }];
-    
-    [keyAlert addAction:submitAction];
-    [keyAlert addAction:[UIAlertAction actionWithTitle:@"داخستن" style:UIAlertActionStyleCancel handler:nil]];
-    [rootVC presentViewController:keyAlert animated:YES completion:nil];
+    CGFloat percentage = angle / (2 * M_PI);
+    self.value = self.minimumValue + percentage * (self.maximumValue - self.minimumValue);
+    self.valueLabel.text = [NSString stringWithFormat:@"%d", (int)self.value];
+    [self sendActionsForControlEvents:UIControlEventValueChanged];
 }
 
 @end
 
+
+// 3. بەشی Home Tab
+@interface ObsidianHomeTab : UIView
+@end
+
+@implementation ObsidianHomeTab
+
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        UIButton *langBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+        langBtn.frame = CGRectMake(20, 15, 100, 30);
+        [langBtn setTitle:@"KURDISH ◀" forState:UIControlStateNormal];
+        [langBtn setTitleColor:[UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0] forState:UIControlStateNormal];
+        langBtn.titleLabel.font = [UIFont boldSystemFontOfSize:11];
+        langBtn.backgroundColor = [UIColor colorWithRed:0.15 green:0.15 blue:0.2 alpha:1.0];
+        langBtn.layer.cornerRadius = 6;
+        langBtn.layer.borderWidth = 1.0;
+        langBtn.layer.borderColor = [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0].CGColor;
+        [self addSubview:langBtn];
+        
+        UIButton *resetBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+        resetBtn.frame = CGRectMake(180, 15, 110, 32];
+        [resetBtn setTitle:@"Reset guest" forState:UIControlStateNormal];
+        [resetBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        resetBtn.titleLabel.font = [UIFont boldSystemFontOfSize:12];
+        resetBtn.backgroundColor = [UIColor colorWithRed:0.18 green:0.18 blue:0.24 alpha:1.0];
+        resetBtn.layer.cornerRadius = 16;
+        resetBtn.layer.borderWidth = 1.0;
+        resetBtn.layer.borderColor = [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0].CGColor;
+        [self addSubview:resetBtn];
+        
+        UIButton *hideBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+        hideBtn.frame = CGRectMake(310, 15, 110, 32];
+        [hideBtn setTitle:@"Hide Hack" forState:UIControlStateNormal];
+        [hideBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        hideBtn.titleLabel.font = [UIFont boldSystemFontOfSize:12];
+        hideBtn.backgroundColor = [UIColor colorWithRed:0.18 green:0.18 blue:0.24 alpha:1.0];
+        hideBtn.layer.cornerRadius = 16;
+        hideBtn.layer.borderWidth = 1.0;
+        hideBtn.layer.borderColor = [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0].CGColor;
+        [self addSubview:hideBtn];
+        
+        UIButton *handcamBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+        handcamBtn.frame = CGRectMake(240, 58, 110, 32];
+        [handcamBtn setTitle:@"Handcam" forState:UIControlStateNormal];
+        [handcamBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        handcamBtn.titleLabel.font = [UIFont boldSystemFontOfSize:12];
+        handcamBtn.backgroundColor = [UIColor colorWithRed:0.18 green:0.18 blue:0.24 alpha:1.0];
+        handcamBtn.layer.cornerRadius = 16;
+        handcamBtn.layer.borderWidth = 1.0;
+        handcamBtn.layer.borderColor = [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0].CGColor;
+        [self addSubview:handcamBtn];
+        
+        UIButton *chkBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+        chkBtn.frame = CGRectMake(20, 60, 110, 25];
+        [chkBtn setTitle:@"  iPadView" forState:UIControlStateNormal];
+        [chkBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        chkBtn.titleLabel.font = [UIFont systemFontOfSize:12];
+        chkBtn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
+        
+        UIView *box = [[UIView alloc] initWithFrame:CGRectMake(0, 4, 16, 16)];
+        box.layer.borderWidth = 1.0;
+        box.layer.borderColor = [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0].CGColor;
+        box.layer.cornerRadius = 3;
+        box.backgroundColor = [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0];
+        [chkBtn addSubview:box];
+        [self addSubview:chkBtn];
+        
+        CircularSlider *ipadSlider = [[CircularSlider alloc] initWithFrame:CGRectMake(35, 95, 75, 75) title:@"iPadView" min:70 max:120 val:90];
+        [self addSubview:ipadSlider];
+        
+        UILabel *verLabel = [[UILabel alloc] initWithFrame:CGRectMake(240, 110, 120, 25)];
+        verLabel.text = @"VERSION 1.0";
+        verLabel.textColor = [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0];
+        verLabel.font = [UIFont boldSystemFontOfSize:14];
+        [self addSubview:verLabel];
+    }
+    return self;
+}
+
+@end
+
+
+// 4. بەشی ESP Tab
+@interface ObsidianESPTab : UIView
+@end
+
+@implementation ObsidianESPTab
+
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        NSArray *leftColumn = @[@"ESP", @"Line", @"Health", @"Name", @"Distance", @"Weapon"];
+        NSArray *rightColumn = @[@"Bone", @"HideBot", @"Alert360"];
+        
+        for (int i = 0; i < leftColumn.count; i++) {
+            CGFloat yPos = 15 + (i * 35);
+            UIButton *swBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+            swBtn.frame = CGRectMake(15, yPos, 70, 26];
+            [swBtn setTitle:@"ON ⚡️" forState:UIControlStateNormal];
+            [swBtn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+            swBtn.titleLabel.font = [UIFont boldSystemFontOfSize:11];
+            swBtn.backgroundColor = [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0];
+            swBtn.layer.cornerRadius = 13;
+            [self addSubview:swBtn];
+            
+            UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(95, yPos + 3, 100, 20)];
+            lbl.text = leftColumn[i];
+            lbl.textColor = [UIColor whiteColor];
+            lbl.font = [UIFont boldSystemFontOfSize:12];
+            [self addSubview:lbl];
+        }
+        
+        for (int i = 0; i < rightColumn.count; i++) {
+            CGFloat yPos = 15 + (i * 35);
+            UIButton *swBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+            swBtn.frame = CGRectMake(210, yPos, 70, 26];
+            [swBtn setTitle:(i == 0 ? @"ON ⚡️" : @"OFF") forState:UIControlStateNormal];
+            [swBtn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+            swBtn.titleLabel.font = [UIFont boldSystemFontOfSize:11];
+            swBtn.backgroundColor = (i == 0) ? [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0] : [UIColor colorWithRed:0.3 green:0.3 blue:0.3 alpha:1.0];
+            swBtn.layer.cornerRadius = 13;
+            [self addSubview:swBtn];
+            
+            UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(290, yPos + 3, 100, 20)];
+            lbl.text = rightColumn[i];
+            lbl.textColor = [UIColor whiteColor];
+            lbl.font = [UIFont boldSystemFontOfSize:12];
+            [self.superview addSubview:lbl]; // Fixing superview context warning safely
+        }
+        
+        UIButton *settingsBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+        settingsBtn.frame = CGRectMake(210, 125, 140, 32];
+        [settingsBtn setTitle:@"ESP Settings" forState:UIControlStateNormal];
+        [settingsBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        settingsBtn.titleLabel.font = [UIFont boldSystemFontOfSize:12];
+        settingsBtn.backgroundColor = [UIColor colorWithRed:0.35 green:0.25 blue:0.15 alpha:1.0];
+        settingsBtn.layer.cornerRadius = 6;
+        settingsBtn.layer.borderWidth = 1.0;
+        settingsBtn.layer.borderColor = [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0].CGColor;
+        [self addSubview:settingsBtn];
+    }
+    return self;
+}
+
+@end
+
+
+// 5. بەشی AIM Tab
+@interface ObsidianAIMTab : UIView
+@end
+
+@implementation ObsidianAIMTab
+
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        CircularSlider *fovSlider = [[CircularSlider alloc] initWithFrame:CGRectMake(80, 10, 75, 75) title:@"FOV" min:0 max:360 val:144];
+        [self addSubview:fovSlider];
+        
+        CircularSlider *aimDisSlider = [[CircularSlider alloc] initWithFrame:CGRectMake(220, 10, 75, 75) title:@"AimDis" min:50 max:500 val:105];
+        [self addSubview:aimDisSlider];
+        
+        NSArray *checkboxOptions = @[@"AimBot", @"Skip Bot", @"Skip Knock", @"Slient aim", @"Show Fov"];
+        NSArray *frames = @[
+            [NSValue valueWithCGRect:CGRectMake(50, 100, 110, 25)],
+            [NSValue valueWithCGRect:CGRectMake(170, 100, 110, 25)],
+            [NSValue valueWithCGRect:CGRectMake(290, 100, 110, 25)],
+            [NSValue valueWithCGRect:CGRectMake(110, 128, 110, 25)],
+            [NSValue valueWithCGRect:CGRectMake(230, 128, 110, 25)]
+        ];
+        
+        for (int i = 0; i < checkboxOptions.count; i++) {
+            CGRect btnRect = [frames[i] CGRectValue];
+            UIButton *chkBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+            chkBtn.frame = btnRect;
+            [chkBtn setTitle:[NSString stringWithFormat:@"  %@", checkboxOptions[i]] forState:UIControlStateNormal];
+            [chkBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+            chkBtn.titleLabel.font = [UIFont systemFontOfSize:11];
+            chkBtn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
+            
+            UIView *box = [[UIView alloc] initWithFrame:CGRectMake(0, 4, 16, 16)];
+            box.layer.borderWidth = 1.0;
+            box.layer.borderColor = [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0].CGColor;
+            box.layer.cornerRadius = 3;
+            box.tag = 99;
+            [chkBtn addSubview:box];
+            
+            [chkBtn addTarget:self action:@selector(checkboxTapped:) forControlEvents:UIControlEventTouchUpInside];
+            [self addSubview:chkBtn];
+        }
+        
+        NSArray *titles = @[@"Mode", @"Target", @"AIM Mode"];
+        NSArray *options1 = @[@"Fire", @"Scope", @"Both"];
+        NSArray *options2 = @[@"Head", @"Body"];
+        NSArray *options3 = @[@"Risk", @"Mid", @"Safe"];
+        NSArray *allOpts = @[options1, options2, options3];
+        
+        for (int i = 0; i < titles.count; i++) {
+            UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(15, 160 + (i * 32), 70, 25)];
+            lbl.text = titles[i];
+            lbl.textColor = [UIColor whiteColor];
+            lbl.font = [UIFont boldSystemFontOfSize:11];
+            [self addSubview:lbl];
+            
+            NSArray *opts = allOpts[i];
+            for (int j = 0; j < opts.count; j++) {
+                UIButton *optBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+                optBtn.frame = CGRectMake(95 + (j * 95), 160 + (i * 32), 85, 25);
+                [optBtn setTitle:opts[j] forState:UIControlStateNormal];
+                [optBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+                optBtn.titleLabel.font = [UIFont systemFontOfSize:11];
+                optBtn.backgroundColor = (j == 0) ? [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0] : [UIColor colorWithRed:0.15 green:0.15 blue:0.2 alpha:1.0];
+                if(j == 0) [optBtn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+                optBtn.layer.cornerRadius = 6;
+                [self addSubview:optBtn];
+            }
+        }
+    }
+    return self;
+}
+
+- (void)checkboxTapped:(UIButton *)sender {
+    UIView *box = [sender viewWithTag:99];
+    if (box.backgroundColor == [UIColor clearColor]) {
+        box.backgroundColor = [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0];
+        box.layer.borderColor = [UIColor whiteColor].CGColor;
+    } else {
+        box.backgroundColor = [UIColor clearColor];
+        box.layer.borderColor = [UIColor colorWithRed:0.95 green:0.8 blue:0.15 alpha:1.0].CGColor;
+    }
+}
+
+@end
+
+
+// 6. فەنکشنی دەنگی خۆکار (Voice Greeting) لە کاتی پەیڕەوکردنی هاکەکە لە ناو پۆبجی
 %ctor {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [[ModMenuManager sharedInstance] setupMenu];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        AVSpeechSynthesizer *synth = [[AVSpeechSynthesizer alloc] init];
+        AVSpeechUtterance *utterance = [[AVSpeechUtterance alloc] initWithString:@"بەخێر بێی بۆ مۆد مێنۆی مامە هەڵە، بەهیوای یارییەکی خۆش"];
+        utterance.rate = 0.48f; // خێرایی خوێندنەوەی دەنگەکە بە شێوازێکی سروشتی و ڕوون
+        utterance.pitchMultiplier = 1.0f;
+        
+        // هەوڵدان بۆ دۆزینەوەی دەنگی کوردی یان عەرەبی نزیک لە کوردی
+        AVSpeechSynthesisVoice *voice = [AVSpeechSynthesisVoice voiceWithLanguage:@"ku-IQ"];
+        if (!voice) {
+            voice = [AVSpeechSynthesisVoice voiceWithLanguage:@"ar-IQ"];
+        }
+        if (voice) {
+            utterance.voice = voice;
+        }
+        
+        [synth speakUtterance:utterance];
     });
 }
