@@ -204,7 +204,7 @@
         for (int i = 0; i < leftColumn.count; i++) {
             CGFloat yPos = 15 + (i * 35);
             UIButton *swBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-            swBtn.frame = CGRectMake(15, yPos, 70, 26];
+            swBtn.frame = CGRectMake(15, yPos, 70, 26);
             [swBtn setTitle:@"ON ⚡️" forState:UIControlStateNormal];
             [swBtn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
             swBtn.titleLabel.font = [UIFont boldSystemFontOfSize:11];
@@ -222,7 +222,7 @@
         for (int i = 0; i < rightColumn.count; i++) {
             CGFloat yPos = 15 + (i * 35);
             UIButton *swBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-            swBtn.frame = CGRectMake(210, yPos, 70, 26];
+            swBtn.frame = CGRectMake(210, yPos, 70, 26);
             [swBtn setTitle:(i == 0 ? @"ON ⚡️" : @"OFF") forState:UIControlStateNormal];
             [swBtn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
             swBtn.titleLabel.font = [UIFont boldSystemFontOfSize:11];
@@ -234,7 +234,7 @@
             lbl.text = rightColumn[i];
             lbl.textColor = [UIColor whiteColor];
             lbl.font = [UIFont boldSystemFontOfSize:12];
-            [self.superview addSubview:lbl]; // Fixing superview context warning safely
+            [self addSubview:lbl];
         }
         
         UIButton *settingsBtn = [UIButton buttonWithType:UIButtonTypeCustom];
@@ -342,15 +342,14 @@
 @end
 
 
-// 6. فەنکشنی دەنگی خۆکار (Voice Greeting) لە کاتی پەیڕەوکردنی هاکەکە لە ناو پۆبجی
+// 6. فەنکشنی دەنگی خۆکار (Voice Greeting) لە کاتی کردنەوەی یارییەکەدا
 %ctor {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         AVSpeechSynthesizer *synth = [[AVSpeechSynthesizer alloc] init];
         AVSpeechUtterance *utterance = [[AVSpeechUtterance alloc] initWithString:@"بەخێر بێی بۆ مۆد مێنۆی مامە هەڵە، بەهیوای یارییەکی خۆش"];
-        utterance.rate = 0.48f; // خێرایی خوێندنەوەی دەنگەکە بە شێوازێکی سروشتی و ڕوون
+        utterance.rate = 0.48f;
         utterance.pitchMultiplier = 1.0f;
         
-        // هەوڵدان بۆ دۆزینەوەی دەنگی کوردی یان عەرەبی نزیک لە کوردی
         AVSpeechSynthesisVoice *voice = [AVSpeechSynthesisVoice voiceWithLanguage:@"ku-IQ"];
         if (!voice) {
             voice = [AVSpeechSynthesisVoice voiceWithLanguage:@"ar-IQ"];
