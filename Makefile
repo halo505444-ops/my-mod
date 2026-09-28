@@ -1,1 +1,10 @@
-YourProjectName_FRAMEWORKS = UIKit AVFoundation
+
+Package: com.mamahala.modmenu
+Name: MamaHala VIP
+Depends: mobilesubstrate
+Version: 1.0
+Architecture: iphoneos-arm
+Description: MamaHala Mod Menu for iOS
+Maintainer: MamaHala
+Author: MamaHala
+Section: Tweaks
