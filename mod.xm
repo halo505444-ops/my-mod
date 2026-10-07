@@ -1,20 +1,31 @@
 #import <UIKit/UIKit.h>
 #import <dlfcn.h>
 
-// دۆزینەوەی ڕێڕەوی ڕاستەقینەی بەیاندڵی MamaHala بە شێوازێکی داینامیکی و مسۆگەر
-static NSBundle *getMamaHalaBundle() {
+// فەنکشنێک بۆ دۆزینەوە و هێنانی وێنەکە ڕاستەوخۆ لە شوێنی فایلی مۆدەکە
+static UIImage *getMamaHalaImage() {
     Dl_info info;
-    if (dladdr((void *)&getMamaHalaBundle, &info) == 0) return nil;
+    if (dladdr((void *)&getMamaHalaImage, &info) == 0) return nil;
     NSString *dylibPath = [NSString stringWithUTF8String:info.dli_fname];
-    NSString *bundlePath = [[dylibPath stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"MamaHala.bundle"];
+    NSString *dylibDir = [dylibPath stringByDeletingLastPathComponent];
+    
+    // 1. پشکنینی ناو بەیاندڵی MamaHala.bundle ئەگەر هەبێت
+    NSString *bundlePath = [dylibDir stringByAppendingPathComponent:@"MamaHala.bundle"];
     NSBundle *bundle = [NSBundle bundleWithPath:bundlePath];
-    if (!bundle) {
-        bundle = [NSBundle bundleWithPath:@"/Library/MobileSubstrate/DynamicLibraries/MamaHala.bundle"];
+    NSString *imagePath = [bundle pathForResource:@"MamaHala" ofType:@"jpg"];
+    if (imagePath) {
+        UIImage *img = [UIImage imageWithContentsOfFile:imagePath];
+        if (img) return img;
     }
-    return bundle;
+    
+    // 2. پشکنینی ڕاستەوخۆی فایلی MamaHala.jpg لە تەنیشت دایلبەکە
+    NSString *directPath = [dylibDir stringByAppendingPathComponent:@"MamaHala.jpg"];
+    UIImage *directImg = [UIImage imageWithContentsOfFile:directPath];
+    if (directImg) return directImg;
+    
+    return nil;
 }
 
-// پشکنینی کاتی بەسەرچوون (٣٠ ڕۆژ لە بەرواری دیاریکراو)
+// پشکنینی کاتی بەسەرچوون (٣٠ ڕۆژ)
 __attribute__((constructor)) static void checkExpiration() {
     NSDateComponents *comps = [[NSDateComponents alloc] init];
     comps.year = 2026;
@@ -43,9 +54,9 @@ __attribute__((constructor)) static void checkExpiration() {
     }
 }
 
-// نیشاندانی لۆگۆ بە شێوەیەکی هەمیشەیی لە ناوەڕاستی سەرەوەی شاشە
+// نیشاندانی وێنەی لۆگۆ لە ناوەڕاستی سەرەوەی شاشە
 %ctor {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         UIWindow *window = nil;
         for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
             if ([scene isKindOfClass:[UIWindowScene class]]) {
@@ -68,8 +79,7 @@ __attribute__((constructor)) static void checkExpiration() {
             CGFloat logoX = (screenWidth - logoWidth) / 2;
             CGFloat logoY = 40;
             
-            NSBundle *bundle = getMamaHalaBundle();
-            UIImage *customImage = [UIImage imageWithContentsOfFile:[bundle pathForResource:@"MamaHala" ofType:@"jpg"]];
+            UIImage *customImage = getMamaHalaImage();
             
             if (customImage) {
                 UIImageView *logoImageView = [[UIImageView alloc] initWithFrame:CGRectMake(logoX, logoY, logoWidth, logoHeight)];
