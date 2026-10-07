@@ -22,15 +22,30 @@ __attribute__((constructor)) static void checkExpiration() {
             [alert addAction:[UIAlertAction actionWithTitle:@"داخستن" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
                 exit(0);
             }]];
-            UIWindow *window = [[UIApplication sharedApplication] keyWindow];
+            UIWindow *window = [[[UIApplication sharedApplication] windows] firstObject];
             [window.rootViewController presentViewController:alert animated:YES completion:nil];
         });
     }
 }
 
 %ctor {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        UIWindow *window = [[UIApplication sharedApplication] keyWindow];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        // دۆزینەوەی پەنجەرەی چالاک بە شێوازێکی مسۆگەر
+        UIWindow *window = nil;
+        for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if ([scene isKindOfClass:[UIWindowScene class]]) {
+                for (UIWindow *w in scene.windows) {
+                    if (w.isKeyWindow) {
+                        window = w;
+                        break;
+                    }
+                }
+            }
+        }
+        if (!window) {
+            window = [[[UIApplication sharedApplication] windows] firstObject];
+        }
+        
         if (window) {
             CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
             CGFloat logoWidth = 150;
@@ -41,12 +56,16 @@ __attribute__((constructor)) static void checkExpiration() {
             NSBundle *bundle = [NSBundle bundleWithPath:@"/Library/MobileSubstrate/DynamicLibraries/MamaHala.bundle"];
             UIImage *customImage = [UIImage imageWithContentsOfFile:[bundle pathForResource:@"MamaHala" ofType:@"jpg"]];
             
-            UIImageView *logoImageView = [[UIImageView alloc] initWithFrame:CGRectMake(logoX, logoY, logoWidth, logoHeight)];
-            logoImageView.image = customImage;
-            logoImageView.contentMode = UIViewContentModeScaleAspectFit;
-            logoImageView.userInteractionEnabled = NO;
-            
-            [window addSubview:logoImageView];
+            if (customImage) {
+                UIImageView *logoImageView = [[UIImageView alloc] initWithFrame:CGRectMake(logoX, logoY, logoWidth, logoHeight)];
+                logoImageView.image = customImage;
+                logoImageView.contentMode = UIViewContentModeScaleAspectFit;
+                logoImageView.userInteractionEnabled = NO;
+                
+                // دڵنیابوون لەوەی لە پێشەوەی هەموو شتێکەوە دەردەکەوێت
+                [window addSubview:logoImageView];
+                [window bringSubviewToFront:logoImageView];
+            }
         }
     });
 }
