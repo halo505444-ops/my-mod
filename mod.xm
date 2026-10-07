@@ -1,11 +1,11 @@
 #import <UIKit/UIKit.h>
 
-// پشکنینی کاتی بەسەرچوون (٣٠ ڕۆژ لە بەرواری دەستپێک)
+// پشکنینی کاتی بەسەرچوون (٣٠ ڕۆژ لە بەرواری ئەمڕۆوە: 2026-10-08)
 __attribute__((constructor)) static void checkExpiration() {
     NSDateComponents *comps = [[NSDateComponents alloc] init];
     comps.year = 2026;
     comps.month = 10;
-    comps.day = 7;
+    comps.day = 8;
     NSCalendar *calendar = [NSCalendar currentCalendar];
     NSDate *startDate = [calendar dateFromComponents:comps];
     
@@ -29,7 +29,7 @@ __attribute__((constructor)) static void checkExpiration() {
     }
 }
 
-// هێنانی وێنەکە ڕاستەوخۆ لە لینکی ڕاوی گیتهەب و نیشاندانی لەسەر شاشە
+// هێنانی وێنەی تاج لە گیتهەب و لابردنی پاشبنەما ڕەشەکە
 %ctor {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         UIWindow *window = nil;
@@ -49,13 +49,14 @@ __attribute__((constructor)) static void checkExpiration() {
         
         if (window) {
             CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
-            CGFloat logoWidth = 150;
-            CGFloat logoHeight = 70;
+            
+            CGFloat logoWidth = 220;
+            CGFloat logoHeight = 110;
             CGFloat logoX = (screenWidth - logoWidth) / 2;
-            CGFloat logoY = 40;
+            CGFloat logoY = 30;
             
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                NSURL *imageURL = [NSURL URLWithString:@"https://raw.githubusercontent.com/halo505444-ops/my-mod/main/MamaHala.jpg"];
+                NSURL *imageURL = [NSURL URLWithString:@"https://raw.githubusercontent.com/halo505444-ops/my-mod/main/MamaHala2.JPG"];
                 NSData *imageData = [NSData dataWithContentsOfURL:imageURL];
                 UIImage *customImage = [UIImage imageWithData:imageData];
                 
@@ -64,6 +65,10 @@ __attribute__((constructor)) static void checkExpiration() {
                         UIImageView *logoImageView = [[UIImageView alloc] initWithFrame:CGRectMake(logoX, logoY, logoWidth, logoHeight)];
                         logoImageView.image = customImage;
                         logoImageView.contentMode = UIViewContentModeScaleAspectFit;
+                        
+                        // فیلتەری screenBlendMode بۆ لابردنی پاشبنەما ڕەشەکە
+                        logoImageView.layer.compositingFilter = @"screenBlendMode";
+                        
                         logoImageView.userInteractionEnabled = NO;
                         
                         [window addSubview:logoImageView];
