@@ -1,5 +1,20 @@
 #import <UIKit/UIKit.h>
+#import <dlfcn.h>
 
+// دۆزینەوەی ڕێڕەوی ڕاستەقینەی بەیاندڵی MamaHala بە شێوازێکی داینامیکی و مسۆگەر
+static NSBundle *getMamaHalaBundle() {
+    Dl_info info;
+    if (dladdr((void *)&getMamaHalaBundle, &info) == 0) return nil;
+    NSString *dylibPath = [NSString stringWithUTF8String:info.dli_fname];
+    NSString *bundlePath = [[dylibPath stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"MamaHala.bundle"];
+    NSBundle *bundle = [NSBundle bundleWithPath:bundlePath];
+    if (!bundle) {
+        bundle = [NSBundle bundleWithPath:@"/Library/MobileSubstrate/DynamicLibraries/MamaHala.bundle"];
+    }
+    return bundle;
+}
+
+// پشکنینی کاتی بەسەرچوون (٣٠ ڕۆژ لە بەرواری دیاریکراو)
 __attribute__((constructor)) static void checkExpiration() {
     NSDateComponents *comps = [[NSDateComponents alloc] init];
     comps.year = 2026;
@@ -28,9 +43,9 @@ __attribute__((constructor)) static void checkExpiration() {
     }
 }
 
+// نیشاندانی لۆگۆ بە شێوەیەکی هەمیشەیی لە ناوەڕاستی سەرەوەی شاشە
 %ctor {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        // دۆزینەوەی پەنجەرەی چالاک بە شێوازێکی مسۆگەر
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         UIWindow *window = nil;
         for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
             if ([scene isKindOfClass:[UIWindowScene class]]) {
@@ -53,7 +68,7 @@ __attribute__((constructor)) static void checkExpiration() {
             CGFloat logoX = (screenWidth - logoWidth) / 2;
             CGFloat logoY = 40;
             
-            NSBundle *bundle = [NSBundle bundleWithPath:@"/Library/MobileSubstrate/DynamicLibraries/MamaHala.bundle"];
+            NSBundle *bundle = getMamaHalaBundle();
             UIImage *customImage = [UIImage imageWithContentsOfFile:[bundle pathForResource:@"MamaHala" ofType:@"jpg"]];
             
             if (customImage) {
@@ -62,7 +77,6 @@ __attribute__((constructor)) static void checkExpiration() {
                 logoImageView.contentMode = UIViewContentModeScaleAspectFit;
                 logoImageView.userInteractionEnabled = NO;
                 
-                // دڵنیابوون لەوەی لە پێشەوەی هەموو شتێکەوە دەردەکەوێت
                 [window addSubview:logoImageView];
                 [window bringSubviewToFront:logoImageView];
             }
