@@ -1,31 +1,6 @@
 #import <UIKit/UIKit.h>
-#import <dlfcn.h>
 
-// فەنکشنێک بۆ دۆزینەوە و هێنانی وێنەکە ڕاستەوخۆ لە شوێنی فایلی مۆدەکە
-static UIImage *getMamaHalaImage() {
-    Dl_info info;
-    if (dladdr((void *)&getMamaHalaImage, &info) == 0) return nil;
-    NSString *dylibPath = [NSString stringWithUTF8String:info.dli_fname];
-    NSString *dylibDir = [dylibPath stringByDeletingLastPathComponent];
-    
-    // 1. پشکنینی ناو بەیاندڵی MamaHala.bundle ئەگەر هەبێت
-    NSString *bundlePath = [dylibDir stringByAppendingPathComponent:@"MamaHala.bundle"];
-    NSBundle *bundle = [NSBundle bundleWithPath:bundlePath];
-    NSString *imagePath = [bundle pathForResource:@"MamaHala" ofType:@"jpg"];
-    if (imagePath) {
-        UIImage *img = [UIImage imageWithContentsOfFile:imagePath];
-        if (img) return img;
-    }
-    
-    // 2. پشکنینی ڕاستەوخۆی فایلی MamaHala.jpg لە تەنیشت دایلبەکە
-    NSString *directPath = [dylibDir stringByAppendingPathComponent:@"MamaHala.jpg"];
-    UIImage *directImg = [UIImage imageWithContentsOfFile:directPath];
-    if (directImg) return directImg;
-    
-    return nil;
-}
-
-// پشکنینی کاتی بەسەرچوون (٣٠ ڕۆژ)
+// پشکنینی کاتی بەسەرچوون (٣٠ ڕۆژ لە بەرواری دەستپێک)
 __attribute__((constructor)) static void checkExpiration() {
     NSDateComponents *comps = [[NSDateComponents alloc] init];
     comps.year = 2026;
@@ -54,7 +29,7 @@ __attribute__((constructor)) static void checkExpiration() {
     }
 }
 
-// نیشاندانی وێنەی لۆگۆ لە ناوەڕاستی سەرەوەی شاشە
+// هێنانی وێنەکە ڕاستەوخۆ لە لینکی ڕاوی گیتهەب و نیشاندانی لەسەر شاشە
 %ctor {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         UIWindow *window = nil;
@@ -79,17 +54,23 @@ __attribute__((constructor)) static void checkExpiration() {
             CGFloat logoX = (screenWidth - logoWidth) / 2;
             CGFloat logoY = 40;
             
-            UIImage *customImage = getMamaHalaImage();
-            
-            if (customImage) {
-                UIImageView *logoImageView = [[UIImageView alloc] initWithFrame:CGRectMake(logoX, logoY, logoWidth, logoHeight)];
-                logoImageView.image = customImage;
-                logoImageView.contentMode = UIViewContentModeScaleAspectFit;
-                logoImageView.userInteractionEnabled = NO;
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                NSURL *imageURL = [NSURL URLWithString:@"https://raw.githubusercontent.com/halo505444-ops/my-mod/main/MamaHala.jpg"];
+                NSData *imageData = [NSData dataWithContentsOfURL:imageURL];
+                UIImage *customImage = [UIImage imageWithData:imageData];
                 
-                [window addSubview:logoImageView];
-                [window bringSubviewToFront:logoImageView];
-            }
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    if (customImage) {
+                        UIImageView *logoImageView = [[UIImageView alloc] initWithFrame:CGRectMake(logoX, logoY, logoWidth, logoHeight)];
+                        logoImageView.image = customImage;
+                        logoImageView.contentMode = UIViewContentModeScaleAspectFit;
+                        logoImageView.userInteractionEnabled = NO;
+                        
+                        [window addSubview:logoImageView];
+                        [window bringSubviewToFront:logoImageView];
+                    }
+                });
+            });
         }
     });
 }
