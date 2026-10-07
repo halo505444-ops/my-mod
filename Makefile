@@ -7,6 +7,6 @@ TWEAK_NAME = MamaHala
 
 MamaHala_FILES = mod.xm
 MamaHala_CFLAGS = -fobjc-arc
-MamaHala_RESOURCES = JPEG.jpg
+MamaHala_RESOURCES = MamaHala.jpg
 
 include $(THEOS_MAKE_PATH)/tweak.mk
