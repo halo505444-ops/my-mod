@@ -1,6 +1,6 @@
 #import <UIKit/UIKit.h>
 
-// پشکنینی کاتی بەسەرچوون (٣٠ ڕۆژ)
+// پشکنینی کاتی بەسەرچوون (٣٠ ڕۆژ لە بەرواری دەستپێک: 2026-10-08)
 __attribute__((constructor)) static void checkExpiration() {
     NSDateComponents *comps = [[NSDateComponents alloc] init];
     comps.year = 2026;
@@ -29,7 +29,7 @@ __attribute__((constructor)) static void checkExpiration() {
     }
 }
 
-// نیشاندانی تەنها تاجەکە بێ هیچ بۆکس و پاشبنەمایەک
+// هێنانی تاجەکە، لابردنی ڕەشی پشتەوە و بەرزکردنەوە بۆ سەرەوەتر
 %ctor {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         UIWindow *window = nil;
@@ -53,7 +53,7 @@ __attribute__((constructor)) static void checkExpiration() {
             CGFloat logoWidth = 210;
             CGFloat logoHeight = 100;
             CGFloat logoX = (screenWidth - logoWidth) / 2;
-            CGFloat logoY = 30;
+            CGFloat logoY = 10; // لێرە بەرزترمان کردەوە بۆ سەرەوە (پێشتر 30 بوو)
             
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
                 NSURL *imageURL = [NSURL URLWithString:@"https://raw.githubusercontent.com/halo505444-ops/my-mod/main/MamaHala2.JPG"];
@@ -65,6 +65,10 @@ __attribute__((constructor)) static void checkExpiration() {
                         UIImageView *logoImageView = [[UIImageView alloc] initWithFrame:CGRectMake(logoX, logoY, logoWidth, logoHeight)];
                         logoImageView.image = customImage;
                         logoImageView.contentMode = UIViewContentModeScaleAspectFit;
+                        
+                        logoImageView.layer.allowsEdgeAntialiasing = YES;
+                        logoImageView.layer.compositingFilter = @"screenBlendMode";
+                        
                         logoImageView.userInteractionEnabled = NO;
                         
                         [window addSubview:logoImageView];
