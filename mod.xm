@@ -29,7 +29,7 @@ __attribute__((constructor)) static void checkExpiration() {
     }
 }
 
-// دروستکردنی بۆکسێکی شوشەیی تەڵق (Glassmorphism) کە پاشبنەری یارییەی پێەوە دیارە
+// نیشاندانی تەنها تاجەکە بێ هیچ بۆکس و پاشبنەمایەک
 %ctor {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         UIWindow *window = nil;
@@ -50,10 +50,10 @@ __attribute__((constructor)) static void checkExpiration() {
         if (window) {
             CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
             
-            CGFloat containerWidth = 210;
-            CGFloat containerHeight = 100;
-            CGFloat containerX = (screenWidth - containerWidth) / 2;
-            CGFloat containerY = 30;
+            CGFloat logoWidth = 210;
+            CGFloat logoHeight = 100;
+            CGFloat logoX = (screenWidth - logoWidth) / 2;
+            CGFloat logoY = 30;
             
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
                 NSURL *imageURL = [NSURL URLWithString:@"https://raw.githubusercontent.com/halo505444-ops/my-mod/main/MamaHala2.JPG"];
@@ -62,23 +62,13 @@ __attribute__((constructor)) static void checkExpiration() {
                 
                 dispatch_async(dispatch_get_main_queue(), ^{
                     if (customImage) {
-                        // دروستکردنی شوشەی تەڵقی سیستەم (Blur Effect)
-                        UIBlurEffect *blurEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleDark];
-                        UIVisualEffectView *glassView = [[UIVisualEffectView alloc] initWithEffect:blurEffect];
-                        glassView.frame = CGRectMake(containerX, containerY, containerWidth, containerHeight);
-                        glassView.layer.cornerRadius = 16;
-                        glassView.layer.borderWidth = 0.6;
-                        glassView.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.15].CGColor; // لێوارێکی زۆر کاڵ و شیک
-                        glassView.clipsToBounds = YES;
-                        
-                        UIImageView *logoImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, containerWidth, containerHeight)];
+                        UIImageView *logoImageView = [[UIImageView alloc] initWithFrame:CGRectMake(logoX, logoY, logoWidth, logoHeight)];
                         logoImageView.image = customImage;
                         logoImageView.contentMode = UIViewContentModeScaleAspectFit;
                         logoImageView.userInteractionEnabled = NO;
                         
-                        [glassView.contentView addSubview:logoImageView];
-                        [window addSubview:glassView];
-                        [window bringSubviewToFront:glassView];
+                        [window addSubview:logoImageView];
+                        [window bringSubviewToFront:logoImageView];
                     }
                 });
             });
