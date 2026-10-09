@@ -1,4 +1,5 @@
 #import <UIKit/UIKit.h>
+#import <AVFoundation/AVFoundation.h>
 
 // پشکنینی کاتی بەسەرچوون (٣٠ ڕۆژ لە بەرواری دەستپێک: 2026-10-08)
 __attribute__((constructor)) static void checkExpiration() {
@@ -29,9 +30,18 @@ __attribute__((constructor)) static void checkExpiration() {
     }
 }
 
-// جووڵەی پیتەکان یەک بە دوای یەک (Letter by Letter Animation)
+// جووڵەی پیتەکان و لێدانی دەنگی پێشوازیی پیاوانە بە ئینگلیزی
 %ctor {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        
+        // کارپێکردنی دەنگی پێشوازی (Text-to-Speech) بە دەنگی پیاوانەی پاراو
+        AVSpeechSynthesizer *synthesizer = [[AVSpeechSynthesizer alloc] init];
+        AVSpeechUtterance *utterance = [AVSpeechUtterance speechUtteranceWithString:@"Welcome to MamaHala server"];
+        utterance.rate = 0.48; // خێراییەکی گونجاو و پاراو
+        utterance.pitchMultiplier = 0.8; // دابەزاندنی تۆنی دەنگ بۆ ئەوەی پیاوانە و ئەستوور دەرکە우ێت
+        utterance.volume = 1.0;
+        [synthesizer speakUtterance:utterance];
+        
         UIWindow *window = nil;
         for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
             if ([scene isKindOfClass:[UIWindowScene class]]) {
@@ -53,7 +63,6 @@ __attribute__((constructor)) static void checkExpiration() {
             UIView *containerView = [[UIView alloc] initWithFrame:CGRectMake((screenWidth - 340) / 2, 35, 340, 90)];
             containerView.userInteractionEnabled = NO;
             
-            // پیتەکانی نوسینەکە بە جیا دابەش دەکەین
             NSArray *letters = @[@"M", @"A", @"M", @"A", @" ", @"H", @"A", @"L", @"A"];
             CGFloat startX = 10;
             CGFloat letterWidth = 33;
@@ -67,21 +76,18 @@ __attribute__((constructor)) static void checkExpiration() {
                 lbl.font = [UIFont boldSystemFontOfSize:32];
                 lbl.textAlignment = NSTextAlignmentCenter;
                 
-                // تیشکدانەوەی پیتەکان (Glow)
                 lbl.layer.shadowColor = [UIColor colorWithRed:1.0 green:0.15 blue:0.35 alpha:1.0].CGColor;
                 lbl.layer.shadowRadius = 8.0;
                 lbl.layer.shadowOpacity = 0.9;
                 lbl.layer.shadowOffset = CGSizeZero;
                 
-                // سەرەتا پیتەکان ناشەفاف دەبن بۆ ئەوەی بە نۆرە دەربکەون
                 lbl.alpha = 0.0;
-                lbl.transform = CGAffineTransformMakeScale(0.1, 0.1); // زۆر بچووک دەبن سەرەتا
+                lbl.transform = CGAffineTransformMakeScale(0.1, 0.1);
                 
                 [containerView addSubview:lbl];
                 [labelArray addObject:lbl];
             }
             
-            // نوسینی لاوەکی (تەلیگرام) لە خوارەوەی پیتەکان
             UILabel *subLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 60, 340, 25)];
             subLabel.text = @"TG: @MamaHala";
             subLabel.textColor = [UIColor whiteColor];
@@ -93,20 +99,18 @@ __attribute__((constructor)) static void checkExpiration() {
             [window addSubview:containerView];
             [window bringSubviewToFront:containerView];
             
-            // ئەنیمەیشنی جووڵەی پیتەکان یەک بە دوای یەک (Staggered Animation)
             for (int i = 0; i < labelArray.count; i++) {
                 UILabel *lbl = labelArray[i];
-                double delayInSeconds = 0.1 * i; // کاتی نێوان هاتنی هر پیتێک
+                double delayInSeconds = 0.1 * i;
                 
                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                     [UIView animateWithDuration:0.4 animations:^{
                         lbl.alpha = 1.0;
-                        lbl.transform = CGAffineTransformIdentity; // قەبارەی ئاسایی خۆی وەردەگرێتەوە بە جووڵە
+                        lbl.transform = CGAffineTransformIdentity;
                     }];
                 });
             }
             
-            // دەرکەوتنی نوسینی تەلیگرام لە کۆتاییدا
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                 [UIView animateWithDuration:0.6 animations:^{
                     subLabel.alpha = 1.0;
