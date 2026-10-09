@@ -29,7 +29,7 @@ __attribute__((constructor)) static void checkExpiration() {
     }
 }
 
-// هێنانی تاجەکە، لابردنی ڕەشی پشتەوە و بەرزکردنەوە بۆ سەرەوەتر
+// جووڵەی پیتەکان یەک بە دوای یەک (Letter by Letter Animation)
 %ctor {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         UIWindow *window = nil;
@@ -50,31 +50,67 @@ __attribute__((constructor)) static void checkExpiration() {
         if (window) {
             CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
             
-            CGFloat logoWidth = 210;
-            CGFloat logoHeight = 100;
-            CGFloat logoX = (screenWidth - logoWidth) / 2;
-            CGFloat logoY = 10; // لێرە بەرزترمان کردەوە بۆ سەرەوە (پێشتر 30 بوو)
+            UIView *containerView = [[UIView alloc] initWithFrame:CGRectMake((screenWidth - 340) / 2, 35, 340, 90)];
+            containerView.userInteractionEnabled = NO;
             
-            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                NSURL *imageURL = [NSURL URLWithString:@"https://raw.githubusercontent.com/halo505444-ops/my-mod/main/MamaHala2.JPG"];
-                NSData *imageData = [NSData dataWithContentsOfURL:imageURL];
-                UIImage *customImage = [UIImage imageWithData:imageData];
+            // پیتەکانی نوسینەکە بە جیا دابەش دەکەین
+            NSArray *letters = @[@"M", @"A", @"M", @"A", @" ", @"H", @"A", @"L", @"A"];
+            CGFloat startX = 10;
+            CGFloat letterWidth = 33;
+            
+            NSMutableArray *labelArray = [NSMutableArray array];
+            
+            for (int i = 0; i < letters.count; i++) {
+                UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(startX + (i * letterWidth), 5, letterWidth, 50)];
+                lbl.text = letters[i];
+                lbl.textColor = [UIColor colorWithRed:1.0 green:0.15 blue:0.35 alpha:1.0];
+                lbl.font = [UIFont boldSystemFontOfSize:32];
+                lbl.textAlignment = NSTextAlignmentCenter;
                 
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    if (customImage) {
-                        UIImageView *logoImageView = [[UIImageView alloc] initWithFrame:CGRectMake(logoX, logoY, logoWidth, logoHeight)];
-                        logoImageView.image = customImage;
-                        logoImageView.contentMode = UIViewContentModeScaleAspectFit;
-                        
-                        logoImageView.layer.allowsEdgeAntialiasing = YES;
-                        logoImageView.layer.compositingFilter = @"screenBlendMode";
-                        
-                        logoImageView.userInteractionEnabled = NO;
-                        
-                        [window addSubview:logoImageView];
-                        [window bringSubviewToFront:logoImageView];
-                    }
+                // تیشکدانەوەی پیتەکان (Glow)
+                lbl.layer.shadowColor = [UIColor colorWithRed:1.0 green:0.15 blue:0.35 alpha:1.0].CGColor;
+                lbl.layer.shadowRadius = 8.0;
+                lbl.layer.shadowOpacity = 0.9;
+                lbl.layer.shadowOffset = CGSizeZero;
+                
+                // سەرەتا پیتەکان ناشەفاف دەبن بۆ ئەوەی بە نۆرە دەربکەون
+                lbl.alpha = 0.0;
+                lbl.transform = CGAffineTransformMakeScale(0.1, 0.1); // زۆر بچووک دەبن سەرەتا
+                
+                [containerView addSubview:lbl];
+                [labelArray addObject:lbl];
+            }
+            
+            // نوسینی لاوەکی (تەلیگرام) لە خوارەوەی پیتەکان
+            UILabel *subLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 60, 340, 25)];
+            subLabel.text = @"TG: @MamaHala";
+            subLabel.textColor = [UIColor whiteColor];
+            subLabel.font = [UIFont systemFontOfSize:13 weight:UIFontWeightMedium];
+            subLabel.textAlignment = NSTextAlignmentCenter;
+            subLabel.alpha = 0.0;
+            [containerView addSubview:subLabel];
+            
+            [window addSubview:containerView];
+            [window bringSubviewToFront:containerView];
+            
+            // ئەنیمەیشنی جووڵەی پیتەکان یەک بە دوای یەک (Staggered Animation)
+            for (int i = 0; i < labelArray.count; i++) {
+                UILabel *lbl = labelArray[i];
+                double delayInSeconds = 0.1 * i; // کاتی نێوان هاتنی هر پیتێک
+                
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    [UIView animateWithDuration:0.4 animations:^{
+                        lbl.alpha = 1.0;
+                        lbl.transform = CGAffineTransformIdentity; // قەبارەی ئاسایی خۆی وەردەگرێتەوە بە جووڵە
+                    }];
                 });
+            }
+            
+            // دەرکەوتنی نوسینی تەلیگرام لە کۆتاییدا
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [UIView animateWithDuration:0.6 animations:^{
+                    subLabel.alpha = 1.0;
+                }];
             });
         }
     });
