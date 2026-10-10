@@ -1,8 +1,4 @@
 #import <UIKit/UIKit.h>
-#import <AVFoundation/AVFoundation.h>
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
 // پشکنینی کاتی بەسەرچوون (٣٠ ڕۆژ لە بەرواری دەستپێک: 2026-10-08)
 __attribute__((constructor)) static void checkExpiration() {
@@ -35,14 +31,6 @@ __attribute__((constructor)) static void checkExpiration() {
 
 static void runMamaHalaMod() {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        
-        // دەنگی پێشوازیی پیاوانەی پاراو
-        AVSpeechSynthesizer *synthesizer = [[AVSpeechSynthesizer alloc] init];
-        AVSpeechUtterance *utterance = [AVSpeechUtterance speechUtteranceWithString:@"Welcome to MamaHala server"];
-        utterance.rate = 0.48;
-        utterance.pitchMultiplier = 0.8;
-        utterance.volume = 1.0;
-        [synthesizer speakUtterance:utterance];
         
         UIWindow *window = nil;
         for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
@@ -142,5 +130,3 @@ static void runMamaHalaMod() {
 __attribute__((constructor)) static void initializer() {
     runMamaHalaMod();
 }
-
-#pragma clang diagnostic pop
