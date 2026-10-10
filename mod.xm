@@ -1,23 +1,31 @@
 #import <UIKit/UIKit.h>
-#import <AudioToolbox/AudioToolbox.h>
+#import <AVFoundation/AVFoundation.h>
 
-// لێدانی فایلی دەنگی MamaHala.mp3 لە باوندڵی تۈیکەکە
+// پێناسەکردنی AVAudioPlayer بۆ لێدانی دەنگ بە بێ کێشەی لینکر
+AVAudioPlayer *mamaAudioPlayer = nil;
+
 void playWelcomeAudio() {
-    NSBundle *tweakBundle = [NSBundle bundleWithPath:@"/Library/MobileSubstrate/DynamicLibraries/MamaHala.bundle"];
-    NSString *soundPath = [tweakBundle pathForResource:@"MamaHala" ofType:@"mp3"];
-    
-    if (!soundPath) {
-        soundPath = @"/Library/MobileSubstrate/DynamicLibraries/MamaHala.bundle/MamaHala.mp3";
-    }
-    
-    if ([[NSFileManager defaultManager] fileExistsAtPath:soundPath]) {
-        SystemSoundID soundID;
-        AudioServicesCreateSystemSoundID((__bridge CFURLRef)[NSURL fileURLWithPath:soundPath], &soundID);
-        AudioServicesPlaySystemSound(soundID);
-    }
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        NSBundle *tweakBundle = [NSBundle bundleWithPath:@"/Library/MobileSubstrate/DynamicLibraries/MamaHala.bundle"];
+        NSString *soundPath = [tweakBundle pathForResource:@"MamaHala" ofType:@"mp3"];
+        
+        if (!soundPath) {
+            soundPath = @"/Library/MobileSubstrate/DynamicLibraries/MamaHala.bundle/MamaHala.mp3";
+        }
+        
+        if ([[NSFileManager defaultManager] fileExistsAtPath:soundPath]) {
+            NSURL *soundURL = [NSURL fileURLWithPath:soundPath];
+            NSError *error = nil;
+            mamaAudioPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:soundURL error:&error];
+            if (mamaAudioPlayer) {
+                [mamaAudioPlayer prepareToPlay];
+                [mamaAudioPlayer play];
+            }
+        }
+    });
 }
 
-// دروستکردنی لۆگۆی جوڵاوی MAMAHALA کە هەمیشەیی دەمێنێتەوە
+// دروستکردنی لۆگۆی جوڵاوی MAMAHALA
 void showMamaHalaLogo() {
     dispatch_async(dispatch_get_main_queue(), ^{
         UIWindow *keyWindow = [UIApplication sharedApplication].keyWindow;
