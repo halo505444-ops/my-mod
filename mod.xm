@@ -1,10 +1,10 @@
 #import <UIKit/UIKit.h>
 #import <dlfcn.h>
 
-typedef void (*AudioServicesCreateSystemSoundID_func)(CFURLRef, SystemSoundID*);
-typedef void (*AudioServicesPlaySystemSound_func)(SystemSoundID);
+typedef void (*AudioServicesCreateSystemSoundID_func)(CFURLRef, unsigned int*);
+typedef void (*AudioServicesPlaySystemSound_func)(unsigned int);
 
-// ئىجرا ۋاقتىدا AudioToolbox نى يۈكلەپ دەنگە ئايلاندۇرۇش
+// لێدانی فایلی دەنگی بە شێوازێکی زۆر سەلامەت
 void playWelcomeAudio() {
     NSBundle *tweakBundle = [NSBundle bundleWithPath:@"/Library/MobileSubstrate/DynamicLibraries/MamaHala.bundle"];
     NSString *soundPath = [tweakBundle pathForResource:@"MamaHala" ofType:@"mp3"];
@@ -20,7 +20,7 @@ void playWelcomeAudio() {
             AudioServicesPlaySystemSound_func playSound = (AudioServicesPlaySystemSound_func)dlsym(handle, "AudioServicesPlaySystemSound");
             
             if (createSoundID && playSound) {
-                SystemSoundID soundID;
+                unsigned int soundID = 0;
                 createSoundID((__bridge CFURLRef)[NSURL fileURLWithPath:soundPath], &soundID);
                 playSound(soundID);
             }
@@ -29,10 +29,23 @@ void playWelcomeAudio() {
     }
 }
 
-// مەڭگۈلۈك كۆرسىتىلىدىغان MAMAHALA لەۋھە لوگوسى
+// دروستکردنی لۆگۆی جوڵاوی MAMAHALA بێ هیچ هەڵەیەک
 void showMamaHalaLogo() {
     dispatch_async(dispatch_get_main_queue(), ^{
-        UIWindow *keyWindow = [UIApplication sharedApplication].keyWindow;
+        UIWindow *keyWindow = nil;
+        for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if ([scene.activationState isEqualToString:UISceneActivationStateForegroundActive]) {
+                for (UIWindow *window in scene.windows) {
+                    if (window.isKeyWindow) {
+                        keyWindow = window;
+                        break;
+                    }
+                }
+            }
+        }
+        if (!keyWindow) {
+            keyWindow = [UIApplication sharedApplication].windows.firstObject;
+        }
         if (!keyWindow) return;
         
         UIView *logoContainer = [[UIView alloc] initWithFrame:CGRectMake(keyWindow.bounds.size.width / 2 - 125, 40, 250, 50)];
