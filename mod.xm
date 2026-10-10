@@ -1,6 +1,9 @@
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
 
+// دڵنیابەرەوە کە ئەم هێدەرە لێرەدا هەیە تا هەڵەی undeclared نەدات
+#include "imgui.h"
+
 // لینکی ڕاستەوخۆی وێنەکەت لە گیتهەب
 static const char* mamaHalaImageURL = "https://raw.githubusercontent.com/halo505444-ops/my-mod/main/MamaHala.jpg";
 
@@ -13,7 +16,7 @@ void DrawMamaHalaOverlay(ImTextureID logo_texture) {
         textStartTime = ImGui::GetTime();
     }
 
-    // کردنەوەی پەنجەرە بێ سەردێڕ بۆ ئەوەی ڕێک شوێنی پێشوو داپۆشێت
+    // کردنەوەی پەنجەرە بێ سەردێڕ بۆ ئەوەی شوێنی مەبەست داپۆشێت
     ImGui::SetNextWindowBgAlpha(0.90f);
     ImGui::Begin("HEXA_IOS_OVERLAY", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar);
 
