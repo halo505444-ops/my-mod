@@ -13,14 +13,14 @@ void DrawMamaHalaOverlay(void* logo_texture) {
     ImGui::SetNextWindowBgAlpha(0.90f);
     ImGui::Begin("HEXA_IOS_OVERLAY", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar);
 
-    // --- قەبارەی وێنە بۆ داپۆشینی شوێنی پێشوو ---
+    // --- ١. پێناسەکردن و نیشاندانی قەبارەی وێنە ---
     ImVec2 imageSize = ImVec2(220.0f, 220.0f); 
     
     if (logo_texture) {
         ImGui::Image(logo_texture, imageSize);
     }
 
-    // --- ئەنیمەیشنی پیت بە پیتی MAMAHALA ---
+    // --- ٢. ئەنیمەیشنی پیت بە پیتی MAMAHALA ---
     int totalChars = strlen(targetText);
     float elapsedTime = ImGui::GetTime() - textStartTime;
     
