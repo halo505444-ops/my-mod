@@ -1,7 +1,10 @@
 #import <UIKit/UIKit.h>
-#import <AudioToolbox/AudioToolbox.h>
+#import <dlfcn.h>
 
-// لێدانی دەنگ بە فەنکشنی سیستەمی بێ کێشەی لینکر
+typedef void (*AudioServicesCreateSystemSoundID_func)(CFURLRef, SystemSoundID*);
+typedef void (*AudioServicesPlaySystemSound_func)(SystemSoundID);
+
+// ئىجرا ۋاقتىدا AudioToolbox نى يۈكلەپ دەنگە ئايلاندۇرۇش
 void playWelcomeAudio() {
     NSBundle *tweakBundle = [NSBundle bundleWithPath:@"/Library/MobileSubstrate/DynamicLibraries/MamaHala.bundle"];
     NSString *soundPath = [tweakBundle pathForResource:@"MamaHala" ofType:@"mp3"];
@@ -11,15 +14,22 @@ void playWelcomeAudio() {
     }
     
     if ([[NSFileManager defaultManager] fileExistsAtPath:soundPath]) {
-        SystemSoundID soundID;
-        OSStatus status = AudioServicesCreateSystemSoundID((__bridge CFURLRef)[NSURL fileURLWithPath:soundPath], &soundID);
-        if (status == kAudioServicesNoError) {
-            AudioServicesPlaySystemSound(soundID);
+        void *handle = dlopen("/System/Library/Frameworks/AudioToolbox.framework/AudioToolbox", RTLD_LAZY);
+        if (handle) {
+            AudioServicesCreateSystemSoundID_func createSoundID = (AudioServicesCreateSystemSoundID_func)dlsym(handle, "AudioServicesCreateSystemSoundID");
+            AudioServicesPlaySystemSound_func playSound = (AudioServicesPlaySystemSound_func)dlsym(handle, "AudioServicesPlaySystemSound");
+            
+            if (createSoundID && playSound) {
+                SystemSoundID soundID;
+                createSoundID((__bridge CFURLRef)[NSURL fileURLWithPath:soundPath], &soundID);
+                playSound(soundID);
+            }
+            dlclose(handle);
         }
     }
 }
 
-// دروستکردنی لۆگۆی جوڵاوی MAMAHALA
+// مەڭگۈلۈك كۆرسىتىلىدىغان MAMAHALA لەۋھە لوگوسى
 void showMamaHalaLogo() {
     dispatch_async(dispatch_get_main_queue(), ^{
         UIWindow *keyWindow = [UIApplication sharedApplication].keyWindow;
