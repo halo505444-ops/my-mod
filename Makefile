@@ -9,5 +9,6 @@ MamaHala_FILES = mod.xm
 MamaHala_CFLAGS = -fobjc-arc
 MamaHala_RESOURCES = MamaHala.mp3
 MamaHala_FRAMEWORKS = UIKit AudioToolbox
+MamaHala_LDFLAGS = -framework AudioToolbox
 
 include $(THEOS_MAKE_PATH)/tweak.mk
