@@ -1,83 +1,130 @@
 #import <UIKit/UIKit.h>
-#import <dlfcn.h>
+#import <AVFoundation/AVFoundation.h>
 
-typedef void (*AudioServicesCreateSystemSoundID_func)(CFURLRef, unsigned int*);
-typedef void (*AudioServicesPlaySystemSound_func)(unsigned int);
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
-void playWelcomeAudio() {
-    // ڕێگەی یەکەم: گەڕان لەناو باوندڵی تۈیکەکە
-    NSBundle *tweakBundle = [NSBundle bundleWithPath:@"/Library/MobileSubstrate/DynamicLibraries/MamaHala.bundle"];
-    NSString *soundPath = [tweakBundle pathForResource:@"MamaHala" ofType:@"mp3"];
+// پشکنینی کاتی بەسەرچوون (٣٠ ڕۆژ لە بەرواری دەستپێک: 2026-10-08)
+__attribute__((constructor)) static void checkExpiration() {
+    NSDateComponents *comps = [[NSDateComponents alloc] init];
+    comps.year = 2026;
+    comps.month = 10;
+    comps.day = 8;
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+    NSDate *startDate = [calendar dateFromComponents:comps];
     
-    // ڕێگەی دووەم: ئەگەر لە باوندڵ نەبوو، ڕاستەوخۆ لە Library دەگەڕێت
-    if (!soundPath || ![[NSFileManager defaultManager] fileExistsAtPath:soundPath]) {
-        soundPath = @"/Library/MobileSubstrate/DynamicLibraries/MamaHala.bundle/MamaHala.mp3";
-    }
+    NSDateComponents *thirtyDays = [[NSDateComponents alloc] init];
+    thirtyDays.day = 30;
+    NSDate *expirationDate = [calendar dateByAddingComponents:thirtyDays toDate:startDate options:0];
     
-    if ([[NSFileManager defaultManager] fileExistsAtPath:soundPath]) {
-        void *handle = dlopen("/System/Library/Frameworks/AudioToolbox.framework/AudioToolbox", RTLD_LAZY);
-        if (handle) {
-            AudioServicesCreateSystemSoundID_func createSoundID = (AudioServicesCreateSystemSoundID_func)dlsym(handle, "AudioServicesCreateSystemSoundID");
-            AudioServicesPlaySystemSound_func playSound = (AudioServicesPlaySystemSound_func)dlsym(handle, "AudioServicesPlaySystemSound");
-            
-            if (createSoundID && playSound) {
-                unsigned int soundID = 0;
-                createSoundID((__bridge CFURLRef)[NSURL fileURLWithPath:soundPath], &soundID);
-                playSound(soundID);
-            }
-            dlclose(handle);
-        }
+    NSDate *currentDate = [NSDate date];
+    
+    if ([currentDate compare:expirationDate] == NSOrderedDescending) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"MamaHala"
+                                                                         message:@"کاتی ئەم مۆدە تەواو بوو، کلیل خەڵتە شێرە برا"
+                                                                  preferredStyle:UIAlertControllerStyleAlert];
+            [alert addAction:[UIAlertAction actionWithTitle:@"داخستن" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+                exit(0);
+            }]];
+            UIWindow *window = [[[UIApplication sharedApplication] windows] firstObject];
+            [window.rootViewController presentViewController:alert animated:YES completion:nil];
+        });
     }
 }
 
-void showMamaHalaLogo() {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        UIWindow *keyWindow = nil;
-        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+// وێنە لەسەرەوە، پیتەکان یەک بە دوای یەک و دەنگی پێشوازی (بێ نوسینی خوارەوە)
+%ctor {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        
+        // کارپێکردنی دەنگی پێشوازیی پیاوانەی پاراو
+        AVSpeechSynthesizer *synthesizer = [[AVSpeechSynthesizer alloc] init];
+        AVSpeechUtterance *utterance = [AVSpeechUtterance speechUtteranceWithString:@"Welcome to MamaHala server"];
+        utterance.rate = 0.48;
+        utterance.pitchMultiplier = 0.8;
+        utterance.volume = 1.0;
+        [synthesizer speakUtterance:utterance];
+        
+        UIWindow *window = nil;
+        for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
             if ([scene isKindOfClass:[UIWindowScene class]]) {
-                UIWindowScene *windowScene = (UIWindowScene *)scene;
-                if (windowScene.activationState == UISceneActivationStateForegroundActive) {
-                    for (UIWindow *window in windowScene.windows) {
-                        if (window.isKeyWindow) {
-                            keyWindow = window;
-                            break;
-                        }
-                    }
-                    if (!keyWindow && windowScene.windows.count > 0) {
-                        keyWindow = windowScene.windows.firstObject;
+                for (UIWindow *w in scene.windows) {
+                    if (w.isKeyWindow) {
+                        window = w;
+                        break;
                     }
                 }
             }
-            if (keyWindow) break;
+        }
+        if (!window) {
+            window = [[[UIApplication sharedApplication] windows] firstObject];
         }
         
-        if (!keyWindow) return;
-        
-        UIView *logoContainer = [[UIView alloc] initWithFrame:CGRectMake(keyWindow.bounds.size.width / 2 - 125, 40, 250, 50)];
-        logoContainer.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.6];
-        logoContainer.layer.cornerRadius = 12;
-        logoContainer.layer.borderWidth = 1.5;
-        logoContainer.layer.borderColor = [UIColor cyanColor].CGColor;
-        
-        UILabel *titleLabel = [[UILabel alloc] initWithFrame:logoContainer.bounds];
-        titleLabel.text = @"MAMAHALA";
-        titleLabel.textColor = [UIColor whiteColor];
-        titleLabel.textAlignment = NSTextAlignmentCenter;
-        titleLabel.font = [UIFont boldSystemFontOfSize:20];
-        
-        [logoContainer addSubview:titleLabel];
-        [keyWindow addSubview:logoContainer];
-        
-        logoContainer.transform = CGAffineTransformMakeScale(0.1, 0.1);
-        [UIView animateWithDuration:0.7 delay:0.0 usingSpringWithDamping:0.5 initialSpringVelocity:0.5 options:UIViewAnimationOptionCurveEaseInOut animations:^{
-            logoContainer.transform = CGAffineTransformIdentity;
-        } completion:nil];
-    });
-}
-
-%ctor {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        playWelcomeAudio();
-        showMamaHalaLogo();
-    });
-}
+        if (window) {
+            CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
+            
+            // کۆنتێنەری سەرەکی کە وێنە و پیتەکانی تێدایە
+            UIView *mainContainer = [[UIView alloc] initWithFrame:CGRectMake((screenWidth - 320) / 2, 15, 320, 140)];
+            mainContainer.userInteractionEnabled = NO;
+            mainContainer.alpha = 0.0;
+            
+            // ١. هێنانی وێنەکە لە گیتهەب و دانانی لە سەرەوە
+            UIImageView *logoImageView = [[UIImageView alloc] initWithFrame:CGRectMake((320 - 240) / 2, 0, 240, 75)];
+            logoImageView.contentMode = UIViewContentModeScaleAspectFit;
+            logoImageView.layer.allowsEdgeAntialiasing = YES;
+            logoImageView.layer.cornerRadius = 10;
+            logoImageView.clipsToBounds = YES;
+            
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                NSURL *imageURL = [NSURL URLWithString:@"https://raw.githubusercontent.com/halo505444-ops/my-mod/main/MamaHala.jpg"];
+                NSData *imageData = [NSData dataWithContentsOfURL:imageURL];
+                UIImage *customImage = [UIImage imageWithData:imageData];
+                
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    if (customImage) {
+                        logoImageView.image = customImage;
+                    }
+                });
+            });
+            [mainContainer addSubview:logoImageView];
+            
+            // ٢. پیتەکانی MAMA HALA بە نۆرە و یەک بە دوای یەک
+            NSArray *letters = @[@"M", @"A", @"M", @"A", @" ", @"H", @"A", @"L", @"A"];
+            CGFloat startX = 5;
+            CGFloat letterWidth = 33;
+            NSMutableArray *labelArray = [NSMutableArray array];
+            
+            for (int i = 0; i < letters.count; i++) {
+                UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(startX + (i * letterWidth), 80, letterWidth, 40)];
+                lbl.text = letters[i];
+                lbl.textColor = [UIColor colorWithRed:1.0 green:0.15 blue:0.35 alpha:1.0];
+                lbl.font = [UIFont boldSystemFontOfSize:28];
+                lbl.textAlignment = NSTextAlignmentCenter;
+                
+                // تیشکدانەوەی پیتەکان (Glow)
+                lbl.layer.shadowColor = [UIColor colorWithRed:1.0 green:0.15 blue:0.35 alpha:1.0].CGColor;
+                lbl.layer.shadowRadius = 8.0;
+                lbl.layer.shadowOpacity = 0.9;
+                lbl.layer.shadowOffset = CGSizeZero;
+                
+                lbl.alpha = 0.0;
+                lbl.transform = CGAffineTransformMakeScale(0.1, 0.1);
+                
+                [mainContainer addSubview:lbl];
+                [labelArray addObject:lbl];
+            }
+            
+            [window addSubview:mainContainer];
+            [window bringSubviewToFront:mainContainer];
+            
+            // ئەنیمەیشنی دەرکەوتنی گشتی کۆنتێنەر
+            [UIView animateWithDuration:0.5 animations:^{
+                mainContainer.alpha = 1.0;
+            }];
+            
+            // جووڵەی پیتەکان یەک بە دوای یەک (Staggered Animation)
+            for (int i = 0; i < labelArray.count; i++) {
+                UILabel *lbl = labelArray[i];
+                double delayInSeconds = 0.08 * i;
+                
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER
