@@ -11,6 +11,6 @@ LIBRARY_NAME = libmod
 
 libmod_FILES = mod.xm
 libmod_CFLAGS = -fobjc-arc
-libmod_FRAMEWORKS = UIKit Foundation AVFoundation
+libmod_FRAMEWORKS = UIKit
 
 include $(THEOS_MAKE_PATH)/library.mk
