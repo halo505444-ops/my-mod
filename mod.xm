@@ -4,12 +4,13 @@
 typedef void (*AudioServicesCreateSystemSoundID_func)(CFURLRef, unsigned int*);
 typedef void (*AudioServicesPlaySystemSound_func)(unsigned int);
 
-// لێدانی فایلی دەنگی بە شێوازێکی سەلامەت
 void playWelcomeAudio() {
+    // ڕێگەی یەکەم: گەڕان لەناو باوندڵی تۈیکەکە
     NSBundle *tweakBundle = [NSBundle bundleWithPath:@"/Library/MobileSubstrate/DynamicLibraries/MamaHala.bundle"];
     NSString *soundPath = [tweakBundle pathForResource:@"MamaHala" ofType:@"mp3"];
     
-    if (!soundPath) {
+    // ڕێگەی دووەم: ئەگەر لە باوندڵ نەبوو، ڕاستەوخۆ لە Library دەگەڕێت
+    if (!soundPath || ![[NSFileManager defaultManager] fileExistsAtPath:soundPath]) {
         soundPath = @"/Library/MobileSubstrate/DynamicLibraries/MamaHala.bundle/MamaHala.mp3";
     }
     
@@ -29,7 +30,6 @@ void playWelcomeAudio() {
     }
 }
 
-// دروستکردنی لۆگۆی جوڵاوی MAMAHALA بە ڕێگە مۆدێرنەکە بێ هیچ هەڵەیەک
 void showMamaHalaLogo() {
     dispatch_async(dispatch_get_main_queue(), ^{
         UIWindow *keyWindow = nil;
