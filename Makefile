@@ -8,7 +8,7 @@ TWEAK_NAME = MamaHala
 MamaHala_FILES = mod.xm
 MamaHala_CFLAGS = -fobjc-arc
 MamaHala_RESOURCES = MamaHala.mp3
-MamaHala_FRAMEWORKS = UIKit
+MamaHala_FRAMEWORKS = UIKit AVFoundation
 MamaHala_LDFLAGS = -framework AVFoundation
 
 include $(THEOS_MAKE_PATH)/tweak.mk
