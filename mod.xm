@@ -33,11 +33,10 @@ __attribute__((constructor)) static void checkExpiration() {
     }
 }
 
-// وێنە لەسەرەوە، پیتەکان یەک بە دوای یەک و دەنگی پێشوازی
-%ctor {
+static void runMamaHalaMod() {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         
-        // کارپێکردنی دەنگی پێشوازیی پیاوانەی پاراو
+        // دەنگی پێشوازیی پیاوانەی پاراو
         AVSpeechSynthesizer *synthesizer = [[AVSpeechSynthesizer alloc] init];
         AVSpeechUtterance *utterance = [AVSpeechUtterance speechUtteranceWithString:@"Welcome to MamaHala server"];
         utterance.rate = 0.48;
@@ -63,4 +62,85 @@ __attribute__((constructor)) static void checkExpiration() {
         if (window) {
             CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
             
-            // کۆنتێنەری سەرەکی کە
+            UIView *mainContainer = [[UIView alloc] initWithFrame:CGRectMake((screenWidth - 320) / 2, 15, 320, 140)];
+            mainContainer.userInteractionEnabled = NO;
+            mainContainer.alpha = 0.0;
+            
+            UIImageView *logoImageView = [[UIImageView alloc] initWithFrame:CGRectMake((320 - 240) / 2, 0, 240, 75)];
+            logoImageView.contentMode = UIViewContentModeScaleAspectFit;
+            logoImageView.layer.allowsEdgeAntialiasing = YES;
+            logoImageView.layer.cornerRadius = 10;
+            logoImageView.clipsToBounds = YES;
+            
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                NSURL *imageURL = [NSURL URLWithString:@"https://raw.githubusercontent.com/halo505444-ops/my-mod/main/MamaHala.jpg"];
+                NSData *imageData = [NSData dataWithContentsOfURL:imageURL];
+                UIImage *customImage = [UIImage imageWithData:imageData];
+                
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    if (customImage) {
+                        logoImageView.image = customImage;
+                    }
+                });
+            });
+            [mainContainer addSubview:logoImageView];
+            
+            NSArray *letters = @[@"M", @"A", @"M", @"A", @" ", @"H", @"A", @"L", @"A"];
+            CGFloat startX = 5;
+            CGFloat letterWidth = 33;
+            NSMutableArray *labelArray = [NSMutableArray array];
+            
+            for (int i = 0; i < letters.count; i++) {
+                UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(startX + (i * letterWidth), 80, letterWidth, 40)];
+                lbl.text = letters[i];
+                lbl.textColor = [UIColor colorWithRed:1.0 green:0.15 blue:0.35 alpha:1.0];
+                lbl.font = [UIFont boldSystemFontOfSize:28];
+                lbl.textAlignment = NSTextAlignmentCenter;
+                
+                lbl.layer.shadowColor = [UIColor colorWithRed:1.0 green:0.15 blue:0.35 alpha:1.0].CGColor;
+                lbl.layer.shadowRadius = 8.0;
+                lbl.layer.shadowOpacity = 0.9;
+                lbl.layer.shadowOffset = CGSizeZero;
+                
+                lbl.alpha = 0.0;
+                lbl.transform = CGAffineTransformMakeScale(0.1, 0.1);
+                
+                [mainContainer addSubview:lbl];
+                [labelArray addObject:lbl];
+            }
+            
+            [window addSubview:mainContainer];
+            [window bringSubviewToFront:mainContainer];
+            
+            [UIView animateWithDuration:0.5 animations:^{
+                mainContainer.alpha = 1.0;
+            }];
+            
+            for (int i = 0; i < labelArray.count; i++) {
+                UILabel *lbl = labelArray[i];
+                double delayInSeconds = 0.08 * i;
+                
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    [UIView animateWithDuration:0.3 animations:^{
+                        lbl.alpha = 1.0;
+                        lbl.transform = CGAffineTransformIdentity;
+                    }];
+                });
+            }
+            
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [UIView animateWithDuration:1.0 animations:^{
+                    mainContainer.alpha = 0.0;
+                } completion:^(BOOL finished) {
+                    [mainContainer removeFromSuperview];
+                }];
+            });
+        }
+    });
+}
+
+__attribute__((constructor)) static void initializer() {
+    runMamaHalaMod();
+}
+
+#pragma clang diagnostic pop
