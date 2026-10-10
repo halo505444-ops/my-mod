@@ -1,28 +1,22 @@
 #import <UIKit/UIKit.h>
-#import <AVFoundation/AVFoundation.h>
+#import <AudioToolbox/AudioToolbox.h>
 
-// پێناسەکردنی AVAudioPlayer بۆ لێدانی دەنگ بە بێ کێشەی لینکر
-AVAudioPlayer *mamaAudioPlayer = nil;
-
+// لێدانی دەنگ بە فەنکشنی سیستەمی بێ کێشەی لینکر
 void playWelcomeAudio() {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        NSBundle *tweakBundle = [NSBundle bundleWithPath:@"/Library/MobileSubstrate/DynamicLibraries/MamaHala.bundle"];
-        NSString *soundPath = [tweakBundle pathForResource:@"MamaHala" ofType:@"mp3"];
-        
-        if (!soundPath) {
-            soundPath = @"/Library/MobileSubstrate/DynamicLibraries/MamaHala.bundle/MamaHala.mp3";
+    NSBundle *tweakBundle = [NSBundle bundleWithPath:@"/Library/MobileSubstrate/DynamicLibraries/MamaHala.bundle"];
+    NSString *soundPath = [tweakBundle pathForResource:@"MamaHala" ofType:@"mp3"];
+    
+    if (!soundPath) {
+        soundPath = @"/Library/MobileSubstrate/DynamicLibraries/MamaHala.bundle/MamaHala.mp3";
+    }
+    
+    if ([[NSFileManager defaultManager] fileExistsAtPath:soundPath]) {
+        SystemSoundID soundID;
+        OSStatus status = AudioServicesCreateSystemSoundID((__bridge CFURLRef)[NSURL fileURLWithPath:soundPath], &soundID);
+        if (status == kAudioServicesNoError) {
+            AudioServicesPlaySystemSound(soundID);
         }
-        
-        if ([[NSFileManager defaultManager] fileExistsAtPath:soundPath]) {
-            NSURL *soundURL = [NSURL fileURLWithPath:soundPath];
-            NSError *error = nil;
-            mamaAudioPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:soundURL error:&error];
-            if (mamaAudioPlayer) {
-                [mamaAudioPlayer prepareToPlay];
-                [mamaAudioPlayer play];
-            }
-        }
-    });
+    }
 }
 
 // دروستکردنی لۆگۆی جوڵاوی MAMAHALA
