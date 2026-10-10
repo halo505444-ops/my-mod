@@ -1,132 +1,52 @@
 #import <UIKit/UIKit.h>
+#import <Foundation/Foundation.h>
+#include "ImGui/imgui.h"
 
-// پشکنینی کاتی بەسەرچوون (٣٠ ڕۆژ لە بەرواری دەستپێک: 2026-10-08)
-__attribute__((constructor)) static void checkExpiration() {
-    NSDateComponents *comps = [[NSDateComponents alloc] init];
-    comps.year = 2026;
-    comps.month = 10;
-    comps.day = 8;
-    NSCalendar *calendar = [NSCalendar currentCalendar];
-    NSDate *startDate = [calendar dateFromComponents:comps];
+// گۆڕاوەکان بۆ ئەنیمەیشنی تایپکردن
+static float textStartTime = -1.0f;
+static const char* targetText = "MAMAHALA";
+
+void DrawMamaHalaOverlay(ImTextureID logo_texture) {
     
-    NSDateComponents *thirtyDays = [[NSDateComponents alloc] init];
-    thirtyDays.day = 30;
-    NSDate *expirationDate = [calendar dateByAddingComponents:thirtyDays toDate:startDate options:0];
-    
-    NSDate *currentDate = [NSDate date];
-    
-    if ([currentDate compare:expirationDate] == NSOrderedDescending) {
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"MamaHala"
-                                                                         message:@"کاتی ئەم مۆدە تەواو بوو، کلیل خەڵتە شێرە برا"
-                                                                  preferredStyle:UIAlertControllerStyleAlert];
-            [alert addAction:[UIAlertAction actionWithTitle:@"داخستن" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
-                exit(0);
-            }]];
-            UIWindow *window = [[[UIApplication sharedApplication] windows] firstObject];
-            [window.rootViewController presentViewController:alert animated:YES completion:nil];
-        });
+    if (textStartTime < 0) {
+        textStartTime = ImGui::GetTime();
     }
-}
 
-static void runMamaHalaMod() {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        
-        UIWindow *window = nil;
-        for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
-            if ([scene isKindOfClass:[UIWindowScene class]]) {
-                for (UIWindow *w in scene.windows) {
-                    if (w.isKeyWindow) {
-                        window = w;
-                        break;
-                    }
-                }
-            }
-        }
-        if (!window) {
-            window = [[[UIApplication sharedApplication] windows] firstObject];
-        }
-        
-        if (window) {
-            CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
-            
-            UIView *mainContainer = [[UIView alloc] initWithFrame:CGRectMake((screenWidth - 320) / 2, 15, 320, 140)];
-            mainContainer.userInteractionEnabled = NO;
-            mainContainer.alpha = 0.0;
-            
-            UIImageView *logoImageView = [[UIImageView alloc] initWithFrame:CGRectMake((320 - 240) / 2, 0, 240, 75)];
-            logoImageView.contentMode = UIViewContentModeScaleAspectFit;
-            logoImageView.layer.allowsEdgeAntialiasing = YES;
-            logoImageView.layer.cornerRadius = 10;
-            logoImageView.clipsToBounds = YES;
-            
-            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                NSURL *imageURL = [NSURL URLWithString:@"https://raw.githubusercontent.com/halo505444-ops/my-mod/main/MamaHala.jpg"];
-                NSData *imageData = [NSData dataWithContentsOfURL:imageURL];
-                UIImage *customImage = [UIImage imageWithData:imageData];
-                
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    if (customImage) {
-                        logoImageView.image = customImage;
-                    }
-                });
-            });
-            [mainContainer addSubview:logoImageView];
-            
-            NSArray *letters = @[@"M", @"A", @"M", @"A", @" ", @"H", @"A", @"L", @"A"];
-            CGFloat startX = 5;
-            CGFloat letterWidth = 33;
-            NSMutableArray *labelArray = [NSMutableArray array];
-            
-            for (int i = 0; i < letters.count; i++) {
-                UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(startX + (i * letterWidth), 80, letterWidth, 40)];
-                lbl.text = letters[i];
-                lbl.textColor = [UIColor colorWithRed:1.0 green:0.15 blue:0.35 alpha:1.0];
-                lbl.font = [UIFont boldSystemFontOfSize:28];
-                lbl.textAlignment = NSTextAlignmentCenter;
-                
-                lbl.layer.shadowColor = [UIColor colorWithRed:1.0 green:0.15 blue:0.35 alpha:1.0].CGColor;
-                lbl.layer.shadowRadius = 8.0;
-                lbl.layer.shadowOpacity = 0.9;
-                lbl.layer.shadowOffset = CGSizeZero;
-                
-                lbl.alpha = 0.0;
-                lbl.transform = CGAffineTransformMakeScale(0.1, 0.1);
-                
-                [mainContainer addSubview:lbl];
-                [labelArray addObject:lbl];
-            }
-            
-            [window addSubview:mainContainer];
-            [window bringSubviewToFront:mainContainer];
-            
-            [UIView animateWithDuration:0.5 animations:^{
-                mainContainer.alpha = 1.0;
-            }];
-            
-            for (int i = 0; i < labelArray.count; i++) {
-                UILabel *lbl = labelArray[i];
-                double delayInSeconds = 0.08 * i;
-                
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                    [UIView animateWithDuration:0.3 animations:^{
-                        lbl.alpha = 1.0;
-                        lbl.transform = CGAffineTransformIdentity;
-                    }];
-                });
-            }
-            
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                [UIView animateWithDuration:1.0 animations:^{
-                    mainContainer.alpha = 0.0;
-                } completion:^(BOOL finished) {
-                    [mainContainer removeFromSuperview];
-                }];
-            });
-        }
-    });
-}
+    // کردنەوەی پەنجەرەی ImGui بێ سەردێڕ و قەبارەی خۆکار
+    ImGui::Begin("SHAZA VIP Overlay", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar);
 
-__attribute__((constructor)) static void initializer() {
-    runMamaHalaMod();
+    // --- ١. نیشاندانی ڕەسمی MamaHala.jpg (قەبارەی گەورە: ١٨٠x١٨٠) ---
+    // ئەم ڕەسمە هەمیشە دەمێنێتەوە و بە هیچ شێوەیەک لاناچێت
+    ImVec2 logoSize = ImVec2(180.0f, 180.0f);
+    if (logo_texture) {
+        ImGui::Image(logo_texture, logoSize);
+    }
+
+    // --- ٢. ئەنیمەیشنی پیت بە پیتی نوسینی MAMAHALA ---
+    int totalChars = strlen(targetText);
+    float elapsedTime = ImGui::GetTime() - textStartTime;
+    
+    float charDelay = 0.20f;    // خێرایی دەرکەوتنی پیتەکان
+    float holdDuration = 2.0f;   // ماوەی مانەوەی پیتەکان دوای تەواوبوون
+
+    int charsToShow = (int)(elapsedTime / charDelay);
+
+    if (charsToShow <= totalChars) {
+        // قۆناغی ۱: پیتەکان یەک لەدوای یەک دەردەکەون (تایپ دەبن)
+        char tempBuffer[32] = {0};
+        strncpy(tempBuffer, targetText, charsToShow);
+        
+        // ناوەڕاستکردنی نوسینەکە لەژێر وێنەکەدا
+        ImGui::SetCursorPosX((logoSize.x - ImGui::CalcTextSize(tempBuffer).x) * 0.5f);
+        ImGui::Text("%s", tempBuffer);
+    } 
+    else if (elapsedTime < (totalChars * charDelay + holdDuration)) {
+        // قۆناغی ۲: وشەکە بە تەواوی دەمێنێتەوە بۆ ماوەی ٢ چرکە
+        ImGui::SetCursorPosX((logoSize.x - ImGui::CalcTextSize(targetText).x) * 0.5f);
+        ImGui::Text("%s", targetText);
+    }
+    // قۆناغی ۳: دوای تەواوبوونی ئەم کاتە، نوسینەکە بە تەواوی لادەچێت و ون دەبێت، 
+    // بەڵام وێنەی MamaHala.jpg لە جێگەی خۆی بە گەورەیی دەمێنێتەوە!
+
+    ImGui::End();
 }
