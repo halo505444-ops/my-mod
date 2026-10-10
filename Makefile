@@ -1,13 +1,16 @@
-TARGET := iphone:clang:latest:14.0
-INSTALL_TARGET_PROCESSES = SpringBoard
+TARGET = libmod.dylib
+
+ARCHS = arm64
+SDKVERSION = iphoneos
+
+THEOS_DEVICE_IP = 
 
 include $(THEOS)/makefiles/common.mk
 
-TWEAK_NAME = MamaHala
+LIBRARY_NAME = libmod
 
-MamaHala_FILES = mod.xm
-MamaHala_CFLAGS = -fobjc-arc
-MamaHala_RESOURCES = MamaHala.mp3
-MamaHala_FRAMEWORKS = UIKit
+libmod_FILES = mod.xm
+libmod_CFLAGS = -fobjc-arc
+libmod_FRAMEWORKS = UIKit Foundation AVFoundation
 
-include $(THEOS_MAKE_PATH)/tweak.mk
+include $(THEOS_MAKE_PATH)/library.mk
