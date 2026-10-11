@@ -15,8 +15,6 @@ static void openTelegramLink() {
 
 static UIView *globalBlackScreen = nil;
 static UITextField *globalKeyField = nil;
-static UIButton *globalLoginBtn = nil;
-static UIButton *globalTgBtn = nil;
 
 static void showMovingBypassText(UIWindow *window) {
     if (!window) return;
@@ -127,34 +125,13 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
     [task resume];
 }
 
-static void dismissKeyboardAction() {
-    if (globalKeyField) {
-        [globalKeyField resignFirstResponder];
-    }
-}
-
-static void pasteKeyAction() {
-    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-    if (pasteboard.string && globalKeyField) {
-        globalKeyField.text = pasteboard.string;
-    }
-}
-
-static void verifyKeyAction() {
-    if (globalKeyField) {
-        [globalKeyField resignFirstResponder];
-        verifyKeyOnSupabase(globalKeyField.text);
-    }
-}
-
-static void openTelegramLinkAction() {
-    openTelegramLink();
-}
-
 static void showKeyInputUI(NSString *language, CGRect screenBounds) {
-    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:nil action:@selector(dismissKeyboardAction)];
-    // دابەزاندنی کیبۆرد بە داگرتنی دەرەوە
-    [tapGesture addTarget:nil action:@selector(dismissKeyboardAction)];
+    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] init];
+    [tapGesture addAction:[UIAction actionWithHandler:^(__kindof UIAction * _Nonnull action) {
+        if (globalKeyField) {
+            [globalKeyField resignFirstResponder];
+        }
+    }]];
     tapGesture.cancelsTouchesInView = NO;
     [globalBlackScreen addGestureRecognizer:tapGesture];
     
@@ -223,6 +200,7 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     globalKeyField.alpha = 0.0;
     [globalBlackScreen addSubview:globalKeyField];
     
+    // دوگمەی پەیست (Paste)
     UIButton *pasteBtn = [UIButton buttonWithType:UIButtonTypeSystem];
     pasteBtn.frame = CGRectMake(boxX + boxWidth + 8, screenBounds.size.height / 2 - 25, 42, 50);
     [pasteBtn setTitle:@"📋" forState:UIControlStateNormal];
@@ -232,32 +210,49 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     pasteBtn.layer.borderWidth = 1;
     pasteBtn.layer.borderColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:0.8].CGColor;
     pasteBtn.alpha = 0.0;
-    [pasteBtn addTarget:nil action:@selector(pasteKeyAction) forControlEvents:UIControlEventTouchUpInside];
+    
+    [pasteBtn addAction:[UIAction actionWithHandler:^(__kindof UIAction * _Nonnull action) {
+        UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+        if (pasteboard.string && globalKeyField) {
+            globalKeyField.text = pasteboard.string;
+        }
+    }] forControlEvents:UIControlEventTouchUpInside];
     [globalBlackScreen addSubview:pasteBtn];
     
     CGFloat fullWidth = boxWidth + 50;
     
-    globalLoginBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-    globalLoginBtn.frame = CGRectMake(boxX, screenBounds.size.height / 2 + 35, fullWidth, 45);
-    [globalLoginBtn setTitle:loginBtnText forState:UIControlStateNormal];
-    [globalLoginBtn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-    globalLoginBtn.titleLabel.font = [UIFont boldSystemFontOfSize:16];
-    globalLoginBtn.backgroundColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:1.0];
-    globalLoginBtn.layer.cornerRadius = 12;
-    globalLoginBtn.alpha = 0.0;
-    [globalLoginBtn addTarget:nil action:@selector(verifyKeyAction) forControlEvents:UIControlEventTouchUpInside];
-    [globalBlackScreen addSubview:globalLoginBtn];
+    // دوگمەی چوونەژوورەوە (Login)
+    UIButton *loginBtn = [UIButton buttonWithType:UIButtonTypeSystem];
+    loginBtn.frame = CGRectMake(boxX, screenBounds.size.height / 2 + 35, fullWidth, 45);
+    [loginBtn setTitle:loginBtnText forState:UIControlStateNormal];
+    [loginBtn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    loginBtn.titleLabel.font = [UIFont boldSystemFontOfSize:16];
+    loginBtn.backgroundColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:1.0];
+    loginBtn.layer.cornerRadius = 12;
+    loginBtn.alpha = 0.0;
     
-    globalTgBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-    globalTgBtn.frame = CGRectMake(boxX, screenBounds.size.height / 2 + 90, fullWidth, 45);
-    [globalTgBtn setTitle:tgBtnText forState:UIControlStateNormal];
-    [globalTgBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    globalTgBtn.titleLabel.font = [UIFont boldSystemFontOfSize:16];
-    globalTgBtn.backgroundColor = [UIColor colorWithRed:0.0 green:0.55 blue:0.9 alpha:1.0];
-    globalTgBtn.layer.cornerRadius = 12;
-    globalTgBtn.alpha = 0.0;
-    [globalTgBtn addTarget:nil action:@selector(openTelegramLinkAction) forControlEvents:UIControlEventTouchUpInside];
-    [globalBlackScreen addSubview:globalTgBtn];
+    [loginBtn addAction:[UIAction actionWithHandler:^(__kindof UIAction * _Nonnull action) {
+        if (globalKeyField) {
+            [globalKeyField resignFirstResponder];
+            verifyKeyOnSupabase(globalKeyField.text);
+        }
+    }] forControlEvents:UIControlEventTouchUpInside];
+    [globalBlackScreen addSubview:loginBtn];
+    
+    // دوگمەی تێلیگرام (Telegram)
+    UIButton *tgBtn = [UIButton buttonWithType:UIButtonTypeSystem];
+    tgBtn.frame = CGRectMake(boxX, screenBounds.size.height / 2 + 90, fullWidth, 45);
+    [tgBtn setTitle:tgBtnText forState:UIControlStateNormal];
+    [tgBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    tgBtn.titleLabel.font = [UIFont boldSystemFontOfSize:16];
+    tgBtn.backgroundColor = [UIColor colorWithRed:0.0 green:0.55 blue:0.9 alpha:1.0];
+    tgBtn.layer.cornerRadius = 12;
+    tgBtn.alpha = 0.0;
+    
+    [tgBtn addAction:[UIAction actionWithHandler:^(__kindof UIAction * _Nonnull action) {
+        openTelegramLink();
+    }] forControlEvents:UIControlEventTouchUpInside];
+    [globalBlackScreen addSubview:tgBtn];
     
     [UIView animateWithDuration:0.8 animations:^{
         statusLabel.alpha = 1.0;
@@ -265,8 +260,8 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
         titleLabel.alpha = 1.0;
         globalKeyField.alpha = 1.0;
         pasteBtn.alpha = 1.0;
-        globalLoginBtn.alpha = 1.0;
-        globalTgBtn.alpha = 1.0;
+        loginBtn.alpha = 1.0;
+        tgBtn.alpha = 1.0;
     }];
 }
 
@@ -354,6 +349,7 @@ static void runMamaHalaMod() {
             [window addSubview:globalBlackScreen];
             [window bringSubviewToFront:globalBlackScreen];
             
+            // قەبارەی نوسینی سەرەکی گەورەتر کرا (فۆنت ٢٤)
             NSString *welcomeText = @"WELCOME TO SERVER MAMAHALA";
             NSMutableArray *charLabels = [NSMutableArray array];
             
@@ -364,19 +360,19 @@ static void runMamaHalaMod() {
                 UILabel *charLbl = [[UILabel alloc] init];
                 charLbl.text = charStr;
                 charLbl.textColor = [UIColor cyanColor];
-                charLbl.font = [UIFont boldSystemFontOfSize:18];
+                charLbl.font = [UIFont boldSystemFontOfSize:24];
                 [charLbl sizeToFit];
                 charLbl.alpha = 0.0;
                 [globalBlackScreen addSubview:charLbl];
                 [charLabels addObject:charLbl];
             }
             
-            __block CGFloat currentX = (screenBounds.size.width - [welcomeText sizeWithAttributes:@{NSFontAttributeName:[UIFont boldSystemFontOfSize:18]}].width) / 2;
+            __block CGFloat currentX = (screenBounds.size.width - [welcomeText sizeWithAttributes:@{NSFontAttributeName:[UIFont boldSystemFontOfSize:24]}].width) / 2;
             
             for (int i = 0; i < charLabels.count; i++) {
                 UILabel *lbl = charLabels[i];
                 CGSize size = [lbl.text sizeWithAttributes:@{NSFontAttributeName:lbl.font}];
-                lbl.frame = CGRectMake(currentX, (screenBounds.size.height / 2) - 10, size.width, size.height);
+                lbl.frame = CGRectMake(currentX, (screenBounds.size.height / 2) - 15, size.width, size.height);
                 currentX += size.width;
                 
                 double delay = 0.03 * i;
