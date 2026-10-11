@@ -19,7 +19,7 @@ static UITextField *globalKeyField = nil;
 static void showMovingBypassText(UIWindow *window) {
     if (!window) return;
     
-    CGRect screenBounds = [UIScreen mainScreen].bounds;
+    CGRect screenBounds = window.bounds;
     
     UILabel *bypassLabel = [[UILabel alloc] initWithFrame:CGRectMake(50, 100, 160, 40)];
     bypassLabel.text = @"BYPASS 🟢";
@@ -200,7 +200,6 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     globalKeyField.alpha = 0.0;
     [globalBlackScreen addSubview:globalKeyField];
     
-    // دوگمەی پەیست (Paste)
     UIButton *pasteBtn = [UIButton buttonWithType:UIButtonTypeSystem];
     pasteBtn.frame = CGRectMake(boxX + boxWidth + 8, screenBounds.size.height / 2 - 25, 42, 50);
     [pasteBtn setTitle:@"📋" forState:UIControlStateNormal];
@@ -221,7 +220,6 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     
     CGFloat fullWidth = boxWidth + 50;
     
-    // دوگمەی چوونەژوورەوە (Login)
     UIButton *loginBtn = [UIButton buttonWithType:UIButtonTypeSystem];
     loginBtn.frame = CGRectMake(boxX, screenBounds.size.height / 2 + 35, fullWidth, 45);
     [loginBtn setTitle:loginBtnText forState:UIControlStateNormal];
@@ -239,7 +237,6 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     }] forControlEvents:UIControlEventTouchUpInside];
     [globalBlackScreen addSubview:loginBtn];
     
-    // دوگمەی تێلیگرام (Telegram)
     UIButton *tgBtn = [UIButton buttonWithType:UIButtonTypeSystem];
     tgBtn.frame = CGRectMake(boxX, screenBounds.size.height / 2 + 90, fullWidth, 45);
     [tgBtn setTitle:tgBtnText forState:UIControlStateNormal];
@@ -339,7 +336,7 @@ static void runMamaHalaMod() {
         }
         
         if (window) {
-            CGRect screenBounds = [UIScreen mainScreen].bounds;
+            CGRect screenBounds = window.bounds;
             
             globalBlackScreen = [[UIView alloc] initWithFrame:screenBounds];
             globalBlackScreen.backgroundColor = [UIColor blackColor];
@@ -349,7 +346,6 @@ static void runMamaHalaMod() {
             [window addSubview:globalBlackScreen];
             [window bringSubviewToFront:globalBlackScreen];
             
-            // قەبارەی نوسینی سەرەکی گەورەتر کرا (فۆنت ٢٤)
             NSString *welcomeText = @"WELCOME TO SERVER MAMAHALA";
             NSMutableArray *charLabels = [NSMutableArray array];
             
