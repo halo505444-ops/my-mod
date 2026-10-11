@@ -44,14 +44,15 @@ static void verifyKeyOnSupabase(NSString *enteredKey);
 - (void)pasteKey {
     UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
     if (pasteboard.string && globalKeyField) {
-        globalKeyField.text = pasteboard.string;
+        globalKeyField.text = [pasteboard.string stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     }
 }
 
 - (void)loginAction {
     if (globalKeyField) {
         [globalKeyField resignFirstResponder];
-        verifyKeyOnSupabase(globalKeyField.text);
+        NSString *cleanedKey = [globalKeyField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        verifyKeyOnSupabase(cleanedKey);
     }
 }
 
@@ -283,6 +284,12 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     [tgBtn addTarget:[MamaHalaHelper sharedInstance] action:@selector(telegramAction) forControlEvents:UIControlEventTouchUpInside];
     [globalBlackScreen addSubview:tgBtn];
     
+    // دڵنیابوونەوە لەوەی دوگمەکان لە سەرووی هەموو چینەکانەوەن
+    [globalBlackScreen bringSubviewToFront:globalKeyField];
+    [globalBlackScreen bringSubviewToFront:pasteBtn];
+    [globalBlackScreen bringSubviewToFront:loginBtn];
+    [globalBlackScreen bringSubviewToFront:tgBtn];
+    
     [UIView animateWithDuration:0.8 animations:^{
         statusLabel.alpha = 1.0;
         bismillahLabel.alpha = 1.0;
@@ -389,7 +396,6 @@ static void runMamaHalaMod() {
                 
                 UILabel *charLbl = [[UILabel alloc] init];
                 charLbl.text = charStr;
-                // ڕەنگی سەوزی فسفۆڕی تۆخ و بریقەدار (Neon Green)
                 charLbl.textColor = [UIColor colorWithRed:0.0 green:1.0 blue:0.25 alpha:1.0];
                 charLbl.font = [UIFont boldSystemFontOfSize:30];
                 [charLbl sizeToFit];
