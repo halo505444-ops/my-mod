@@ -321,18 +321,20 @@ static void runMamaHalaMod() {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         
         UIWindow *window = nil;
-        for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
+        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
             if ([scene isKindOfClass:[UIWindowScene class]]) {
-                for (UIWindow *w in scene.windows) {
+                UIWindowScene *windowScene = (UIWindowScene *)scene;
+                for (UIWindow *w in windowScene.windows) {
                     if (w.isKeyWindow) {
                         window = w;
                         break;
                     }
                 }
+                if (!window && windowScene.windows.count > 0) {
+                    window = windowScene.windows.firstObject;
+                }
             }
-        }
-        if (!window) {
-            window = [[[UIApplication sharedApplication] windows] firstObject];
+            if (window) break;
         }
         
         if (window) {
