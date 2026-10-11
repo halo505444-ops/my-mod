@@ -13,6 +13,7 @@ static void openTelegramLink() {
     }
 }
 
+static UIWindow *globalModWindow = nil;
 static UIView *globalBlackScreen = nil;
 static UITextField *globalKeyField = nil;
 static void verifyKeyOnSupabase(NSString *enteredKey);
@@ -61,10 +62,10 @@ static void verifyKeyOnSupabase(NSString *enteredKey);
 }
 @end
 
-static void showMovingBypassText(UIWindow *window) {
-    if (!window) return;
+static void showMovingBypassText(UIWindow *targetWindow) {
+    if (!targetWindow) return;
     
-    CGRect screenBounds = window.bounds;
+    CGRect screenBounds = targetWindow.bounds;
     
     UILabel *bypassLabel = [[UILabel alloc] initWithFrame:CGRectMake(50, 100, 160, 40)];
     bypassLabel.text = @"BYPASS 🟢";
@@ -76,8 +77,8 @@ static void showMovingBypassText(UIWindow *window) {
     bypassLabel.clipsToBounds = YES;
     bypassLabel.userInteractionEnabled = NO;
     
-    [window addSubview:bypassLabel];
-    [window bringSubviewToFront:bypassLabel];
+    [targetWindow addSubview:bypassLabel];
+    [targetWindow bringSubviewToFront:bypassLabel];
     
     __block void (^moveBlock)(void) = nil;
     __weak UILabel *weakLabel = bypassLabel;
@@ -152,26 +153,38 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
                 
                 showToastNotification(@"⚡️ MAMAHALA VIP Activated Successfully!", globalBlackScreen);
                 
-                UIWindow *window = globalBlackScreen.window;
+                // وەرگرتنی ویندۆوی اصلی یاری بۆ نیشاندانی بایپاس پاش سەرکەوتن
+                UIWindow *targetWindow = nil;
+                for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+                    if ([scene isKindOfClass:[UIWindowScene class]]) {
+                        UIWindowScene *windowScene = (UIWindowScene *)scene;
+                        if (windowScene.windows.count > 0) {
+                            targetWindow = windowScene.windows.firstObject;
+                            break;
+                        }
+                    }
+                }
                 
                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                     [UIView animateWithDuration:0.8 animations:^{
-                        if (globalBlackScreen) {
-                            globalBlackScreen.alpha = 0.0;
+                        if (globalModWindow) {
+                            globalModWindow.alpha = 0.0;
                         }
                     } completion:^(BOOL finished) {
-                        [globalBlackScreen removeFromSuperview];
+                        [globalModWindow setHidden:YES];
+                        globalModWindow = nil;
                         globalBlackScreen = nil;
                         
-                        showMovingBypassText(window);
+                        showMovingBypassText(targetWindow);
                     }];
                 });
             } else {
                 if (globalKeyField) {
                     globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
-                    globalKeyField.placeholder = @"❌ Invalid Key!";
+                    globalKeyField.placeholder = @"❌ کلیل بەدەست بێنە!";
                     globalKeyField.text = @"";
                 }
+                openTelegramLink();
             }
         });
     }];
@@ -284,7 +297,6 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     [tgBtn addTarget:[MamaHalaHelper sharedInstance] action:@selector(telegramAction) forControlEvents:UIControlEventTouchUpInside];
     [globalBlackScreen addSubview:tgBtn];
     
-    // دڵنیابوونەوە لەوەی دوگمەکان لە سەرووی هەموو چینەکانەوەن
     [globalBlackScreen bringSubviewToFront:globalKeyField];
     [globalBlackScreen bringSubviewToFront:pasteBtn];
     [globalBlackScreen bringSubviewToFront:loginBtn];
@@ -342,7 +354,7 @@ static void showLanguageMenu(CGRect screenBounds) {
             }];
         }] forControlEvents:UIControlEventTouchUpInside];
         
-        [globalBlackScreen addSubview:langBtn];
+        [globalModWindow.rootViewController.view addSubview:langBtn];
         [langViews addObject:langBtn];
     }
     
@@ -359,33 +371,31 @@ static void showLanguageMenu(CGRect screenBounds) {
 static void runMamaHalaMod() {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         
-        UIWindow *window = nil;
+        UIWindowScene *activeScene = nil;
         for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
             if ([scene isKindOfClass:[UIWindowScene class]]) {
-                UIWindowScene *windowScene = (UIWindowScene *)scene;
-                for (UIWindow *w in windowScene.windows) {
-                    if (w.isKeyWindow) {
-                        window = w;
-                        break;
-                    }
-                }
-                if (!window && windowScene.windows.count > 0) {
-                    window = windowScene.windows.firstObject;
-                }
+                activeScene = (UIWindowScene *)scene;
+                break;
             }
-            if (window) break;
         }
         
-        if (window) {
-            CGRect screenBounds = window.bounds;
+        if (activeScene) {
+            CGRect screenBounds = activeScene.coordinateSpace.bounds;
             
-            globalBlackScreen = [[UIView alloc] initWithFrame:screenBounds];
-            globalBlackScreen.backgroundColor = [UIColor blackColor];
-            globalBlackScreen.alpha = 1.0;
+            // دروستکردنی ویندوێکی سەربەخۆ بە ئاستی زۆر بەرز بۆ ئەوەی یاری نەتوانێت تاچەکان بدزێت
+            globalModWindow = [[UIWindow alloc] initWithWindowScene:activeScene];
+            globalModWindow.frame = screenBounds;
+            globalModWindow.windowLevel = UIWindowLevelAlert + 100;
+            globalModWindow.backgroundColor = [UIColor clearColor];
+            
+            UIViewController *rootVC = [[UIViewController alloc] init];
+            rootVC.view.backgroundColor = [UIColor blackColor];
+            globalModWindow.rootViewController = rootVC;
+            
+            [globalModWindow makeKeyAndVisible];
+            
+            globalBlackScreen = rootVC.view;
             globalBlackScreen.userInteractionEnabled = YES;
-            
-            [window addSubview:globalBlackScreen];
-            [window bringSubviewToFront:globalBlackScreen];
             
             NSString *welcomeText = @"WELCOME TO SERVER MAMAHALA";
             NSMutableArray *charLabels = [NSMutableArray array];
