@@ -15,6 +15,50 @@ static void openTelegramLink() {
 
 static UIView *globalBlackScreen = nil;
 static UITextField *globalKeyField = nil;
+static void verifyKeyOnSupabase(NSString *enteredKey);
+
+@interface MamaHalaHelper : NSObject
++ (instancetype)sharedInstance;
+- (void)dismissKeyboard;
+- (void)pasteKey;
+- (void)loginAction;
+- (void)telegramAction;
+@end
+
+@implementation MamaHalaHelper
++ (instancetype)sharedInstance {
+    static MamaHalaHelper *instance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[MamaHalaHelper alloc] init];
+    });
+    return instance;
+}
+
+- (void)dismissKeyboard {
+    if (globalKeyField) {
+        [globalKeyField resignFirstResponder];
+    }
+}
+
+- (void)pasteKey {
+    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+    if (pasteboard.string && globalKeyField) {
+        globalKeyField.text = pasteboard.string;
+    }
+}
+
+- (void)loginAction {
+    if (globalKeyField) {
+        [globalKeyField resignFirstResponder];
+        verifyKeyOnSupabase(globalKeyField.text);
+    }
+}
+
+- (void)telegramAction {
+    openTelegramLink();
+}
+@end
 
 static void showMovingBypassText(UIWindow *window) {
     if (!window) return;
@@ -133,28 +177,8 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
     [task resume];
 }
 
-static void dismissKeyboardAction() {
-    if (globalKeyField) {
-        [globalKeyField resignFirstResponder];
-    }
-}
-
-static void pasteKeyAction() {
-    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-    if (pasteboard.string && globalKeyField) {
-        globalKeyField.text = pasteboard.string;
-    }
-}
-
-static void verifyKeyAction() {
-    if (globalKeyField) {
-        [globalKeyField resignFirstResponder];
-        verifyKeyOnSupabase(globalKeyField.text);
-    }
-}
-
 static void showKeyInputUI(NSString *language, CGRect screenBounds) {
-    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:nil action:@selector(dismissKeyboardAction)];
+    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:[MamaHalaHelper sharedInstance] action:@selector(dismissKeyboard)];
     tapGesture.cancelsTouchesInView = NO;
     [globalBlackScreen addGestureRecognizer:tapGesture];
     
@@ -232,7 +256,7 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     pasteBtn.layer.borderWidth = 1;
     pasteBtn.layer.borderColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:0.8].CGColor;
     pasteBtn.alpha = 0.0;
-    [pasteBtn addTarget:nil action:@selector(pasteKeyAction) forControlEvents:UIControlEventTouchUpInside];
+    [pasteBtn addTarget:[MamaHalaHelper sharedInstance] action:@selector(pasteKey) forControlEvents:UIControlEventTouchUpInside];
     [globalBlackScreen addSubview:pasteBtn];
     
     CGFloat fullWidth = boxWidth + 50;
@@ -245,7 +269,7 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     loginBtn.backgroundColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:1.0];
     loginBtn.layer.cornerRadius = 12;
     loginBtn.alpha = 0.0;
-    [loginBtn addTarget:nil action:@selector(verifyKeyAction) forControlEvents:UIControlEventTouchUpInside];
+    [loginBtn addTarget:[MamaHalaHelper sharedInstance] action:@selector(loginAction) forControlEvents:UIControlEventTouchUpInside];
     [globalBlackScreen addSubview:loginBtn];
     
     UIButton *tgBtn = [UIButton buttonWithType:UIButtonTypeSystem];
@@ -256,7 +280,7 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     tgBtn.backgroundColor = [UIColor colorWithRed:0.0 green:0.55 blue:0.9 alpha:1.0];
     tgBtn.layer.cornerRadius = 12;
     tgBtn.alpha = 0.0;
-    [tgBtn addTarget:nil action:@selector(openTelegramLinkAction) forControlEvents:UIControlEventTouchUpInside];
+    [tgBtn addTarget:[MamaHalaHelper sharedInstance] action:@selector(telegramAction) forControlEvents:UIControlEventTouchUpInside];
     [globalBlackScreen addSubview:tgBtn];
     
     [UIView animateWithDuration:0.8 animations:^{
@@ -365,20 +389,21 @@ static void runMamaHalaMod() {
                 
                 UILabel *charLbl = [[UILabel alloc] init];
                 charLbl.text = charStr;
-                charLbl.textColor = [UIColor cyanColor];
-                charLbl.font = [UIFont boldSystemFontOfSize:24];
+                // ڕەنگی سەوزی فسفۆڕی تۆخ و بریقەدار (Neon Green)
+                charLbl.textColor = [UIColor colorWithRed:0.0 green:1.0 blue:0.25 alpha:1.0];
+                charLbl.font = [UIFont boldSystemFontOfSize:30];
                 [charLbl sizeToFit];
                 charLbl.alpha = 0.0;
                 [globalBlackScreen addSubview:charLbl];
                 [charLabels addObject:charLbl];
             }
             
-            __block CGFloat currentX = (screenBounds.size.width - [welcomeText sizeWithAttributes:@{NSFontAttributeName:[UIFont boldSystemFontOfSize:24]}].width) / 2;
+            __block CGFloat currentX = (screenBounds.size.width - [welcomeText sizeWithAttributes:@{NSFontAttributeName:[UIFont boldSystemFontOfSize:30]}].width) / 2;
             
             for (int i = 0; i < charLabels.count; i++) {
                 UILabel *lbl = charLabels[i];
                 CGSize size = [lbl.text sizeWithAttributes:@{NSFontAttributeName:lbl.font}];
-                lbl.frame = CGRectMake(currentX, (screenBounds.size.height / 2) - 15, size.width, size.height);
+                lbl.frame = CGRectMake(currentX, (screenBounds.size.height / 2) - 20, size.width, size.height);
                 currentX += size.width;
                 
                 double delay = 0.03 * i;
