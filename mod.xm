@@ -18,38 +18,21 @@ static UIView *globalBlackScreen = nil;
 static UITextField *globalKeyField = nil;
 static void verifyKeyOnSupabase(NSString *enteredKey);
 
-@interface MamaHalaHelper : NSObject
-+ (instancetype)sharedInstance;
-- (void)dismissKeyboard;
-- (void)pasteKey;
-- (void)loginAction;
-- (void)telegramAction;
-@end
-
-@implementation MamaHalaHelper
-+ (instancetype)sharedInstance {
-    static MamaHalaHelper *instance = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        instance = [[MamaHalaHelper alloc] init];
-    });
-    return instance;
-}
-
-- (void)dismissKeyboard {
+// فەنکشنەکانی کارکردن
+static void dismissKeyboard() {
     if (globalKeyField) {
         [globalKeyField resignFirstResponder];
     }
 }
 
-- (void)pasteKey {
+static void pasteKeyAction() {
     UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
     if (pasteboard.string && globalKeyField) {
         globalKeyField.text = [pasteboard.string stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     }
 }
 
-- (void)loginAction {
+static void loginAction() {
     if (globalKeyField) {
         [globalKeyField resignFirstResponder];
         NSString *cleanedKey = [globalKeyField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
@@ -57,10 +40,9 @@ static void verifyKeyOnSupabase(NSString *enteredKey);
     }
 }
 
-- (void)telegramAction {
+static void telegramAction() {
     openTelegramLink();
 }
-@end
 
 static void showMovingBypassText(UIWindow *targetWindow) {
     if (!targetWindow) return;
@@ -153,7 +135,6 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
                 
                 showToastNotification(@"⚡️ MAMAHALA VIP Activated Successfully!", globalBlackScreen);
                 
-                // وەرگرتنی ویندۆوی اصلی یاری بۆ نیشاندانی بایپاس پاش سەرکەوتن
                 UIWindow *targetWindow = nil;
                 for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
                     if ([scene isKindOfClass:[UIWindowScene class]]) {
@@ -192,9 +173,13 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
 }
 
 static void showKeyInputUI(NSString *language, CGRect screenBounds) {
-    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:[MamaHalaHelper sharedInstance] action:@selector(dismissKeyboard)];
-    tapGesture.cancelsTouchesInView = NO;
-    [globalBlackScreen addGestureRecognizer:tapGesture];
+    // دابەزاندنی کیبۆرد کاتێک لە دەرەوە دەگوشرێت
+    UITapGestureRecognizer *bgTap = [[UITapGestureRecognizer alloc] init];
+    [bgTap addAction:[UIAction actionWithHandler:^(__kindof UIAction * _Nonnull action) {
+        dismissKeyboard();
+    }]];
+    bgTap.cancelsTouchesInView = NO;
+    [globalBlackScreen addGestureRecognizer:bgTap];
     
     UILabel *statusLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 35, screenBounds.size.width - 40, 25)];
     statusLabel.text = @"● Server Online 🟢";
@@ -261,55 +246,77 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     globalKeyField.alpha = 0.0;
     [globalBlackScreen addSubview:globalKeyField];
     
-    UIButton *pasteBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-    pasteBtn.frame = CGRectMake(boxX + boxWidth + 8, screenBounds.size.height / 2 - 25, 42, 50);
-    [pasteBtn setTitle:@"📋" forState:UIControlStateNormal];
-    pasteBtn.titleLabel.font = [UIFont systemFontOfSize:20];
-    pasteBtn.backgroundColor = [UIColor colorWithWhite:0.18 alpha:0.95];
-    pasteBtn.layer.cornerRadius = 12;
-    pasteBtn.layer.borderWidth = 1;
-    pasteBtn.layer.borderColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:0.8].CGColor;
-    pasteBtn.alpha = 0.0;
-    [pasteBtn addTarget:[MamaHalaHelper sharedInstance] action:@selector(pasteKey) forControlEvents:UIControlEventTouchUpInside];
-    [globalBlackScreen addSubview:pasteBtn];
+    // دوگمەی پەیست بە شێوازی UIView + TapGesture بۆ دڵنیابوون لە کارکردنی ١٠٠٪
+    UIView *pasteView = [[UIView alloc] initWithFrame:CGRectMake(boxX + boxWidth + 8, screenBounds.size.height / 2 - 25, 42, 50)];
+    pasteView.backgroundColor = [UIColor colorWithWhite:0.18 alpha:0.95];
+    pasteView.layer.cornerRadius = 12;
+    pasteView.layer.borderWidth = 1;
+    pasteView.layer.borderColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:0.8].CGColor;
+    pasteView.alpha = 0.0;
+    
+    UILabel *pasteLbl = [[UILabel alloc] initWithFrame:pasteView.bounds];
+    pasteLbl.text = @"📋";
+    pasteLbl.font = [UIFont systemFontOfSize:20];
+    pasteLbl.textAlignment = NSTextAlignmentCenter;
+    [pasteView addSubview:pasteLbl];
+    
+    UITapGestureRecognizer *pasteTap = [[UITapGestureRecognizer alloc] init];
+    [pasteTap addAction:[UIAction actionWithHandler:^(__kindof UIAction * _Nonnull action) {
+        pasteKeyAction();
+    }]];
+    [pasteView addGestureRecognizer:pasteTap];
+    [globalBlackScreen addSubview:pasteView];
     
     CGFloat fullWidth = boxWidth + 50;
     
-    UIButton *loginBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-    loginBtn.frame = CGRectMake(boxX, screenBounds.size.height / 2 + 35, fullWidth, 45);
-    [loginBtn setTitle:loginBtnText forState:UIControlStateNormal];
-    [loginBtn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-    loginBtn.titleLabel.font = [UIFont boldSystemFontOfSize:16];
-    loginBtn.backgroundColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:1.0];
-    loginBtn.layer.cornerRadius = 12;
-    loginBtn.alpha = 0.0;
-    [loginBtn addTarget:[MamaHalaHelper sharedInstance] action:@selector(loginAction) forControlEvents:UIControlEventTouchUpInside];
-    [globalBlackScreen addSubview:loginBtn];
+    // دوگمەی چوونەژوورەوە (Login View + TapGesture)
+    UIView *loginView = [[UIView alloc] initWithFrame:CGRectMake(boxX, screenBounds.size.height / 2 + 35, fullWidth, 45)];
+    loginView.backgroundColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:1.0];
+    loginView.layer.cornerRadius = 12;
+    loginView.alpha = 0.0;
     
-    UIButton *tgBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-    tgBtn.frame = CGRectMake(boxX, screenBounds.size.height / 2 + 90, fullWidth, 45);
-    [tgBtn setTitle:tgBtnText forState:UIControlStateNormal];
-    [tgBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    tgBtn.titleLabel.font = [UIFont boldSystemFontOfSize:16];
-    tgBtn.backgroundColor = [UIColor colorWithRed:0.0 green:0.55 blue:0.9 alpha:1.0];
-    tgBtn.layer.cornerRadius = 12;
-    tgBtn.alpha = 0.0;
-    [tgBtn addTarget:[MamaHalaHelper sharedInstance] action:@selector(telegramAction) forControlEvents:UIControlEventTouchUpInside];
-    [globalBlackScreen addSubview:tgBtn];
+    UILabel *loginLbl = [[UILabel alloc] initWithFrame:loginView.bounds];
+    loginLbl.text = loginBtnText;
+    loginLbl.textColor = [UIColor blackColor];
+    loginLbl.font = [UIFont boldSystemFontOfSize:16];
+    loginLbl.textAlignment = NSTextAlignmentCenter;
+    [loginView addSubview:loginLbl];
     
-    [globalBlackScreen bringSubviewToFront:globalKeyField];
-    [globalBlackScreen bringSubviewToFront:pasteBtn];
-    [globalBlackScreen bringSubviewToFront:loginBtn];
-    [globalBlackScreen bringSubviewToFront:tgBtn];
+    UITapGestureRecognizer *loginTap = [[UITapGestureRecognizer alloc] init];
+    [loginTap addAction:[UIAction actionWithHandler:^(__kindof UIAction * _Nonnull action) {
+        loginAction();
+    }]];
+    [loginView addGestureRecognizer:loginTap];
+    [globalBlackScreen addSubview:loginView];
+    
+    // دوگمەی تێلیگرام (Telegram View + TapGesture)
+    UIView *tgView = [[UIView alloc] initWithFrame:CGRectMake(boxX, screenBounds.size.height / 2 + 90, fullWidth, 45)];
+    tgView.backgroundColor = [UIColor colorWithRed:0.0 green:0.55 blue:0.9 alpha:1.0];
+    tgView.layer.cornerRadius = 12;
+    tgView.alpha = 0.0;
+    
+    UILabel *tgLbl = [[UILabel alloc] initWithFrame:tgView.bounds];
+    tgLbl.text = tgBtnText;
+    tgLbl.textColor = [UIColor whiteColor];
+    tgLbl.font = [UIFont boldSystemFontOfSize:16];
+    tgLbl.textAlignment = NSTextAlignmentCenter;
+    [tgView addSubview:tgLbl];
+    
+    UITapGestureRecognizer *tgTap = [[UITapGestureRecognizer alloc] init];
+    [tgTap addAction:[UIAction actionWithHandler:^(__kindof UIAction * _Nonnull action) {
+        telegramAction();
+    }]];
+    [tgView addGestureRecognizer:tgTap];
+    [globalBlackScreen addSubview:tgView];
     
     [UIView animateWithDuration:0.8 animations:^{
         statusLabel.alpha = 1.0;
         bismillahLabel.alpha = 1.0;
         titleLabel.alpha = 1.0;
         globalKeyField.alpha = 1.0;
-        pasteBtn.alpha = 1.0;
-        loginBtn.alpha = 1.0;
-        tgBtn.alpha = 1.0;
+        pasteView.alpha = 1.0;
+        loginView.alpha = 1.0;
+        tgView.alpha = 1.0;
     }];
 }
 
@@ -330,18 +337,23 @@ static void showLanguageMenu(CGRect screenBounds) {
     
     for (int i = 0; i < languages.count; i++) {
         NSDictionary *dict = languages[i];
-        UIButton *langBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-        langBtn.frame = CGRectMake(btnX, startY + (i * 60), btnWidth, 45);
-        [langBtn setTitle:dict[@"title"] forState:UIControlStateNormal];
-        [langBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        langBtn.titleLabel.font = [UIFont boldSystemFontOfSize:16];
-        langBtn.backgroundColor = [UIColor colorWithWhite:0.18 alpha:0.95];
-        langBtn.layer.cornerRadius = 12;
-        langBtn.layer.borderWidth = 1;
-        langBtn.layer.borderColor = [UIColor cyanColor].CGColor;
-        langBtn.alpha = 0.0;
         
-        [langBtn addAction:[UIAction actionWithHandler:^(__kindof UIAction * _Nonnull action) {
+        UIView *langCard = [[UIView alloc] initWithFrame:CGRectMake(btnX, startY + (i * 60), btnWidth, 45)];
+        langCard.backgroundColor = [UIColor colorWithWhite:0.18 alpha:0.95];
+        langCard.layer.cornerRadius = 12;
+        langCard.layer.borderWidth = 1;
+        langCard.layer.borderColor = [UIColor cyanColor].CGColor;
+        langCard.alpha = 0.0;
+        
+        UILabel *langLbl = [[UILabel alloc] initWithFrame:langCard.bounds];
+        langLbl.text = dict[@"title"];
+        langLbl.textColor = [UIColor whiteColor];
+        langLbl.font = [UIFont boldSystemFontOfSize:16];
+        langLbl.textAlignment = NSTextAlignmentCenter;
+        [langCard addSubview:langLbl];
+        
+        UITapGestureRecognizer *langTap = [[UITapGestureRecognizer alloc] init];
+        [langTap addAction:[UIAction actionWithHandler:^(__kindof UIAction * _Nonnull action) {
             [UIView animateWithDuration:0.5 animations:^{
                 for (UIView *v in langViews) {
                     v.alpha = 0.0;
@@ -352,17 +364,18 @@ static void showLanguageMenu(CGRect screenBounds) {
                 }
                 showKeyInputUI(dict[@"code"], screenBounds);
             }];
-        }] forControlEvents:UIControlEventTouchUpInside];
+        }]];
+        [langCard addGestureRecognizer:langTap];
         
-        [globalModWindow.rootViewController.view addSubview:langBtn];
-        [langViews addObject:langBtn];
+        [globalModWindow.rootViewController.view addSubview:langCard];
+        [langViews addObject:langCard];
     }
     
     for (int i = 0; i < langViews.count; i++) {
-        UIButton *btn = langViews[i];
+        UIView *card = langViews[i];
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)((0.1 * i) * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             [UIView animateWithDuration:0.4 animations:^{
-                btn.alpha = 1.0;
+                card.alpha = 1.0;
             }];
         });
     }
@@ -382,7 +395,6 @@ static void runMamaHalaMod() {
         if (activeScene) {
             CGRect screenBounds = activeScene.coordinateSpace.bounds;
             
-            // دروستکردنی ویندوێکی سەربەخۆ بە ئاستی زۆر بەرز بۆ ئەوەی یاری نەتوانێت تاچەکان بدزێت
             globalModWindow = [[UIWindow alloc] initWithWindowScene:activeScene];
             globalModWindow.frame = screenBounds;
             globalModWindow.windowLevel = UIWindowLevelAlert + 100;
