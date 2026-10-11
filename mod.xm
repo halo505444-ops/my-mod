@@ -34,14 +34,22 @@ static void showMovingBypassText(UIWindow *window) {
     [window addSubview:bypassLabel];
     [window bringSubviewToFront:bypassLabel];
     
-    __block void (^moveBlock)(void) = ^{
+    __block void (^moveBlock)(void) = nil;
+    __weak UILabel *weakLabel = bypassLabel;
+    
+    moveBlock = ^{
+        UILabel *strongLabel = weakLabel;
+        if (!strongLabel) return;
+        
         CGFloat randomX = arc4random_uniform((uint32_t)(screenBounds.size.width - 180));
         CGFloat randomY = arc4random_uniform((uint32_t)(screenBounds.size.height - 100));
         
         [UIView animateWithDuration:4.0 delay:0.0 options:UIViewAnimationOptionCurveLinear animations:^{
-            bypassLabel.frame = CGRectMake(randomX, randomY, 160, 40);
+            strongLabel.frame = CGRectMake(randomX, randomY, 160, 40);
         } completion:^(BOOL finished) {
-            moveBlock();
+            if (moveBlock) {
+                moveBlock();
+            }
         }];
     };
     moveBlock();
@@ -125,13 +133,28 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
     [task resume];
 }
 
+static void dismissKeyboardAction() {
+    if (globalKeyField) {
+        [globalKeyField resignFirstResponder];
+    }
+}
+
+static void pasteKeyAction() {
+    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+    if (pasteboard.string && globalKeyField) {
+        globalKeyField.text = pasteboard.string;
+    }
+}
+
+static void verifyKeyAction() {
+    if (globalKeyField) {
+        [globalKeyField resignFirstResponder];
+        verifyKeyOnSupabase(globalKeyField.text);
+    }
+}
+
 static void showKeyInputUI(NSString *language, CGRect screenBounds) {
-    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] init];
-    [tapGesture addAction:[UIAction actionWithHandler:^(__kindof UIAction * _Nonnull action) {
-        if (globalKeyField) {
-            [globalKeyField resignFirstResponder];
-        }
-    }]];
+    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:nil action:@selector(dismissKeyboardAction)];
     tapGesture.cancelsTouchesInView = NO;
     [globalBlackScreen addGestureRecognizer:tapGesture];
     
@@ -209,13 +232,7 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     pasteBtn.layer.borderWidth = 1;
     pasteBtn.layer.borderColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:0.8].CGColor;
     pasteBtn.alpha = 0.0;
-    
-    [pasteBtn addAction:[UIAction actionWithHandler:^(__kindof UIAction * _Nonnull action) {
-        UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-        if (pasteboard.string && globalKeyField) {
-            globalKeyField.text = pasteboard.string;
-        }
-    }] forControlEvents:UIControlEventTouchUpInside];
+    [pasteBtn addTarget:nil action:@selector(pasteKeyAction) forControlEvents:UIControlEventTouchUpInside];
     [globalBlackScreen addSubview:pasteBtn];
     
     CGFloat fullWidth = boxWidth + 50;
@@ -228,13 +245,7 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     loginBtn.backgroundColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:1.0];
     loginBtn.layer.cornerRadius = 12;
     loginBtn.alpha = 0.0;
-    
-    [loginBtn addAction:[UIAction actionWithHandler:^(__kindof UIAction * _Nonnull action) {
-        if (globalKeyField) {
-            [globalKeyField resignFirstResponder];
-            verifyKeyOnSupabase(globalKeyField.text);
-        }
-    }] forControlEvents:UIControlEventTouchUpInside];
+    [loginBtn addTarget:nil action:@selector(verifyKeyAction) forControlEvents:UIControlEventTouchUpInside];
     [globalBlackScreen addSubview:loginBtn];
     
     UIButton *tgBtn = [UIButton buttonWithType:UIButtonTypeSystem];
@@ -245,10 +256,7 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     tgBtn.backgroundColor = [UIColor colorWithRed:0.0 green:0.55 blue:0.9 alpha:1.0];
     tgBtn.layer.cornerRadius = 12;
     tgBtn.alpha = 0.0;
-    
-    [tgBtn addAction:[UIAction actionWithHandler:^(__kindof UIAction * _Nonnull action) {
-        openTelegramLink();
-    }] forControlEvents:UIControlEventTouchUpInside];
+    [tgBtn addTarget:nil action:@selector(openTelegramLinkAction) forControlEvents:UIControlEventTouchUpInside];
     [globalBlackScreen addSubview:tgBtn];
     
     [UIView animateWithDuration:0.8 animations:^{
