@@ -8,7 +8,21 @@
 
 + (void)startAnimation {
     dispatch_async(dispatch_get_main_queue(), ^{
-        UIWindow *keyWindow = [UIApplication sharedApplication].keyWindow;
+        // دۆزینەوەی پەنجەرەی کارا بۆ وەشانە نوێیەکانی iOS
+        UIWindow *keyWindow = nil;
+        for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if (scene.activationState == UISceneActivationStateForegroundActive) {
+                for (UIWindow *window in scene.windows) {
+                    if (window.isKeyWindow) {
+                        keyWindow = window;
+                        break;
+                    }
+                }
+            }
+        }
+        if (!keyWindow) {
+            keyWindow = [UIApplication sharedApplication].windows.firstObject;
+        }
         if (!keyWindow) return;
 
         // دروستکردنی لایەری سەرەکی
@@ -18,7 +32,7 @@
 
         // نووسینی سەرەکی (⚡️SHAZAVIP⚡️)
         UILabel *mainTitle = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, bannerContainer.bounds.size.width, 70)];
-        mainTitle.textText = @""; // سەرەتا بەتاڵە بۆ ئەوەی پیت بە پیت بێت
+        mainTitle.text = @""; // ڕاستکردنەوەی هەڵەکە
         mainTitle.textAlignment = NSTextAlignmentCenter;
         mainTitle.font = [UIFont boldSystemFontOfSize:38];
         mainTitle.textColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:1.0]; // زێڕی
@@ -49,38 +63,37 @@
         NSString *fullMainText = @"⚡️SHAZAVIP⚡️";
         NSString *fullSubText = @"💥WELCOME TO SERVER MAMAHALA💥";
 
-        // فەنکشنی پیت بە پیت هاتن (Typing) بۆ سەرەکی
+        // پیت بە پیت هاتنی نووسینی سەرەکی
         __block int mainIndex = 0;
-        NSTimer *typeTimer = [NSTimer scheduledTimerWithTimeInterval:0.12 repeats:YES block:^(NSTimer * _Nonnull timer) {
+        [NSTimer scheduledTimerWithTimeInterval:0.12 repeats:YES block:^(NSTimer * _Nonnull timer) {
             if (mainIndex <= fullMainText.length) {
                 mainTitle.text = [fullMainText substringToIndex:mainIndex];
                 mainIndex++;
             } else {
                 [timer invalidate];
                 
-                // کاتێک سەرەکی تەواو بوو، دەستی بە دووەم بکە
+                // پاش تەواوبوونی سەرەکی، دەستپێکردنی نووسینی دووەم
                 __block int subIndex = 0;
-                NSTimer *subTimer = [NSTimer scheduledTimerWithTimeInterval:0.06 repeats:YES block:^(NSTimer * _Nonnull subTimerRef) {
+                [NSTimer scheduledTimerWithTimeInterval:0.06 repeats:YES block:^(NSTimer * _Nonnull subTimerRef) {
                     if (subIndex <= fullSubText.length) {
                         subTitle.text = [fullSubText substringToIndex:subIndex];
                         subIndex++;
                     } else {
                         [subTimerRef invalidate];
                         
-                        // پاش چەند چرکەیەک، پیت بە پیت بسڕەوە (رۆیشتن)
+                        // چاوەڕوانکردن بۆ ٢.٥ چرکە پاشان پیت بە پیت سڕینەوە (رۆیشتن)
                         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                            // سڕینەوەی پیت بە پیت بۆ نووسینی خوارەوە
+                            
                             __block int subRemoveIndex = fullSubText.length;
-                            NSTimer *subDelTimer = [NSTimer scheduledTimerWithTimeInterval:0.04 repeats:YES block:^(NSTimer * _Nonnull delTimerRef) {
+                            [NSTimer scheduledTimerWithTimeInterval:0.04 repeats:YES block:^(NSTimer * _Nonnull delTimerRef) {
                                 if (subRemoveIndex >= 0) {
                                     subTitle.text = [fullSubText substringToIndex:subRemoveIndex];
                                     subRemoveIndex--;
                                 } else {
                                     [delTimerRef invalidate];
                                     
-                                    // سڕینەوەی پیت بە پیت بۆ نووسینی سەرەکی
                                     __block int mainRemoveIndex = fullMainText.length;
-                                    NSTimer *mainDelTimer = [NSTimer scheduledTimerWithTimeInterval:0.06 repeats:YES block:^(NSTimer * _Nonnull mainDelRef) {
+                                    [NSTimer scheduledTimerWithTimeInterval:0.06 repeats:YES block:^(NSTimer * _Nonnull mainDelRef) {
                                         if (mainRemoveIndex >= 0) {
                                             mainTitle.text = [fullMainText substringToIndex:mainRemoveIndex];
                                             mainRemoveIndex--;
@@ -101,7 +114,7 @@
 
 @end
 
-// یەکسەر کە یارییەکە دەستپێدەکات و دەیاتە سەر کار
+// یەکسەر کە یارییەکە دەکرێتەوە کار دەکات
 %ctor {
     dispatch_async(dispatch_get_main_queue(), ^{
         [ShazaVIPTypewriterManager startAnimation];
