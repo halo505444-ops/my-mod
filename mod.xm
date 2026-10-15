@@ -1,70 +1,79 @@
-<?xml version="1.0" encoding="utf-8"?>
-<mod id="ShazaVIP_Welcome_Banner" version="1.0">
-    <info>
-        <name>ShazaVIP Animated Welcome UI</name>
-        <author>MAMAHALA</author>
-        <description>Shows dynamic glowing text after 20 seconds in-game.</description>
-    </info>
+#import <UIKit/UIKit.h>
 
-    <!-- Configuration for UI & Timer -->
-    <config>
-        <!-- Delay in seconds (20 seconds) -->
-        <property name="delay_seconds" value="20" />
-        <property name="display_duration" value="10" /> <!-- ماوەی نیشاندانی دەقەکە -->
-    </config>
+// دروستکردنی ڕوکارێکی سەرنجڕاکێش و ئەنیمی (UI)
+@interface ShazaVIPManager : NSObject
++ (void)showWelcomeBanner;
+@end
 
-    <!-- Visual Layer & Styles -->
-    <ui_elements>
-        <overlay_screen id="vip_banner_layer" align="center" vertical_align="center">
-            
-            <!-- Main VIP Title with Glow Animation -->
-            <text_box id="txt_vip_main" 
-                      text="⚡️SHAZAVIP⚡️" 
-                      font_size="64" 
-                      font_style="bold"
-                      color="#FFD700" 
-                      glow_color="#00FFFF" 
-                      glow_radius="15" 
-                      animation="pulse_and_bounce" 
-                      animation_speed="1.2s">
-            </text_box>
+@implementation ShazaVIPManager
 
-            <!-- Subtitle Text -->
-            <text_box id="txt_server_welcome" 
-                      text="💥WELCOME TO SERVER MAMAHALA💥" 
-                      font_size="28" 
-                      font_style="bold"
-                      color="#FF4500" 
-                      glow_color="#FF007F" 
-                      glow_radius="8" 
-                      margin_top="25"
-                      animation="fade_in_up" 
-                      animation_delay="0.5s">
-            </text_box>
++ (void)showWelcomeBanner {
+    // دڵنیابوونەوە لەوەی لەسەر مینی مەین ویندۆوە
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIWindow *keyWindow = [UIApplication sharedApplication].keyWindow;
+        if (!keyWindow) return;
 
-        </overlay_screen>
-    </ui_elements>
+        // دروستکردنی لایەری سەرەکی (Container View)
+        UIView *bannerContainer = [[UIView alloc] initWithFrame:CGRectMake(0, 0, keyWindow.bounds.size.width, 150)];
+        bannerContainer.center = CGPointMake(keyWindow.bounds.size.width / 2, keyWindow.bounds.size.height / 3);
+        bannerContainer.userInteractionEnabled = NO;
+        
+        // نووسینی سەرەکی: ⚡️SHAZAVIP⚡️
+        UILabel *mainTitle = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, bannerContainer.bounds.size.width, 70)];
+        mainTitle.text = @"⚡️SHAZAVIP⚡️";
+        mainTitle.textAlignment = NSTextAlignmentCenter;
+        mainTitle.font = [UIFont boldSystemFontOfSize:38];
+        mainTitle.textColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:1.0]; // زێڕی
+        
+        // زیادکردنی بریقە (Glow Effect) بۆ نووسینی سەرەکی
+        mainTitle.layer.shadowColor = [UIColor cyanColor].CGColor;
+        mainTitle.layer.shadowRadius = 10.0f;
+        mainTitle.layer.shadowOpacity = 0.9f;
+        mainTitle.layer.shadowOffset = CGSizeZero;
+        
+        // نووسینی دووەم: 💥WELCOME TO SERVER MAMAHALA💥
+        UILabel *subTitle = [[UILabel alloc] initWithFrame:CGRectMake(0, 70, bannerContainer.bounds.size.width, 40)];
+        subTitle.text = @"💥WELCOME TO SERVER MAMAHALA💥";
+        subTitle.textAlignment = NSTextAlignmentCenter;
+        subTitle.font = [UIFont boldSystemFontOfSize:16];
+        subTitle.textColor = [UIColor colorWithRed:1.0 green:0.27 blue:0.0 alpha:1.0]; // پڕتەقالی / سور
+        
+        subTitle.layer.shadowColor = [UIColor magentaColor].CGColor;
+        subTitle.layer.shadowRadius = 8.0f;
+        subTitle.layer.shadowOpacity = 0.8f;
+        subTitle.layer.shadowOffset = CGSizeZero;
 
-    <!-- Logic / Timer Execution -->
-    <script>
-        <![CDATA[
-        function onPlayerJoinGame() {
-            -- Wait for 20 seconds
-            Timer.start(20, function() {
-                showAnimatedBanner();
+        // کۆکردنەوەی لایەرەکان
+        [bannerContainer addSubview:mainTitle];
+        [bannerContainer addSubview:subTitle];
+        [keyWindow addSubview:bannerContainer];
+
+        // ئەنیمەیشنی دەرکەوتن و جووڵە (Fade In & Scale)
+        bannerContainer.transform = CGAffineTransformMakeScale(0.1, 0.1);
+        bannerContainer.alpha = 0.0;
+        
+        [UIView animateWithDuration:0.8 delay:0.0 usingSpringWithDamping:0.6 initialSpringVelocity:0.5 options:UIViewAnimationOptionCurveEaseInOut animations:^{
+            bannerContainer.transform = CGAffineTransformIdentity;
+            bannerContainer.alpha = 1.0;
+        } completion:^(BOOL finished) {
+            // لابردنی پاش ٢٠ چرکە یان دوای تەواوبوون
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [UIView animateWithDuration:1.0 animations:^{
+                    bannerContainer.alpha = 0.0;
+                } completion:^(BOOL finished2) {
+                    [bannerContainer removeFromSuperview];
+                }];
             });
-        }
+        }];
+    });
+}
 
-        function showAnimatedBanner() {
-            UI.setVisibility("vip_banner_layer", true);
-            UI.playAnimation("txt_vip_main");
-            UI.playAnimation("txt_server_welcome");
-            
-            -- Automatically hide after 10 seconds
-            Timer.start(10, function() {
-                UI.fadeOut("vip_banner_layer", 2.0);
-            });
-        }
-        ]]>
-    </script>
-</mod>
+@end
+
+// بەکارهێنانی Logos Hook بۆ کاتی چوونە ژوورەوە بۆ یارییەکە یان کارپێکردنی تابلۆکە
+%ctor {
+    // چاوەڕێکردنی ٢٠ چرکە دوای ئەوەی یارییەکە دەستپێدەکات
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(20.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [ShazaVIPManager showWelcomeBanner];
+    });
+}
