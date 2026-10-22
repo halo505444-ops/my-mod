@@ -23,115 +23,104 @@
         if (!keyWindow) keyWindow = [UIApplication sharedApplication].windows.firstObject;
         if (!keyWindow) return;
 
-        // 1. بۆکسی سەرەکی
-        UIView *containerView = [[UIView alloc] initWithFrame:CGRectMake((keyWindow.bounds.size.width - 280) / 2, 40, 280, 90)];
-        containerView.backgroundColor = [UIColor colorWithRed:0.02 green:0.02 blue:0.05 alpha:0.85];
-        containerView.layer.cornerRadius = 15;
-        containerView.layer.borderWidth = 1.2;
-        containerView.layer.borderColor = [UIColor greenColor].CGColor;
-        containerView.clipsToBounds = YES;
+        // 1. بۆکسی سەرەکی (بچووک و لە سەرەوە - بەبێ ڕێگریکردن لە کلیکەکانی یارییەکە)
+        UIView *containerView = [[UIView alloc] initWithFrame:CGRectMake((keyWindow.bounds.size.width - 200) / 2, 15, 200, 65)];
+        containerView.backgroundColor = [UIColor clearColor];
+        containerView.userInteractionEnabled = NO; // <--- ئەمە وا دەکات کلیکەکان تێپەڕبن بۆ ناو یارییەکە
         [keyWindow addSubview:containerView];
 
         // 2. دەقی هاکینگ لە سەرەتاوە
-        UILabel *hackerLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 15, 260, 60)];
+        UILabel *hackerLabel = [[UILabel alloc] initWithFrame:CGRectMake(5, 5, 190, 55)];
         hackerLabel.textColor = [UIColor greenColor];
-        hackerLabel.font = [UIFont fontWithName:@"Courier-Bold" size:12];
+        hackerLabel.font = [UIFont fontWithName:@"Courier-Bold" size:10];
         hackerLabel.numberOfLines = 3;
         hackerLabel.textAlignment = NSTextAlignmentCenter;
         [containerView addSubview:hackerLabel];
 
-        // 3. ناوی SHAZAVIP (لە سەرەتادا نادیارە تا کاتی ئاگرگرتن)
-        UILabel *shazaLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 10, 280, 45)];
+        // 3. ناوی SHAZAVIP (لە سەرەوە بە قەبارەی گونجاو)
+        UILabel *shazaLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 4, 200, 35)];
         shazaLabel.text = @"SHAZAVIP";
         shazaLabel.textAlignment = NSTextAlignmentCenter;
-        shazaLabel.font = [UIFont systemFontOfSize:30 weight:UIFontWeightBlack];
+        shazaLabel.font = [UIFont systemFontOfSize:22 weight:UIFontWeightBlack];
         shazaLabel.textColor = [UIColor colorWithRed:1.0 green:0.9 blue:0.3 alpha:1.0]; // زێڕی گەش
         shazaLabel.alpha = 0.0;
         
-        // درەوشانەوەی ئاگرین بۆ پشت ناوەکە
         shazaLabel.layer.shadowColor = [UIColor colorWithRed:1.0 green:0.3 blue:0.0 alpha:1.0].CGColor;
-        shazaLabel.layer.shadowRadius = 10.0f;
+        shazaLabel.layer.shadowRadius = 8.0f;
         shazaLabel.layer.shadowOpacity = 1.0f;
         shazaLabel.layer.shadowOffset = CGSizeZero;
         [containerView addSubview:shazaLabel];
 
-        // 4. دەقی خوارەوە: Anti-Ban Active ✅ (بە ڕەنگی سەوزی فسفۆڕی جیاواز لە ئاگرەکە)
-        UILabel *antiBanLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 60, 280, 20)];
+        // 4. دەقی خوارەوە: Anti-Ban Active ✅
+        UILabel *antiBanLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 42, 200, 18)];
         antiBanLabel.text = @"Anti-Ban Active ✅";
         antiBanLabel.textAlignment = NSTextAlignmentCenter;
-        antiBanLabel.font = [UIFont boldSystemFontOfSize:11];
+        antiBanLabel.font = [UIFont boldSystemFontOfSize:9.5];
         antiBanLabel.textColor = [UIColor colorWithRed:0.0 green:1.0 blue:0.5 alpha:1.0];
         antiBanLabel.alpha = 0.0;
         
         antiBanLabel.layer.shadowColor = [UIColor blackColor].CGColor;
-        antiBanLabel.layer.shadowRadius = 3.0f;
+        antiBanLabel.layer.shadowRadius = 2.0f;
         antiBanLabel.layer.shadowOpacity = 1.0f;
         antiBanLabel.layer.shadowOffset = CGSizeZero;
         [containerView addSubview:antiBanLabel];
 
-        // 5. زنجیرەی ئەنیمەیشنی هاکینگ و پاشان تەقینەوەی ئاگرەکە
+        // 5. زنجیرەی ئەنیمەیشنی هاکینگ و پاشان ئاگرگرتن
         NSArray *hackMessages = @[
-            @"> INITIALIZING KERNEL INJECTION...",
-            @"> BYPASSING ANTI-BAN PROTOCOLS...",
-            @"> SHAZAVIP SECURED 100% 🚀"
+            @"> KERNEL INJECTION...",
+            @"> BYPASSING ANTI-BAN...",
+            @"> SHAZAVIP SECURED 🚀"
         ];
         __block int step = 0;
-        [NSTimer scheduledTimerWithTimeInterval:0.5 repeats:YES block:^(NSTimer * _Nonnull timer) {
+        [NSTimer scheduledTimerWithTimeInterval:0.4 repeats:YES block:^(NSTimer * _Nonnull timer) {
             if (step < hackMessages.count) {
                 hackerLabel.text = hackMessages[step];
                 step++;
             } else {
                 [timer invalidate];
 
-                // لابرنی دەقی هاکینگ و گۆڕینی باگراوند بۆ شوشەیی پاک
-                [UIView animateWithDuration:0.6 animations:^{
+                [UIView animateWithDuration:0.5 animations:^{
                     hackerLabel.alpha = 0.0;
-                    containerView.backgroundColor = [UIColor clearColor];
-                    containerView.layer.borderColor = [UIColor clearColor].CGColor;
                 } completion:^(BOOL finished) {
                     [hackerLabel removeFromSuperview];
 
-                    // نیشاندانی ناوی شازە، دژە باند و دەستپێکی ئاگرەکە
                     shazaLabel.alpha = 1.0;
                     antiBanLabel.alpha = 1.0;
 
-                    // سیستەمی ئاگری ڕاستەقینە (Real Fire Emitter) لەسەر ناوەکە
+                    // سیستەمی ئاگری ڕاستەقینە لەسەر ناوەکە
                     CAEmitterLayer *fireEmitter = [CAEmitterLayer layer];
-                    fireEmitter.emitterPosition = CGPointMake(containerView.bounds.size.width / 2, 45);
-                    fireEmitter.emitterSize = CGSizeMake(200, 10);
+                    fireEmitter.emitterPosition = CGPointMake(containerView.bounds.size.width / 2, 35);
+                    fireEmitter.emitterSize = CGSizeMake(140, 5);
                     fireEmitter.emitterShape = kCAEmitterLayerLine;
 
-                    // گەردیلەی ئاگری ناوەندی (سپی/زەرد)
                     CAEmitterCell *coreFire = [CAEmitterCell emitterCell];
-                    coreFire.birthRate = 120;
-                    coreFire.lifetime = 0.5;
-                    coreFire.velocity = 35;
-                    coreFire.velocityRange = 15;
+                    coreFire.birthRate = 90;
+                    coreFire.lifetime = 0.4;
+                    coreFire.velocity = 25;
+                    coreFire.velocityRange = 10;
                     coreFire.emissionLongitude = M_PI + M_PI_2;
                     coreFire.emissionRange = M_PI_4 / 2.0;
-                    coreFire.scaleSpeed = -0.4;
+                    coreFire.scaleSpeed = -0.3;
                     coreFire.color = [UIColor colorWithRed:1.0 green:1.0 blue:0.7 alpha:0.9].CGColor;
 
-                    // گەردیلەی ئاگری دەرەکی (پرتەقاڵی و سوور)
                     CAEmitterCell *flameFire = [CAEmitterCell emitterCell];
-                    flameFire.birthRate = 220;
-                    flameFire.lifetime = 0.8;
-                    flameFire.velocity = 55;
-                    flameFire.velocityRange = 25;
+                    flameFire.birthRate = 150;
+                    flameFire.lifetime = 0.6;
+                    flameFire.velocity = 40;
+                    flameFire.velocityRange = 15;
                     flameFire.emissionLongitude = M_PI + M_PI_2;
                     flameFire.emissionRange = M_PI_4;
                     flameFire.scaleSpeed = -0.2;
                     flameFire.color = [UIColor colorWithRed:1.0 green:0.3 blue:0.0 alpha:0.75].CGColor;
 
-                    // پڕشنگی ئاگر (Sparks)
                     CAEmitterCell *sparks = [CAEmitterCell emitterCell];
-                    sparks.birthRate = 25;
-                    sparks.lifetime = 1.5;
-                    sparks.velocity = 80;
-                    sparks.velocityRange = 40;
+                    sparks.birthRate = 15;
+                    sparks.lifetime = 1.2;
+                    sparks.velocity = 60;
+                    sparks.velocityRange = 25;
                     sparks.emissionLongitude = M_PI + M_PI_2;
                     sparks.emissionRange = (M_PI / 3.0);
-                    sparks.scale = 0.05;
+                    sparks.scale = 0.04;
                     sparks.scaleSpeed = -0.02;
                     sparks.color = [UIColor colorWithRed:1.0 green:0.6 blue:0.0 alpha:1.0].CGColor;
 
