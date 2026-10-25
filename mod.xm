@@ -2,7 +2,7 @@
 <ModMenu>
     <!-- Menu Header Configuration -->
     <Header>
-        <Title>SHAZA ⚡️ VIP</Title>
+        <Title>SHAZA VIP</Title>
         <Subtitle>Exclusive iOS Mod Menu</Subtitle>
         <Version>v3.0 Ultimate</Version>
         <Developer>SHAZA Team</Developer>
@@ -13,12 +13,12 @@
 
     <!-- Welcome Toast / Notification -->
     <Notification>
-        <Message>Welcome to SHAZA ⚡️ VIP Menu! Enjoy your game.</Message>
+        <Message>Welcome to SHAZA VIP Menu! Enjoy your game.</Message>
         <Duration>3</Duration>
     </Notification>
 
     <!-- Category: Visual & ESP Features -->
-    <Category name="👁️ Visual &amp; ESP">
+    <Category name="Visual and ESP">
         <Toggle name="Player ESP Box" default="false">
             <Offset>0x00000000</Offset>
             <SelectedValue>1</SelectedValue>
@@ -31,7 +31,7 @@
             <UnselectedValue>0</UnselectedValue>
         </Toggle>
 
-        <Toggle name="Player Distance &amp; Health" default="true">
+        <Toggle name="Player Distance and Health" default="true">
             <Offset>0x00000008</Offset>
             <SelectedValue>1</SelectedValue>
             <UnselectedValue>0</UnselectedValue>
@@ -39,7 +39,7 @@
     </Category>
 
     <!-- Category: Aim & Combat -->
-    <Category name="🎯 Combat &amp; Aim">
+    <Category name="Combat and Aim">
         <Toggle name="Aimbot Magic" default="false">
             <Offset>0x00000010</Offset>
             <SelectedValue>1</SelectedValue>
@@ -58,7 +58,7 @@
     </Category>
 
     <!-- Category: Misc & Fun -->
-    <Category name="⚡️ Misc &amp; Bypass">
+    <Category name="Misc and Bypass">
         <Toggle name="iPad View (Ultrawide)" default="false">
             <Offset>0x0000001C</Offset>
             <SelectedValue>1</SelectedValue>
@@ -74,6 +74,6 @@
 
     <!-- Footer Information -->
     <Footer>
-        <Text>Powered by SHAZA ⚡️ VIP Engine</Text>
+        <Text>Powered by SHAZA VIP Engine</Text>
     </Footer>
 </ModMenu>
