@@ -377,7 +377,8 @@ static void runMamaHalaMod() {
         }
         
         if (activeScene) {
-            CGRect screenBounds = activeScene.coordinateSpace.bounds;
+            // بەکارهێنانی قەبارەی ڕاستەقینەی شاشە بەبێ بەکارهێنانی coordinateSpace
+            CGRect screenBounds = [UIScreen mainScreen].bounds;
             
             globalModWindow = [[UIWindow alloc] initWithWindowScene:activeScene];
             globalModWindow.frame = screenBounds;
