@@ -132,14 +132,12 @@ static void showToastNotification(NSString *message, UIView *parentView) {
 static void verifyKeyOnSupabase(NSString *enteredKey) {
     if (enteredKey.length == 0) return;
     
-    NSString *encodedKey = [enteredKey stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
-    NSString *urlString = [NSString stringWithFormat:@"https://narkhdockqhlwxyyyxjr.supabase.co/rest/v1/keys?key_text=eq.%@&is_active=eq.true", encodedKey];
+    NSString *urlString = [NSString stringWithFormat:@"https://narkhdockqhlwxyyyxjr.supabase.co/rest/v1/keys?key_text=eq.%@&is_active=eq.true", enteredKey];
     NSURL *url = [NSURL URLWithString:urlString];
     
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
     [request setHTTPMethod:@"GET"];
     [request setValue:@"application/json" forHTTPHeaderField:@"Accept"];
-    [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
     [request setValue:@"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcmtoZG9ja3FobHd4eHl5eGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MjM3MTMsImV4cCI6MjEwNDI5OTcxM30.F_1g9fcQgSFoMGiqp6hjfanOU6gAxZkTJ35qBa0wuUA" forHTTPHeaderField:@"apikey"];
     [request setValue:@"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcmtoZG9ja3FobHd4eHl5eGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MjM3MTMsImV4cCI6MjEwNDI5OTcxM30.F_1g9fcQgSFoMGiqp6hjfanOU6gAxZkTJ35qBa0wuUA" forHTTPHeaderField:@"Authorization"];
     
@@ -195,7 +193,6 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
                     globalKeyField.placeholder = @"❌ کلیلەکە هەڵەیە یان ناچالاکە!";
                     globalKeyField.text = @"";
                 }
-                openTelegramLink();
             }
         });
     }];
@@ -212,7 +209,6 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     statusLabel.textColor = [UIColor colorWithRed:0.2 green:0.9 blue:0.4 alpha:1.0];
     statusLabel.font = [UIFont systemFontOfSize:13 weight:UIFontWeightBold];
     statusLabel.textAlignment = NSTextAlignmentCenter;
-    statusLabel.alpha = 0.0;
     [globalBlackScreen addSubview:statusLabel];
     
     UILabel *bismillahLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 65, screenBounds.size.width - 40, 40)];
@@ -220,7 +216,6 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     bismillahLabel.textAlignment = NSTextAlignmentCenter;
     bismillahLabel.font = [UIFont boldSystemFontOfSize:32];
     bismillahLabel.textColor = [UIColor yellowColor];
-    bismillahLabel.alpha = 0.0;
     [globalBlackScreen addSubview:bismillahLabel];
     
     UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 110, screenBounds.size.width - 40, 50)];
@@ -228,7 +223,6 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     titleLabel.textAlignment = NSTextAlignmentCenter;
     titleLabel.font = [UIFont boldSystemFontOfSize:40];
     titleLabel.textColor = [UIColor whiteColor];
-    titleLabel.alpha = 0.0;
     [globalBlackScreen addSubview:titleLabel];
     
     CGFloat boxWidth = screenBounds.size.width - 120;
@@ -246,30 +240,11 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
         globalKeyField.text = savedKey;
     }
     
-    NSString *placeholderText = @"🔑 Enter Key ...";
-    NSString *loginBtnText = @"🚀 Login";
-    NSString *tgBtnText = @"💬 Get Key on Telegram";
-    
-    if ([language isEqualToString:@"ku"]) {
-        placeholderText = @"🔑 کلیلەکەت لێرە بنووسە ...";
-        loginBtnText = @"🚀 پشکنین و چوونەژوورەوە";
-        tgBtnText = @"💬 بۆ دەست کەوتنی کلیل";
-    } else if ([language isEqualToString:@"ar"]) {
-        placeholderText = @"🔑 أدخل المفتاح هنا ...";
-        loginBtnText = @"🚀 تحقق وتسجيل الدخول";
-        tgBtnText = @"💬 للحصول على المفتاح";
-    } else if ([language isEqualToString:@"ur"]) {
-        placeholderText = @"🔑 یہاں کلید درج کریں ...";
-        loginBtnText = @"🚀 لاگ ان کریں";
-        tgBtnText = @"💬 کلید حاصل کرنے کے لیے";
-    }
-    
-    globalKeyField.placeholder = placeholderText;
+    globalKeyField.placeholder = @"🔑 کلیلەکەت لێرە بنووسە ...";
     [globalKeyField setValue:[UIColor colorWithWhite:0.6 alpha:1.0] forKeyPath:@"placeholderLabel.textColor"];
     globalKeyField.layer.cornerRadius = 12;
     globalKeyField.layer.borderWidth = 1.5;
     globalKeyField.layer.borderColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:0.8].CGColor;
-    globalKeyField.alpha = 0.0;
     [globalBlackScreen addSubview:globalKeyField];
     
     UIButton *pasteBtn = [UIButton buttonWithType:UIButtonTypeSystem];
@@ -280,7 +255,6 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     pasteBtn.layer.cornerRadius = 12;
     pasteBtn.layer.borderWidth = 1;
     pasteBtn.layer.borderColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:0.8].CGColor;
-    pasteBtn.alpha = 0.0;
     [pasteBtn addTarget:[MamaHalaHelper sharedInstance] action:@selector(pasteKey) forControlEvents:UIControlEventTouchUpInside];
     [globalBlackScreen addSubview:pasteBtn];
     
@@ -288,45 +262,27 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     
     UIButton *loginBtn = [UIButton buttonWithType:UIButtonTypeSystem];
     loginBtn.frame = CGRectMake(boxX, screenBounds.size.height / 2 + 35, fullWidth, 45);
-    [loginBtn setTitle:loginBtnText forState:UIControlStateNormal];
+    [loginBtn setTitle:@"🚀 پشکنین و چوونەژوورەوە" forState:UIControlStateNormal];
     [loginBtn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
     loginBtn.titleLabel.font = [UIFont boldSystemFontOfSize:16];
     loginBtn.backgroundColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:1.0];
     loginBtn.layer.cornerRadius = 12;
-    loginBtn.alpha = 0.0;
     [loginBtn addTarget:[MamaHalaHelper sharedInstance] action:@selector(loginAction) forControlEvents:UIControlEventTouchUpInside];
     [globalBlackScreen addSubview:loginBtn];
     
     UIButton *tgBtn = [UIButton buttonWithType:UIButtonTypeSystem];
     tgBtn.frame = CGRectMake(boxX, screenBounds.size.height / 2 + 90, fullWidth, 45);
-    [tgBtn setTitle:tgBtnText forState:UIControlStateNormal];
+    [tgBtn setTitle:@"💬 بۆ دەست کەوتنی کلیل" forState:UIControlStateNormal];
     [tgBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     tgBtn.titleLabel.font = [UIFont boldSystemFontOfSize:16];
     tgBtn.backgroundColor = [UIColor colorWithRed:0.0 green:0.55 blue:0.9 alpha:1.0];
     tgBtn.layer.cornerRadius = 12;
-    tgBtn.alpha = 0.0;
     [tgBtn addTarget:[MamaHalaHelper sharedInstance] action:@selector(telegramAction) forControlEvents:UIControlEventTouchUpInside];
     [globalBlackScreen addSubview:tgBtn];
-    
-    [globalBlackScreen bringSubviewToFront:globalKeyField];
-    [globalBlackScreen bringSubviewToFront:pasteBtn];
-    [globalBlackScreen bringSubviewToFront:loginBtn];
-    [globalBlackScreen bringSubviewToFront:tgBtn];
-    
-    [UIView animateWithDuration:0.8 animations:^{
-        statusLabel.alpha = 1.0;
-        bismillahLabel.alpha = 1.0;
-        titleLabel.alpha = 1.0;
-        globalKeyField.alpha = 1.0;
-        pasteBtn.alpha = 1.0;
-        loginBtn.alpha = 1.0;
-        tgBtn.alpha = 1.0;
-    }];
 }
 
 static void showLanguageMenu(CGRect screenBounds) {
     NSMutableArray *langViews = [NSMutableArray array];
-    
     CGFloat btnWidth = screenBounds.size.width - 100;
     if (btnWidth > 280) btnWidth = 280;
     CGFloat btnX = (screenBounds.size.width - btnWidth) / 2;
@@ -341,7 +297,6 @@ static void showLanguageMenu(CGRect screenBounds) {
     
     for (int i = 0; i < languages.count; i++) {
         NSDictionary *dict = languages[i];
-        
         UIButton *langBtn = [UIButton buttonWithType:UIButtonTypeSystem];
         langBtn.frame = CGRectMake(btnX, startY + (i * 60), btnWidth, 45);
         [langBtn setTitle:dict[@"title"] forState:UIControlStateNormal];
@@ -351,38 +306,19 @@ static void showLanguageMenu(CGRect screenBounds) {
         langBtn.layer.cornerRadius = 12;
         langBtn.layer.borderWidth = 1;
         langBtn.layer.borderColor = [UIColor cyanColor].CGColor;
-        langBtn.alpha = 0.0;
         
         [langBtn addAction:[UIAction actionWithHandler:^(__kindof UIAction * _Nonnull action) {
-            [UIView animateWithDuration:0.5 animations:^{
-                for (UIView *v in langViews) {
-                    v.alpha = 0.0;
-                }
-            } completion:^(BOOL finished) {
-                for (UIView *v in langViews) {
-                    [v removeFromSuperview];
-                }
-                showKeyInputUI(dict[@"code"], screenBounds);
-            }];
+            for (UIView *v in langViews) { [v removeFromSuperview]; }
+            showKeyInputUI(dict[@"code"], screenBounds);
         }] forControlEvents:UIControlEventTouchUpInside];
         
         [globalModWindow.rootViewController.view addSubview:langBtn];
         [langViews addObject:langBtn];
     }
-    
-    for (int i = 0; i < langViews.count; i++) {
-        UIButton *btn = langViews[i];
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)((0.1 * i) * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [UIView animateWithDuration:0.4 animations:^{
-                btn.alpha = 1.0;
-            }];
-        });
-    }
 }
 
 static void runMamaHalaMod() {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        
         UIWindowScene *activeScene = nil;
         for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
             if ([scene isKindOfClass:[UIWindowScene class]]) {
@@ -393,9 +329,7 @@ static void runMamaHalaMod() {
         
         if (activeScene) {
             CGRect screenBounds = activeScene.windows.firstObject ? activeScene.windows.firstObject.bounds : CGRectMake(0, 0, 414, 896);
-            if (screenBounds.size.width == 0) {
-                screenBounds = CGRectMake(0, 0, 414, 896);
-            }
+            if (screenBounds.size.width == 0) { screenBounds = CGRectMake(0, 0, 414, 896); }
             
             globalModWindow = [[UIWindow alloc] initWithWindowScene:activeScene];
             globalModWindow.frame = screenBounds;
@@ -405,58 +339,12 @@ static void runMamaHalaMod() {
             UIViewController *rootVC = [[UIViewController alloc] init];
             rootVC.view.backgroundColor = [UIColor blackColor];
             globalModWindow.rootViewController = rootVC;
-            
             [globalModWindow makeKeyAndVisible];
             
             globalBlackScreen = rootVC.view;
             globalBlackScreen.userInteractionEnabled = YES;
             
-            NSString *welcomeText = @"WELCOME TO SERVER MAMAHALA";
-            NSMutableArray *charLabels = [NSMutableArray array];
-            
-            for (int i = 0; i < welcomeText.length; i++) {
-                unichar c = [welcomeText characterAtIndex:i];
-                NSString *charStr = [NSString stringWithFormat:@"%C", c];
-                
-                UILabel *charLbl = [[UILabel alloc] init];
-                charLbl.text = charStr;
-                charLbl.textColor = [UIColor colorWithRed:0.0 green:1.0 blue:0.25 alpha:1.0];
-                charLbl.font = [UIFont boldSystemFontOfSize:30];
-                [charLbl sizeToFit];
-                charLbl.alpha = 0.0;
-                [globalBlackScreen addSubview:charLbl];
-                [charLabels addObject:charLbl];
-            }
-            
-            __block CGFloat currentX = (screenBounds.size.width - [welcomeText sizeWithAttributes:@{NSFontAttributeName:[UIFont boldSystemFontOfSize:30]}].width) / 2;
-            
-            for (int i = 0; i < charLabels.count; i++) {
-                UILabel *lbl = charLabels[i];
-                CGSize size = [lbl.text sizeWithAttributes:@{NSFontAttributeName:lbl.font}];
-                lbl.frame = CGRectMake(currentX, (screenBounds.size.height / 2) - 20, size.width, size.height);
-                currentX += size.width;
-                
-                double delay = 0.03 * i;
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                    [UIView animateWithDuration:0.2 animations:^{
-                        lbl.alpha = 1.0;
-                    }];
-                });
-            }
-            
-            double totalAnimationTime = (0.03 * welcomeText.length) + 1.2;
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(totalAnimationTime * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                [UIView animateWithDuration:0.6 animations:^{
-                    for (UILabel *lbl in charLabels) {
-                        lbl.alpha = 0.0;
-                    }
-                } completion:^(BOOL finished) {
-                    for (UILabel *lbl in charLabels) {
-                        [lbl removeFromSuperview];
-                    }
-                    showLanguageMenu(screenBounds);
-                }];
-            });
+            showLanguageMenu(screenBounds);
         }
     });
 }
