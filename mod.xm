@@ -18,20 +18,38 @@ static UIView *globalBlackScreen = nil;
 static UITextField *globalKeyField = nil;
 static void verifyKeyOnSupabase(NSString *enteredKey);
 
-static void dismissKeyboard() {
+@interface MamaHalaHelper : NSObject
++ (instancetype)sharedInstance;
+- (void)dismissKeyboard;
+- (void)pasteKey;
+- (void)loginAction;
+- (void)telegramAction;
+@end
+
+@implementation MamaHalaHelper
++ (instancetype)sharedInstance {
+    static MamaHalaHelper *instance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[MamaHalaHelper alloc] init];
+    });
+    return instance;
+}
+
+- (void)dismissKeyboard {
     if (globalKeyField) {
         [globalKeyField resignFirstResponder];
     }
 }
 
-static void pasteKeyAction() {
+- (void)pasteKey {
     UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
     if (pasteboard.string && globalKeyField) {
         globalKeyField.text = [pasteboard.string stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     }
 }
 
-static void loginAction() {
+- (void)loginAction {
     if (globalKeyField) {
         [globalKeyField resignFirstResponder];
         NSString *cleanedKey = [globalKeyField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
@@ -39,9 +57,10 @@ static void loginAction() {
     }
 }
 
-static void telegramAction() {
+- (void)telegramAction {
     openTelegramLink();
 }
+@end
 
 static void showMovingBypassText(UIWindow *targetWindow) {
     if (!targetWindow) return;
@@ -74,7 +93,8 @@ static void showMovingBypassText(UIWindow *targetWindow) {
         [UIView animateWithDuration:4.0 delay:0.0 options:UIViewAnimationOptionCurveLinear animations:^{
             strongLabel.frame = CGRectMake(randomX, randomY, 160, 40);
         } completion:^(BOOL finished) {
-            if (moveBlock) {
+            UILabel *innerStrong = weakLabel;
+            if (innerStrong && moveBlock) {
                 moveBlock();
             }
         }];
@@ -179,10 +199,7 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
 }
 
 static void showKeyInputUI(NSString *language, CGRect screenBounds) {
-    UITapGestureRecognizer *bgTap = [[UITapGestureRecognizer alloc] init];
-    [bgTap addAction:[UIAction actionWithHandler:^(__kindof UIAction * _Nonnull action) {
-        dismissKeyboard();
-    }]];
+    UITapGestureRecognizer *bgTap = [[UITapGestureRecognizer alloc] initWithTarget:[MamaHalaHelper sharedInstance] action:@selector(dismissKeyboard)];
     bgTap.cancelsTouchesInView = NO;
     [globalBlackScreen addGestureRecognizer:bgTap];
     
@@ -260,9 +277,7 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     pasteBtn.layer.borderWidth = 1;
     pasteBtn.layer.borderColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:0.8].CGColor;
     pasteBtn.alpha = 0.0;
-    [pasteBtn addAction:[UIAction actionWithHandler:^(__kindof UIAction * _Nonnull action) {
-        pasteKeyAction();
-    }] forControlEvents:UIControlEventTouchUpInside];
+    [pasteBtn addTarget:[MamaHalaHelper sharedInstance] action:@selector(pasteKey) forControlEvents:UIControlEventTouchUpInside];
     [globalBlackScreen addSubview:pasteBtn];
     
     CGFloat fullWidth = boxWidth + 50;
@@ -275,9 +290,7 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     loginBtn.backgroundColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:1.0];
     loginBtn.layer.cornerRadius = 12;
     loginBtn.alpha = 0.0;
-    [loginBtn addAction:[UIAction actionWithHandler:^(__kindof UIAction * _Nonnull action) {
-        loginAction();
-    }] forControlEvents:UIControlEventTouchUpInside];
+    [loginBtn addTarget:[MamaHalaHelper sharedInstance] action:@selector(loginAction) forControlEvents:UIControlEventTouchUpInside];
     [globalBlackScreen addSubview:loginBtn];
     
     UIButton *tgBtn = [UIButton buttonWithType:UIButtonTypeSystem];
@@ -288,9 +301,7 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     tgBtn.backgroundColor = [UIColor colorWithRed:0.0 green:0.55 blue:0.9 alpha:1.0];
     tgBtn.layer.cornerRadius = 12;
     tgBtn.alpha = 0.0;
-    [tgBtn addAction:[UIAction actionWithHandler:^(__kindof UIAction * _Nonnull action) {
-        telegramAction();
-    }] forControlEvents:UIControlEventTouchUpInside];
+    [tgBtn addTarget:[MamaHalaHelper sharedInstance] action:@selector(telegramAction) forControlEvents:UIControlEventTouchUpInside];
     [globalBlackScreen addSubview:tgBtn];
     
     [globalBlackScreen bringSubviewToFront:globalKeyField];
@@ -377,7 +388,6 @@ static void runMamaHalaMod() {
         }
         
         if (activeScene) {
-            // بەکارهێنانی قەبارەی ویندۆ بێ بەکارهێنانی coordinateSpace
             CGRect screenBounds = activeScene.windows.firstObject ? activeScene.windows.firstObject.bounds : CGRectMake(0, 0, 414, 896);
             if (screenBounds.size.width == 0) {
                 screenBounds = CGRectMake(0, 0, 414, 896);
