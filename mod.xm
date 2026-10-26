@@ -132,8 +132,10 @@ static void showToastNotification(NSString *message, UIView *parentView) {
 static void verifyKeyOnSupabase(NSString *enteredKey) {
     if (enteredKey.length == 0) return;
     
-    NSString *urlString = [NSString stringWithFormat:@"https://narkhdockqhlwxyyyxjr.supabase.co/rest/v1/keys?key_text=eq.%@&is_active=eq.true", enteredKey];
-    NSURL *url = [NSURL URLWithString:[urlString stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]]];
+    // چارەسەر: تەنها کلیلەکە خۆی encode دەکرێت، نەک هەموو بەستەرەکە
+    NSString *encodedKey = [enteredKey stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
+    NSString *urlString = [NSString stringWithFormat:@"https://narkhdockqhlwxyyyxjr.supabase.co/rest/v1/keys?key_text=eq.%@&is_active=eq.true", encodedKey];
+    NSURL *url = [NSURL URLWithString:urlString];
     
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
     [request setHTTPMethod:@"GET"];
