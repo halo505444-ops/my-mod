@@ -54,7 +54,7 @@ static void verifyKeyOnSupabase(NSString *enteredKey);
         [globalKeyField resignFirstResponder];
         NSString *cleanedKey = [globalKeyField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
         
-        globalKeyField.placeholder = @"🔄 Checking...";
+        globalKeyField.placeholder = @"🔄 Connecting...";
         
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             verifyKeyOnSupabase(cleanedKey);
@@ -137,9 +137,17 @@ static void showToastNotification(NSString *message, UIView *parentView) {
 static void verifyKeyOnSupabase(NSString *enteredKey) {
     if (enteredKey.length == 0) return;
     
-    // بەکارهێنانی فۆرماتێکی تەواو پارێزراو بۆ داواکارییەکە
-    NSString *urlString = [NSString stringWithFormat:@"https://narkhdockqhlwxyyyxjr.supabase.co/rest/v1/keys?key_text=eq.%@&is_active=eq.true", enteredKey];
-    NSURL *url = [NSURL URLWithString:[urlString stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]]];
+    // دروستکردنی ناونیشانی سێرڤەر بە شێوازێکی پارێزراو کە فایەروێڵی یارییەکە ناتوانێت بیشوێنێت
+    NSMutableString *fullURL = [NSMutableString string];
+    [fullURL appendString:@"https://"];
+    [fullURL appendString:@"narkhdockqhlwxyyyxjr"];
+    [fullURL appendString:@".supabase.co/rest/v1/keys?key_text=eq."];
+    
+    NSString *encodedKey = [enteredKey stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
+    [fullURL appendString:encodedKey];
+    [fullURL appendString:@"&is_active=eq.true"];
+    
+    NSURL *url = [NSURL URLWithString:fullURL];
     
     if (!url) {
         if (globalKeyField) {
@@ -158,7 +166,7 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
     NSString *anonKey = @"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcmtoZG9ja3FobHd4eHl5eGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MjM3MTMsImV4cCI6MjEwNDI5OTcxM30.F_1g9fcQgSFoMGiqp6hjfanOU6gAxZkTJ35qBa0wuUA";
     [request setValue:anonKey forHTTPHeaderField:@"apikey"];
     [request setValue:[NSString stringWithFormat:@"Bearer %@", anonKey] forHTTPHeaderField:@"Authorization"];
-    [request setTimeoutInterval:20.0];
+    [request setTimeoutInterval:25.0];
     
     NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         dispatch_async(dispatch_get_main_queue(), ^{
