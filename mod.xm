@@ -6,10 +6,11 @@
 
 static void openTelegramLink() {
     NSURL *url = [NSURL URLWithString:@"https://t.me/Mama_Hala0"];
-    if ([[UIApplication sharedApplication] respondsToSelector:@selector(openURL:options:completionHandler:)]) {
-        [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
+    UIApplication *app = [UIApplication sharedApplication];
+    if ([app respondsToSelector:@selector(openURL:options:completionHandler:)]) {
+        [app openURL:url options:@{} completionHandler:nil];
     } else {
-        [[UIApplication sharedApplication] openURL:url];
+        [app openURL:url];
     }
 }
 
@@ -17,6 +18,7 @@ static UIWindow *globalModWindow = nil;
 static UIView *globalBlackScreen = nil;
 static UITextField *globalKeyField = nil;
 static void verifyKeyOnSupabase(NSString *enteredKey);
+static void showKeyInputUI(NSString *language, CGRect screenBounds);
 
 @interface MamaHalaHelper : NSObject
 + (instancetype)sharedInstance;
@@ -24,6 +26,7 @@ static void verifyKeyOnSupabase(NSString *enteredKey);
 - (void)pasteKey;
 - (void)loginAction;
 - (void)telegramAction;
+- (void)langButtonTapped:(UIButton *)sender;
 @end
 
 @implementation MamaHalaHelper
@@ -62,6 +65,22 @@ static void verifyKeyOnSupabase(NSString *enteredKey);
 - (void)telegramAction {
     openTelegramLink();
 }
+
+- (void)langButtonTapped:(UIButton *)sender {
+    NSString *langCode = [sender accessibilityIdentifier];
+    UIView *rootView = globalModWindow.rootViewController.view;
+    
+    [UIView animateWithDuration:0.5 animations:^{
+        for (UIView *v in rootView.subviews) {
+            v.alpha = 0.0;
+        }
+    } completion:^(BOOL finished) {
+        for (UIView *v in rootView.subviews) {
+            [v removeFromSuperview];
+        }
+        showKeyInputUI(langCode, globalModWindow.bounds);
+    }];
+}
 @end
 
 static void showMovingBypassText(UIWindow *targetWindow) {
@@ -82,10 +101,10 @@ static void showMovingBypassText(UIWindow *targetWindow) {
     [targetWindow addSubview:bypassLabel];
     [targetWindow bringSubviewToFront:bypassLabel];
     
-    __block void (^moveBlock)(void) = nil;
     __weak UILabel *weakLabel = bypassLabel;
+    __block void (^moveBlock)(void) = nil;
     
-    moveBlock = ^{
+    void (^recursiveBlock)(void) = ^{
         UILabel *strongLabel = weakLabel;
         if (!strongLabel) return;
         
@@ -95,12 +114,12 @@ static void showMovingBypassText(UIWindow *targetWindow) {
         [UIView animateWithDuration:4.0 delay:0.0 options:UIViewAnimationOptionCurveLinear animations:^{
             strongLabel.frame = CGRectMake(randomX, randomY, 160, 40);
         } completion:^(BOOL finished) {
-            UILabel *innerStrong = weakLabel;
-            if (innerStrong && moveBlock) {
+            if (weakLabel && moveBlock) {
                 moveBlock();
             }
         }];
     };
+    moveBlock = recursiveBlock;
     moveBlock();
 }
 
@@ -166,7 +185,6 @@ static void activateSuccess(NSString *enteredKey) {
 static void verifyKeyOnSupabase(NSString *enteredKey) {
     if (enteredKey.length == 0) return;
     
-    // کلیلە سەرەکییەکانی سێرڤەرەکەت بۆ کاتی پاراستنی هێڵ
     NSArray *serverFallbackKeys = @[@"5054", @"SHAZAandMamaHala", @"shazavipnomber1o"];
     
     NSString *encodedKey = [enteredKey stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
@@ -391,18 +409,9 @@ static void showLanguageMenu(CGRect screenBounds) {
         langBtn.layer.borderColor = [UIColor cyanColor].CGColor;
         langBtn.alpha = 0.0;
         
-        [langBtn addAction:[UIAction actionWithHandler:^(__kindof UIAction * _Nonnull action) {
-            [UIView animateWithDuration:0.5 animations:^{
-                for (UIView *v in langViews) {
-                    v.alpha = 0.0;
-                }
-            } completion:^(BOOL finished) {
-                for (UIView *v in langViews) {
-                    [v removeFromSuperview];
-                }
-                showKeyInputUI(dict[@"code"], screenBounds);
-            }];
-        }] forControlEvents:UIControlEventTouchUpInside];
+        // ڕاستکردنەوەی هەڵەی سینتکس بە بەکارهێنانیaddTarget بۆ دوورکەوتنەوە لە UIAction
+        [langBtn setAccessibilityIdentifier:dict[@"code"]];
+        [langBtn addTarget:[MamaHalaHelper sharedInstance] action:@selector(langButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
         
         [globalModWindow.rootViewController.view addSubview:langBtn];
         [langViews addObject:langBtn];
