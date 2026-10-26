@@ -25,7 +25,10 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds);
 - (void)pasteKey;
 - (void)loginAction;
 - (void)telegramAction;
-- (void)langButtonTapped:(UIButton *)sender;
+- (void)langButtonKurdish;
+- (void)langButtonArabic;
+- (void)langButtonEnglish;
+- (void)langButtonUrdu;
 @end
 
 @implementation MamaHalaHelper
@@ -65,23 +68,16 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds);
     openTelegramLink();
 }
 
-- (void)langButtonTapped:(UIButton *)sender {
-    NSArray *codes = @[@"ku", @"ar", @"en", @"ur"];
-    NSInteger tag = sender.tag;
-    NSString *langCode = (tag >= 0 && tag < codes.count) ? codes[tag] : @"ku";
-    
+- (void)proceedToLang:(NSString *)langCode {
     UIView *rootView = globalModWindow.rootViewController.view;
-    [UIView animateWithDuration:0.5 animations:^{
-        for (UIView *v in rootView.subviews) {
-            v.alpha = 0.0;
-        }
-    } completion:^(BOOL finished) {
-        for (UIView *v in rootView.subviews) {
-            [v removeFromSuperview];
-        }
-        showKeyInputUI(langCode, globalModWindow.bounds);
-    }];
+    [rootView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    showKeyInputUI(langCode, globalModWindow.bounds);
 }
+
+- (void)langButtonKurdish { [self proceedToLang:@"ku"]; }
+- (void)langButtonArabic { [self proceedToLang:@"ar"]; }
+- (void)langButtonEnglish { [self proceedToLang:@"en"]; }
+- (void)langButtonUrdu { [self proceedToLang:@"ur"]; }
 @end
 
 static void showMovingBypassText(UIWindow *targetWindow) {
@@ -390,10 +386,10 @@ static void showLanguageMenu(CGRect screenBounds) {
     CGFloat startY = screenBounds.size.height / 2 - 110;
     
     NSArray *languages = @[
-        @{@"code": @"ku", @"title": @"کوردی (Kurdish)"},
-        @{@"code": @"ar", @"title": @"العربية (Arabic)"},
-        @{@"code": @"en", @"title": @"English"},
-        @{@"code": @"ur", @"title": @"اردو (Urdu/Pakistani)"}
+        @{@"title": @"کوردی (Kurdish)", @"sel": @selector(langButtonKurdish)},
+        @{@"title": @"العربية (Arabic)", @"sel": @selector(langButtonArabic)},
+        @{@"title": @"English", @"sel": @selector(langButtonEnglish)},
+        @{@"title": @"اردو (Urdu/Pakistani)", @"sel": @selector(langButtonUrdu)}
     ];
     
     for (int i = 0; i < languages.count; i++) {
@@ -409,9 +405,8 @@ static void showLanguageMenu(CGRect screenBounds) {
         langBtn.layer.borderWidth = 1;
         langBtn.layer.borderColor = [UIColor cyanColor].CGColor;
         langBtn.alpha = 0.0;
-        langBtn.tag = i;
         
-        [langBtn addTarget:[MamaHalaHelper sharedInstance] action:@selector(langButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+        [langBtn addTarget:[MamaHalaHelper sharedInstance] action:NSSelectorFromString(dict[@"sel"]) forControlEvents:UIControlEventTouchUpInside];
         
         [globalModWindow.rootViewController.view addSubview:langBtn];
         [langViews addObject:langBtn];
