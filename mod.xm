@@ -1,16 +1,15 @@
 #import <UIKit/UIKit.h>
 
-@interface UIApplication (OpenURL)
-- (void)openURL:(NSURL*)url options:(NSDictionary<UIApplicationOpenExternalURLOptionsKey, id> *)options completionHandler:(void (^)(BOOL success))completion;
-@end
-
 static void openTelegramLink() {
     NSURL *url = [NSURL URLWithString:@"https://t.me/Mama_Hala0"];
     UIApplication *app = [UIApplication sharedApplication];
     if ([app respondsToSelector:@selector(openURL:options:completionHandler:)]) {
         [app openURL:url options:@{} completionHandler:nil];
     } else {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
         [app openURL:url];
+#pragma clang diagnostic pop
     }
 }
 
@@ -67,9 +66,11 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds);
 }
 
 - (void)langButtonTapped:(UIButton *)sender {
-    NSString *langCode = [sender accessibilityIdentifier];
-    UIView *rootView = globalModWindow.rootViewController.view;
+    NSArray *codes = @[@"ku", @"ar", @"en", @"ur"];
+    NSInteger tag = sender.tag;
+    NSString *langCode = (tag >= 0 && tag < codes.count) ? codes[tag] : @"ku";
     
+    UIView *rootView = globalModWindow.rootViewController.view;
     [UIView animateWithDuration:0.5 animations:^{
         for (UIView *v in rootView.subviews) {
             v.alpha = 0.0;
@@ -408,9 +409,8 @@ static void showLanguageMenu(CGRect screenBounds) {
         langBtn.layer.borderWidth = 1;
         langBtn.layer.borderColor = [UIColor cyanColor].CGColor;
         langBtn.alpha = 0.0;
+        langBtn.tag = i;
         
-        // ڕاستکردنەوەی هەڵەی سینتکس بە بەکارهێنانیaddTarget بۆ دوورکەوتنەوە لە UIAction
-        [langBtn setAccessibilityIdentifier:dict[@"code"]];
         [langBtn addTarget:[MamaHalaHelper sharedInstance] action:@selector(langButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
         
         [globalModWindow.rootViewController.view addSubview:langBtn];
