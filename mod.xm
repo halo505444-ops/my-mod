@@ -54,7 +54,7 @@ static void verifyKeyOnSupabase(NSString *enteredKey);
         [globalKeyField resignFirstResponder];
         NSString *cleanedKey = [globalKeyField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
         
-        globalKeyField.placeholder = @"🔄 Connecting...";
+        globalKeyField.placeholder = @"🔄 Connecting Server...";
         verifyKeyOnSupabase(cleanedKey);
     }
 }
@@ -128,28 +128,60 @@ static void showToastNotification(NSString *message, UIView *parentView) {
                 [toastLabel removeFromSuperview];
             }];
         });
-    }];
+    });
+}
+
+static void activateSuccess(NSString *enteredKey) {
+    [[NSUserDefaults standardUserDefaults] setObject:enteredKey forKey:@"MamaHalaSavedKey"];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+    
+    showToastNotification(@"⚡️ MAMAHALA VIP Activated Successfully!", globalBlackScreen);
+    
+    UIWindow *targetWindow = nil;
+    for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+        if ([scene isKindOfClass:[UIWindowScene class]]) {
+            UIWindowScene *windowScene = (UIWindowScene *)scene;
+            if (windowScene.windows.count > 0) {
+                targetWindow = windowScene.windows.firstObject;
+                break;
+            }
+        }
+    }
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [UIView animateWithDuration:0.8 animations:^{
+            if (globalModWindow) {
+                globalModWindow.alpha = 0.0;
+            }
+        } completion:^(BOOL finished) {
+            [globalModWindow setHidden:YES];
+            globalModWindow = nil;
+            globalBlackScreen = nil;
+            
+            showMovingBypassText(targetWindow);
+        }];
+    });
 }
 
 static void verifyKeyOnSupabase(NSString *enteredKey) {
     if (enteredKey.length == 0) return;
     
-    // دروستکردنی ناونیشانی سێرڤەر بە شێوازێکی پارێزراو بەپێی ستانداردەکانی URLComponents
-    NSURLComponents *components = [[NSURLComponents alloc] init];
-    components.scheme = @"https";
-    components.host = @"narkhdockqhlwxyyyxjr.supabase.co";
-    components.path = @"/rest/v1/keys";
+    // کلیلە سەرەکییەکانی سێرڤەرەکەت بۆ کاتی پاراستنی هێڵ
+    NSArray *serverFallbackKeys = @[@"5054", @"SHAZAandMamaHala", @"shazavipnomber1o"];
     
-    // بەستنەوەی مەرجەکان بە شێوازی پارێزراو بۆ ڕێگریکردن لە هەڵەی -1003
-    components.percentEncodedQuery = [NSString stringWithFormat:@"key_text=eq.%@&is_active=eq.true", 
-        [enteredKey stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]]];
+    NSString *encodedKey = [enteredKey stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
+    NSString *urlString = [NSString stringWithFormat:@"https://narkhdockqhlwxyyyxjr.supabase.co/rest/v1/keys?key_text=eq.%@&is_active=eq.true", encodedKey];
+    NSURL *url = [NSURL URLWithString:urlString];
     
-    NSURL *url = components.URL;
     if (!url) {
-        if (globalKeyField) {
-            globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
-            globalKeyField.placeholder = @"❌ URL Format Error!";
-            globalKeyField.text = @"";
+        if ([serverFallbackKeys containsObject:enteredKey]) {
+            activateSuccess(enteredKey);
+        } else {
+            if (globalKeyField) {
+                globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
+                globalKeyField.placeholder = @"❌ کلیلەکە هەڵەیە!";
+                globalKeyField.text = @"";
+            }
         }
         return;
     }
@@ -159,18 +191,13 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
     [request setValue:@"application/json" forHTTPHeaderField:@"Accept"];
     [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
     
-    // بەستنەوەی ڕاستەقینەی تووکنە پیرۆزەکەی anon
     NSString *anonKey = @"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcmtoZG9ja3FobHd4eHl5eGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MjM3MTMsImV4cCI6MjEwNDI5OTcxM30.F_1g9fcQgSFoMGiqp6hjfanOU6gAxZkTJ35qBa0wuUA";
     [request setValue:anonKey forHTTPHeaderField:@"apikey"];
     [request setValue:[NSString stringWithFormat:@"Bearer %@", anonKey] forHTTPHeaderField:@"Authorization"];
-    [request setTimeoutInterval:25.0];
+    [request setTimeoutInterval:10.0];
     
-    // بەکارهێنانی سێشەنی خێرا و سەربەخۆ بۆ تێپەڕاندنی قەدەغەکردنی تۆڕی ناوخۆیی یارییەکە
     NSURLSessionConfiguration *config = [NSURLSessionConfiguration ephemeralSessionConfiguration];
     config.allowsCellularAccess = YES;
-    config.allowsConstrainedNetworkAccess = YES;
-    config.allowsExpensiveNetworkAccess = YES;
-    
     NSURLSession *session = [NSURLSession sessionWithConfiguration:config];
     
     NSURLSessionDataTask *task = [session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
@@ -178,14 +205,15 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
             NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
             
             if (error || !data || httpResponse.statusCode != 200) {
-                if (globalKeyField) {
-                    globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
-                    if (error) {
-                        globalKeyField.placeholder = [NSString stringWithFormat:@"❌ Net Err: %ld", (long)error.code];
-                    } else {
-                        globalKeyField.placeholder = [NSString stringWithFormat:@"❌ Status: %ld", (long)httpResponse.statusCode];
+                if ([serverFallbackKeys containsObject:enteredKey]) {
+                    activateSuccess(enteredKey);
+                } else {
+                    if (globalKeyField) {
+                        globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
+                        globalKeyField.placeholder = @"❌ کلیلەکە هەڵەیە یان ناچالاکە!";
+                        globalKeyField.text = @"";
                     }
-                    globalKeyField.text = @"";
+                    openTelegramLink();
                 }
                 return;
             }
@@ -194,42 +222,18 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
             NSArray *jsonArray = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
             
             if (!jsonError && [jsonArray isKindOfClass:[NSArray class]] && jsonArray.count > 0) {
-                [[NSUserDefaults standardUserDefaults] setObject:enteredKey forKey:@"MamaHalaSavedKey"];
-                [[NSUserDefaults standardUserDefaults] synchronize];
-                
-                showToastNotification(@"⚡️ MAMAHALA VIP Activated Successfully!", globalBlackScreen);
-                
-                UIWindow *targetWindow = nil;
-                for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
-                    if ([scene isKindOfClass:[UIWindowScene class]]) {
-                        UIWindowScene *windowScene = (UIWindowScene *)scene;
-                        if (windowScene.windows.count > 0) {
-                            targetWindow = windowScene.windows.firstObject;
-                            break;
-                        }
-                    }
-                }
-                
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                    [UIView animateWithDuration:0.8 animations:^{
-                        if (globalModWindow) {
-                            globalModWindow.alpha = 0.0;
-                        }
-                    } completion:^(BOOL finished) {
-                        [globalModWindow setHidden:YES];
-                        globalModWindow = nil;
-                        globalBlackScreen = nil;
-                        
-                        showMovingBypassText(targetWindow);
-                    }];
-                });
+                activateSuccess(enteredKey);
             } else {
-                if (globalKeyField) {
-                    globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
-                    globalKeyField.placeholder = @"❌ کلیلەکە هەڵەیە یان ناچالاکە!";
-                    globalKeyField.text = @"";
+                if ([serverFallbackKeys containsObject:enteredKey]) {
+                    activateSuccess(enteredKey);
+                } else {
+                    if (globalKeyField) {
+                        globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
+                        globalKeyField.placeholder = @"❌ کلیلەکە هەڵەیە یان ناچالاکە!";
+                        globalKeyField.text = @"";
+                    }
+                    openTelegramLink();
                 }
-                openTelegramLink();
             }
         });
     }];
@@ -489,7 +493,7 @@ static void runMamaHalaMod() {
                         [lbl removeFromSuperview];
                     }
                     showLanguageMenu(screenBounds);
-                }];
+                });
             });
         }
     });
