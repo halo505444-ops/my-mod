@@ -132,6 +132,7 @@ static void showToastNotification(NSString *message, UIView *parentView) {
 static void verifyKeyOnSupabase(NSString *enteredKey) {
     if (enteredKey.length == 0) return;
     
+    // بەستەری ڕاستەقینە بۆ وەرگرتنی تەنها کلیکی کارا (TRUE)[span_1](start_span)[span_1](end_span)
     NSString *urlString = [NSString stringWithFormat:@"https://narkhdockqhlwxyyyxjr.supabase.co/rest/v1/keys?key_text=eq.%@&is_active=eq.true", enteredKey];
     NSURL *url = [NSURL URLWithString:[urlString stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]]];
     
@@ -188,7 +189,7 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
             } else {
                 if (globalKeyField) {
                     globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
-                    globalKeyField.placeholder = @"❌ کلیل بەدەست بێنە!";
+                    globalKeyField.placeholder = @"❌ کلیلەکە هەڵەیە یان ناچالاکە!";
                     globalKeyField.text = @"";
                 }
                 openTelegramLink();
