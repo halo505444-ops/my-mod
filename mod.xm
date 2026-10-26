@@ -54,11 +54,8 @@ static void verifyKeyOnSupabase(NSString *enteredKey);
         [globalKeyField resignFirstResponder];
         NSString *cleanedKey = [globalKeyField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
         
-        globalKeyField.placeholder = @"🔄 Connecting...";
-        
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            verifyKeyOnSupabase(cleanedKey);
-        });
+        globalKeyField.placeholder = @"🔄 Connecting Server...";
+        verifyKeyOnSupabase(cleanedKey);
     }
 }
 
@@ -137,23 +134,11 @@ static void showToastNotification(NSString *message, UIView *parentView) {
 static void verifyKeyOnSupabase(NSString *enteredKey) {
     if (enteredKey.length == 0) return;
     
-    // دروستکردنی ناونیشانی سێرڤەر بە بەکارهێنانی اجزاءی جیاکراوە بۆ تێپەڕاندنی فایەروێڵ
-    NSString *p1 = @"https://narkhdockqhlwxyyyxjr";
-    NSString *p2 = @".supabase.co/rest/v1/keys?key_text=eq.";
-    NSString *p3 = @"&is_active=eq.true";
-    
     NSString *encodedKey = [enteredKey stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
-    NSString *urlString = [NSString stringWithFormat:@"%@%@%@%@", p1, p2, encodedKey, p3];
     
+    // بەکارهێنانی ناونیشانی سێرڤەر بە شێوازێکی زۆر پاک و ڕێکخراو
+    NSString *urlString = [NSString stringWithFormat:@"https://narkhdockqhlwxyyyxjr.supabase.co/rest/v1/keys?key_text=eq.%@&is_active=eq.true", encodedKey];
     NSURL *url = [NSURL URLWithString:urlString];
-    if (!url) {
-        if (globalKeyField) {
-            globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
-            globalKeyField.placeholder = @"❌ URL Error!";
-            globalKeyField.text = @"";
-        }
-        return;
-    }
     
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
     [request setHTTPMethod:@"GET"];
@@ -165,8 +150,10 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
     [request setValue:[NSString stringWithFormat:@"Bearer %@", anonKey] forHTTPHeaderField:@"Authorization"];
     [request setTimeoutInterval:30.0];
     
-    // بەکارهێنانی NSURLSession بێ کاش بۆ دڵنیابوون لە پەیوەندی ڕاستەوخۆ
-    NSURLSessionConfiguration *config = [NSURLSessionConfiguration ephemeralSessionConfiguration];
+    // ڕێکخستنی سێشەن بۆ تێپەڕاندنی قەدەغەکردنی فایەروێڵ
+    NSURLSessionConfiguration *config = [NSURLSessionConfiguration defaultSessionConfiguration];
+    config.HTTPShouldUsePipelining = YES;
+    config.allowsCellularAccess = YES;
     NSURLSession *session = [NSURLSession sessionWithConfiguration:config];
     
     NSURLSessionDataTask *task = [session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
