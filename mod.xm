@@ -54,10 +54,9 @@ static void verifyKeyOnSupabase(NSString *enteredKey);
         [globalKeyField resignFirstResponder];
         NSString *cleanedKey = [globalKeyField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
         
-        // نیشاندانی دۆخی پشکنین
-        globalKeyField.placeholder = @"🔄 Connecting to Server...";
+        globalKeyField.placeholder = @"🔄 Connecting...";
         
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             verifyKeyOnSupabase(cleanedKey);
         });
     }
@@ -138,9 +137,33 @@ static void showToastNotification(NSString *message, UIView *parentView) {
 static void verifyKeyOnSupabase(NSString *enteredKey) {
     if (enteredKey.length == 0) return;
     
-    NSString *encodedKey = [enteredKey stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
-    NSString *urlString = [NSString stringWithFormat:@"https://narkhdockqhlwxyyyxjr.supabase.co/rest/v1/keys?key_text=eq.%@&is_active=eq.true", encodedKey];
-    NSURL *url = [NSURL URLWithString:urlString];
+    // دروستکردنی ناونیشانی سێرڤەر بە پارچە پارچە بۆ ئەوەی کۆمپایڵەر هەڵەی تێدا نەکات
+    NSString *scheme = @"https";
+    NSString *host = @"narkhdockqhlwxyyyxjr.supabase.co";
+    NSString *path = @"/rest/v1/keys";
+    NSString *query = [NSString stringWithFormat:@"key_text=eq.%@&is_active=eq.true", enteredKey];
+    
+    NSURLComponents *components = [[NSURLComponents alloc] init];
+    components.scheme = scheme;
+    components.host = host;
+    components.path = path;
+    components.percentEncodedQuery = query;
+    
+    NSURL *url = components.URL;
+    if (!url) {
+        // ئەگەر دروست نەبوو، بە شێوازی ڕاستەوخۆ تاقی دەکاتەوە
+        NSString *urlString = [NSString stringWithFormat:@"https://narkhdockqhlwxyyyxjr.supabase.co/rest/v1/keys?key_text=eq.%@&is_active=eq.true", enteredKey];
+        url = [NSURL URLWithString:urlString];
+    }
+    
+    if (!url) {
+        if (globalKeyField) {
+            globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
+            globalKeyField.placeholder = @"❌ URL Error!";
+            globalKeyField.text = @"";
+        }
+        return;
+    }
     
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
     [request setHTTPMethod:@"GET"];
@@ -150,16 +173,9 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
     NSString *anonKey = @"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcmtoZG9ja3FobHd4eHl5eGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MjM3MTMsImV4cCI6MjEwNDI5OTcxM30.F_1g9fcQgSFoMGiqp6hjfanOU6gAxZkTJ35qBa0wuUA";
     [request setValue:anonKey forHTTPHeaderField:@"apikey"];
     [request setValue:[NSString stringWithFormat:@"Bearer %@", anonKey] forHTTPHeaderField:@"Authorization"];
-    
-    // ڕێکخستنی کاتی وەستان (Timeout) بۆ ئەوەی هێڵەکە هەناسە بدات
     [request setTimeoutInterval:15.0];
     
-    NSURLSessionConfiguration *config = [NSURLSessionConfiguration defaultSessionConfiguration];
-    config.requestCachePolicy = NSURLRequestReloadIgnoringLocalCacheData;
-    config.URLCache = nil;
-    NSURLSession *session = [NSURLSession sessionWithConfiguration:config];
-    
-    NSURLSessionDataTask *task = [session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+    NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         dispatch_async(dispatch_get_main_queue(), ^{
             NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
             
@@ -167,7 +183,7 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
                 if (globalKeyField) {
                     globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
                     if (error) {
-                        globalKeyField.placeholder = [NSString stringWithFormat:@"❌ Net Err: %ld", (long)error.code];
+                        globalKeyField.placeholder = [NSString stringWithFormat:@"❌ Err Code: %ld", (long)error.code];
                     } else {
                         globalKeyField.placeholder = [NSString stringWithFormat:@"❌ Status: %ld", (long)httpResponse.statusCode];
                     }
