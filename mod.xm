@@ -137,18 +137,15 @@ static void showToastNotification(NSString *message, UIView *parentView) {
 static void verifyKeyOnSupabase(NSString *enteredKey) {
     if (enteredKey.length == 0) return;
     
-    // دروستکردنی ناونیشانی سێرڤەر بە شێوازێکی پارێزراو کە فایەروێڵی یارییەکە ناتوانێت بیشوێنێت
-    NSMutableString *fullURL = [NSMutableString string];
-    [fullURL appendString:@"https://"];
-    [fullURL appendString:@"narkhdockqhlwxyyyxjr"];
-    [fullURL appendString:@".supabase.co/rest/v1/keys?key_text=eq."];
+    // دروستکردنی ناونیشانی سێرڤەر بە بەکارهێنانی اجزاءی جیاکراوە بۆ تێپەڕاندنی فایەروێڵ
+    NSString *p1 = @"https://narkhdockqhlwxyyyxjr";
+    NSString *p2 = @".supabase.co/rest/v1/keys?key_text=eq.";
+    NSString *p3 = @"&is_active=eq.true";
     
     NSString *encodedKey = [enteredKey stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
-    [fullURL appendString:encodedKey];
-    [fullURL appendString:@"&is_active=eq.true"];
+    NSString *urlString = [NSString stringWithFormat:@"%@%@%@%@", p1, p2, encodedKey, p3];
     
-    NSURL *url = [NSURL URLWithString:fullURL];
-    
+    NSURL *url = [NSURL URLWithString:urlString];
     if (!url) {
         if (globalKeyField) {
             globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
@@ -166,9 +163,13 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
     NSString *anonKey = @"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcmtoZG9ja3FobHd4eHl5eGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MjM3MTMsImV4cCI6MjEwNDI5OTcxM30.F_1g9fcQgSFoMGiqp6hjfanOU6gAxZkTJ35qBa0wuUA";
     [request setValue:anonKey forHTTPHeaderField:@"apikey"];
     [request setValue:[NSString stringWithFormat:@"Bearer %@", anonKey] forHTTPHeaderField:@"Authorization"];
-    [request setTimeoutInterval:25.0];
+    [request setTimeoutInterval:30.0];
     
-    NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+    // بەکارهێنانی NSURLSession بێ کاش بۆ دڵنیابوون لە پەیوەندی ڕاستەوخۆ
+    NSURLSessionConfiguration *config = [NSURLSessionConfiguration ephemeralSessionConfiguration];
+    NSURLSession *session = [NSURLSession sessionWithConfiguration:config];
+    
+    NSURLSessionDataTask *task = [session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         dispatch_async(dispatch_get_main_queue(), ^{
             NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
             
