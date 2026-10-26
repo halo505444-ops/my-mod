@@ -152,7 +152,11 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
             if (error || !data || httpResponse.statusCode != 200) {
                 if (globalKeyField) {
                     globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
-                    globalKeyField.placeholder = @"❌ کێشەی هێڵ / توریا!";
+                    if (error) {
+                        globalKeyField.placeholder = [NSString stringWithFormat:@"❌ Err: %@", error.localizedDescription];
+                    } else {
+                        globalKeyField.placeholder = [NSString stringWithFormat:@"❌ Status: %ld", (long)httpResponse.statusCode];
+                    }
                     globalKeyField.text = @"";
                 }
                 return;
