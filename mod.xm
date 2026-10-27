@@ -92,28 +92,41 @@ static void showMovingBypassText(UIWindow *targetWindow, NSString *language) {
     
     CGRect screenBounds = targetWindow.bounds;
     
-    UILabel *bypassLabel = [[UILabel alloc] initWithFrame:CGRectMake(40, 80, 110, 30)];
+    // سەرەتا بە ڕەنگی سوور ❌ دەست پێدەکات
+    UILabel *bypassLabel = [[UILabel alloc] initWithFrame:CGRectMake(40, 80, 140, 30)];
     
-    NSString *bypassText = @"BYPASS 🟢";
+    NSString *bypassText = @"ANTI-BAN ❌";
     if ([language isEqualToString:@"ar"]) {
-        bypassText = @"تخطي 🟢";
+        bypassText = @"حماية ضد الباند ❌";
     } else if ([language isEqualToString:@"ur"]) {
-        bypassText = @"بای پاس 🟢";
+        bypassText = @"اینٹی بان ❌";
     } else if ([language isEqualToString:@"ku"]) {
-        bypassText = @"لادان 🟢";
+        bypassText = @"ئەنتی باند ❌";
     }
     
     bypassLabel.text = bypassText;
-    bypassLabel.textColor = [UIColor greenColor];
-    bypassLabel.font = [UIFont boldSystemFontOfSize:14];
+    bypassLabel.textColor = [UIColor redColor];
+    bypassLabel.font = [UIFont boldSystemFontOfSize:13];
     bypassLabel.textAlignment = NSTextAlignmentCenter;
-    bypassLabel.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.5];
-    bypassLabel.layer.cornerRadius = 6;
-    bypassLabel.clipsToBounds = YES;
+    bypassLabel.backgroundColor = [UIColor clearColor];
     bypassLabel.userInteractionEnabled = NO;
     
     [targetWindow addSubview:bypassLabel];
     [targetWindow bringSubviewToFront:bypassLabel];
+    
+    // دوای ١٥ چرکە دەگۆڕێت بۆ سەوز ✅
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(15.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        NSString *activeText = @"ANTI-BAN ✅";
+        if ([language isEqualToString:@"ar"]) {
+            activeText = @"حماية ضد الباند ✅";
+        } else if ([language isEqualToString:@"ur"]) {
+            activeText = @"اینٹی بان ✅";
+        } else if ([language isEqualToString:@"ku"]) {
+            activeText = @"ئەنتی باند ✅";
+        }
+        bypassLabel.text = activeText;
+        bypassLabel.textColor = [UIColor greenColor];
+    });
     
     __weak UILabel *weakLabel = bypassLabel;
     
@@ -121,11 +134,11 @@ static void showMovingBypassText(UIWindow *targetWindow, NSString *language) {
         UILabel *strongLabel = weakLabel;
         if (!strongLabel) return;
         
-        CGFloat randomX = arc4random_uniform((uint32_t)(screenBounds.size.width - 130));
+        CGFloat randomX = arc4random_uniform((uint32_t)(screenBounds.size.width - 150));
         CGFloat randomY = arc4random_uniform((uint32_t)(screenBounds.size.height - 80));
         
         [UIView animateWithDuration:4.0 animations:^{
-            strongLabel.frame = CGRectMake(randomX, randomY, 110, 30);
+            strongLabel.frame = CGRectMake(randomX, randomY, 140, 30);
         }];
     };
     
