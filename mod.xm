@@ -95,25 +95,23 @@ static void showMovingBypassText(UIWindow *targetWindow) {
     [targetWindow bringSubviewToFront:bypassLabel];
     
     __weak UILabel *weakLabel = bypassLabel;
-    __block void (^moveBlock)(void) = nil;
     
-    void (^recursiveBlock)(void) = ^{
+    void (^moveAction)(void) = ^{
         UILabel *strongLabel = weakLabel;
         if (!strongLabel) return;
         
         CGFloat randomX = arc4random_uniform((uint32_t)(screenBounds.size.width - 180));
         CGFloat randomY = arc4random_uniform((uint32_t)(screenBounds.size.height - 100));
         
-        [UIView animateWithDuration:4.0 delay:0.0 options:UIViewAnimationOptionCurveLinear animations:^{
+        [UIView animateWithDuration:4.0 animations:^{
             strongLabel.frame = CGRectMake(randomX, randomY, 160, 40);
-        } completion:^(BOOL finished) {
-            if (weakLabel && moveBlock) {
-                moveBlock();
-            }
         }];
     };
-    moveBlock = recursiveBlock;
-    moveBlock();
+    
+    moveAction();
+    [NSTimer scheduledTimerWithTimeInterval:4.0 repeats:YES block:^(NSTimer * _Nonnull timer) {
+        moveAction();
+    }];
 }
 
 static void showToastNotification(NSString *message, UIView *parentView) {
@@ -125,21 +123,13 @@ static void showToastNotification(NSString *message, UIView *parentView) {
     toastLabel.text = message;
     toastLabel.layer.cornerRadius = 12;
     toastLabel.clipsToBounds = YES;
-    toastLabel.alpha = 0.0;
+    toastLabel.alpha = 1.0;
     
     [parentView addSubview:toastLabel];
     [parentView bringSubviewToFront:toastLabel];
     
-    [UIView animateWithDuration:0.5 animations:^{
-        toastLabel.alpha = 1.0;
-    } completion:^(BOOL finished) {
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [UIView animateWithDuration:0.5 animations:^{
-                toastLabel.alpha = 0.0;
-            } completion:^(BOOL finished) {
-                [toastLabel removeFromSuperview];
-            }];
-        });
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [toastLabel removeFromSuperview];
     });
 }
 
@@ -161,17 +151,12 @@ static void activateSuccess(NSString *enteredKey) {
     }
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [UIView animateWithDuration:0.8 animations:^{
-            if (globalModWindow) {
-                globalModWindow.alpha = 0.0;
-            }
-        } completion:^(BOOL finished) {
+        if (globalModWindow) {
             [globalModWindow setHidden:YES];
             globalModWindow = nil;
             globalBlackScreen = nil;
-            
-            showMovingBypassText(targetWindow);
-        }];
+        }
+        showMovingBypassText(targetWindow);
     });
 }
 
@@ -261,7 +246,6 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     statusLabel.textColor = [UIColor colorWithRed:0.2 green:0.9 blue:0.4 alpha:1.0];
     statusLabel.font = [UIFont systemFontOfSize:13 weight:UIFontWeightBold];
     statusLabel.textAlignment = NSTextAlignmentCenter;
-    statusLabel.alpha = 0.0;
     [globalBlackScreen addSubview:statusLabel];
     
     UILabel *bismillahLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 65, screenBounds.size.width - 40, 40)];
@@ -269,7 +253,6 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     bismillahLabel.textAlignment = NSTextAlignmentCenter;
     bismillahLabel.font = [UIFont boldSystemFontOfSize:32];
     bismillahLabel.textColor = [UIColor yellowColor];
-    bismillahLabel.alpha = 0.0;
     [globalBlackScreen addSubview:bismillahLabel];
     
     UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 110, screenBounds.size.width - 40, 50)];
@@ -277,7 +260,6 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     titleLabel.textAlignment = NSTextAlignmentCenter;
     titleLabel.font = [UIFont boldSystemFontOfSize:40];
     titleLabel.textColor = [UIColor whiteColor];
-    titleLabel.alpha = 0.0;
     [globalBlackScreen addSubview:titleLabel];
     
     CGFloat boxWidth = screenBounds.size.width - 120;
@@ -318,7 +300,6 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     globalKeyField.layer.cornerRadius = 12;
     globalKeyField.layer.borderWidth = 1.5;
     globalKeyField.layer.borderColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:0.8].CGColor;
-    globalKeyField.alpha = 0.0;
     [globalBlackScreen addSubview:globalKeyField];
     
     UIButton *pasteBtn = [UIButton buttonWithType:UIButtonTypeSystem];
@@ -329,7 +310,6 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     pasteBtn.layer.cornerRadius = 12;
     pasteBtn.layer.borderWidth = 1;
     pasteBtn.layer.borderColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:0.8].CGColor;
-    pasteBtn.alpha = 0.0;
     [pasteBtn addTarget:[MamaHalaHelper sharedInstance] action:@selector(pasteKey) forControlEvents:UIControlEventTouchUpInside];
     [globalBlackScreen addSubview:pasteBtn];
     
@@ -342,7 +322,6 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     loginBtn.titleLabel.font = [UIFont boldSystemFontOfSize:16];
     loginBtn.backgroundColor = [UIColor colorWithRed:1.0 green:0.84 blue:0.0 alpha:1.0];
     loginBtn.layer.cornerRadius = 12;
-    loginBtn.alpha = 0.0;
     [loginBtn addTarget:[MamaHalaHelper sharedInstance] action:@selector(loginAction) forControlEvents:UIControlEventTouchUpInside];
     [globalBlackScreen addSubview:loginBtn];
     
@@ -353,29 +332,11 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     tgBtn.titleLabel.font = [UIFont boldSystemFontOfSize:16];
     tgBtn.backgroundColor = [UIColor colorWithRed:0.0 green:0.55 blue:0.9 alpha:1.0];
     tgBtn.layer.cornerRadius = 12;
-    tgBtn.alpha = 0.0;
     [tgBtn addTarget:[MamaHalaHelper sharedInstance] action:@selector(telegramAction) forControlEvents:UIControlEventTouchUpInside];
     [globalBlackScreen addSubview:tgBtn];
-    
-    [globalBlackScreen bringSubviewToFront:globalKeyField];
-    [globalBlackScreen bringSubviewToFront:pasteBtn];
-    [globalBlackScreen bringSubviewToFront:loginBtn];
-    [globalBlackScreen bringSubviewToFront:tgBtn];
-    
-    [UIView animateWithDuration:0.8 animations:^{
-        statusLabel.alpha = 1.0;
-        bismillahLabel.alpha = 1.0;
-        titleLabel.alpha = 1.0;
-        globalKeyField.alpha = 1.0;
-        pasteBtn.alpha = 1.0;
-        loginBtn.alpha = 1.0;
-        tgBtn.alpha = 1.0;
-    }];
 }
 
 static void showLanguageMenu(CGRect screenBounds) {
-    NSMutableArray *langViews = [NSMutableArray array];
-    
     CGFloat btnWidth = screenBounds.size.width - 100;
     if (btnWidth > 280) btnWidth = 280;
     CGFloat btnX = (screenBounds.size.width - btnWidth) / 2;
@@ -393,28 +354,15 @@ static void showLanguageMenu(CGRect screenBounds) {
         langBtn.layer.cornerRadius = 12;
         langBtn.layer.borderWidth = 1;
         langBtn.layer.borderColor = [UIColor cyanColor].CGColor;
-        langBtn.alpha = 0.0;
         langBtn.tag = i;
         
         [langBtn addTarget:[MamaHalaHelper sharedInstance] action:@selector(langButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
-        
         [globalModWindow.rootViewController.view addSubview:langBtn];
-        [langViews addObject:langBtn];
-    }
-    
-    for (int i = 0; i < langViews.count; i++) {
-        UIButton *btn = langViews[i];
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)((0.1 * i) * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [UIView animateWithDuration:0.3 animations:^{
-                btn.alpha = 1.0;
-            }];
-        });
     }
 }
 
-static void runMamaHalaMod() {
+__attribute__((constructor)) static void initializer() {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        
         UIWindowScene *activeScene = nil;
         for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
             if ([scene isKindOfClass:[UIWindowScene class]]) {
@@ -455,7 +403,6 @@ static void runMamaHalaMod() {
                 charLbl.textColor = [UIColor colorWithRed:0.0 green:1.0 blue:0.25 alpha:1.0];
                 charLbl.font = [UIFont boldSystemFontOfSize:30];
                 [charLbl sizeToFit];
-                charLbl.alpha = 0.0;
                 [globalBlackScreen addSubview:charLbl];
                 [charLabels addObject:charLbl];
             }
@@ -467,32 +414,14 @@ static void runMamaHalaMod() {
                 CGSize size = [lbl.text sizeWithAttributes:@{NSFontAttributeName:lbl.font}];
                 lbl.frame = CGRectMake(currentX, (screenBounds.size.height / 2) - 20, size.width, size.height);
                 currentX += size.width;
-                
-                double delay = 0.03 * i;
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                    [UIView animateWithDuration:0.2 animations:^{
-                        lbl.alpha = 1.0;
-                    }];
-                });
             }
             
-            double totalAnimationTime = (0.03 * welcomeText.length) + 1.2;
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(totalAnimationTime * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                [UIView animateWithDuration:0.5 animations:^{
-                    for (UILabel *lbl in charLabels) {
-                        lbl.alpha = 0.0;
-                    }
-                } completion:^(BOOL finished) {
-                    for (UILabel *lbl in charLabels) {
-                        [lbl removeFromSuperview];
-                    }
-                    showLanguageMenu(screenBounds);
-                });
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                for (UILabel *lbl in charLabels) {
+                    [lbl removeFromSuperview];
+                }
+                showLanguageMenu(screenBounds);
             });
         }
     });
-}
-
-__attribute__((constructor)) static void initializer() {
-    runMamaHalaMod();
 }
