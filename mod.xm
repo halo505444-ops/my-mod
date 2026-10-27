@@ -19,6 +19,7 @@ static UITextField *globalKeyField = nil;
 static NSString *currentSelectedLanguage = @"ku";
 static void verifyKeyOnSupabase(NSString *enteredKey);
 static void showKeyInputUI(NSString *language, CGRect screenBounds);
+static void showLanguageMenu(CGRect screenBounds);
 
 @interface MamaHalaHelper : NSObject
 + (instancetype)sharedInstance;
@@ -91,7 +92,6 @@ static void showMovingBypassText(UIWindow *targetWindow, NSString *language) {
     
     CGRect screenBounds = targetWindow.bounds;
     
-    // قەبارەی بایپاس بچووککراوە و ڕێکخراوە
     UILabel *bypassLabel = [[UILabel alloc] initWithFrame:CGRectMake(40, 80, 110, 30)];
     
     NSString *bypassText = @"BYPASS 🟢";
@@ -217,7 +217,7 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
     [request setValue:@"application/json" forHTTPHeaderField:@"Accept"];
     [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
     
-    NSString *anonKey = @"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcmtoZG9ja3FobHd4eHl5eGpyIiwicm9sZSI6ImFub24iOjE3ODg3MjM3MTMsImV4cCI6MjEwNDI5OTcxM30.F_1g9fcQgSFoMGiqp6hjfanOU6gAxZkTJ35qBa0wuUA";
+    NSString *anonKey = @"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcmtoZG9ja3FobHd4eHl5eGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MjM3MTMsImV4cCI6MjEwNDI5OTcxM30.F_1g9fcQgSFoMGiqp6hjfanOU6gAxZkTJ35qBa0wuUA";
     [request setValue:anonKey forHTTPHeaderField:@"apikey"];
     [request setValue:[NSString stringWithFormat:@"Bearer %@", anonKey] forHTTPHeaderField:@"Authorization"];
     [request setTimeoutInterval:10.0];
@@ -236,7 +236,7 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
                 } else {
                     if (globalKeyField) {
                         globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
-                        globalKeyField.placeholder = [currentSelectedLanguage isEqualToString:@"ar"] ? @"❌ مفتاح غير صالح!" : ([currentSelectedLanguage isEqualToString:@"ku"] ? @"❌ کلیلەکە هەڵەیە یان ناچالاکە!" : @"❌ Invalid or Inactive Key!");
+                        globalKeyField.placeholder = [currentSelectedLanguage isEqualToString:@"ar"] ? @"❌ مفتاح غير صالح!" : ([currentSelectedLanguage isEqualToString:@"ku"] ? @"❌ کلیلەکە هەڵەیە یان ناچالاکە!" : @"❌ Invalid Key!");
                         globalKeyField.text = @"";
                     }
                     openTelegramLink();
@@ -255,7 +255,7 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
                 } else {
                     if (globalKeyField) {
                         globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
-                        globalKeyField.placeholder = [currentSelectedLanguage isEqualToString:@"ar"] ? @"❌ مفتاح غير صالح!" : ([currentSelectedLanguage isEqualToString:@"ku"] ? @"❌ کلیلەکە هەڵەیە یان ناچالاکە!" : @"❌ Invalid or Inactive Key!");
+                        globalKeyField.placeholder = [currentSelectedLanguage isEqualToString:@"ar"] ? @"❌ مفتاح غير صالح!" : ([currentSelectedLanguage isEqualToString:@"ku"] ? @"❌ کلیلەکە هەڵەیە یان ناچالاکە!" : @"❌ Invalid Key!");
                         globalKeyField.text = @"";
                     }
                     openTelegramLink();
@@ -454,18 +454,11 @@ __attribute__((constructor)) static void initializer() {
                 });
             }
             
-            double totalAnimationTime = (0.03 * welcomeText.length) + 1.2;
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(totalAnimationTime * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                [UIView animateWithDuration:0.5 animations:^{
-                    for (UILabel *lbl in charLabels) {
-                        lbl.alpha = 0.0;
-                    }
-                } completion:^(BOOL finished) {
-                    for (UILabel *lbl in charLabels) {
-                        [lbl removeFromSuperview];
-                    }
-                    showLanguageMenu(screenBounds);
-                });
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                for (UILabel *lbl in charLabels) {
+                    [lbl removeFromSuperview];
+                }
+                showLanguageMenu(screenBounds);
             });
         }
     });
