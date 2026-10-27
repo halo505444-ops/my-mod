@@ -71,14 +71,8 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds);
     NSString *langCode = (tag >= 0 && tag < codes.count) ? codes[tag] : @"ku";
     
     UIView *rootView = globalModWindow.rootViewController.view;
-    [UIView animateWithDuration:0.3 animations:^{
-        for (UIView *v in rootView.subviews) {
-            v.alpha = 0.0;
-        }
-    } completion:^(BOOL finished) {
-        [rootView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
-        showKeyInputUI(langCode, globalModWindow.bounds);
-    }];
+    [rootView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    showKeyInputUI(langCode, globalModWindow.bounds);
 }
 @end
 
