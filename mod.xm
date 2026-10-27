@@ -59,13 +59,13 @@ static void showLanguageMenu(CGRect screenBounds);
         NSString *cleanedKey = [globalKeyField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
         
         if ([currentSelectedLanguage isEqualToString:@"ar"]) {
-            globalKeyField.placeholder = @"🔄 جاري الاتصال بالخادم...";
+            globalKeyField.placeholder = @"🔄 جاري التحقق من الخادم...";
         } else if ([currentSelectedLanguage isEqualToString:@"ur"]) {
-            globalKeyField.placeholder = @"🔄 سرور سے সংযোগ ہو رہا ہے...";
+            globalKeyField.placeholder = @"🔄 سرور سے تصدیق ہو رہی ہے...";
         } else if ([currentSelectedLanguage isEqualToString:@"ku"]) {
-            globalKeyField.placeholder = @"🔄 پەیوەندی بە سەვەرەوە دەکرێت...";
+            globalKeyField.placeholder = @"🔄 پشکنین لە سەوەر دەکرێت...";
         } else {
-            globalKeyField.placeholder = @"🔄 Connecting Server...";
+            globalKeyField.placeholder = @"🔄 Verifying with Server...";
         }
         
         verifyKeyOnSupabase(cleanedKey);
@@ -92,7 +92,6 @@ static void showMovingBypassText(UIWindow *targetWindow, NSString *language) {
     
     CGRect screenBounds = targetWindow.bounds;
     
-    // سەرەتا بە ڕەنگی سوور ❌ دەست پێدەکات
     UILabel *bypassLabel = [[UILabel alloc] initWithFrame:CGRectMake(40, 80, 140, 30)];
     
     NSString *bypassText = @"ANTI-BAN ❌";
@@ -114,7 +113,6 @@ static void showMovingBypassText(UIWindow *targetWindow, NSString *language) {
     [targetWindow addSubview:bypassLabel];
     [targetWindow bringSubviewToFront:bypassLabel];
     
-    // دوای ١٥ چرکە دەگۆڕێت بۆ سەوز ✅
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(15.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         NSString *activeText = @"ANTI-BAN ✅";
         if ([language isEqualToString:@"ar"]) {
@@ -204,23 +202,23 @@ static void activateSuccess(NSString *enteredKey) {
 }
 
 static void verifyKeyOnSupabase(NSString *enteredKey) {
-    if (enteredKey.length == 0) return;
-    
-    NSArray *serverFallbackKeys = @[@"5054", @"SHAZAandMamaHala", @"shazavipnomber1o"];
+    if (enteredKey.length == 0) {
+        if (globalKeyField) {
+            globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
+            globalKeyField.placeholder = [currentSelectedLanguage isEqualToString:@"ar"] ? @"❌ أدخل المفتاح أولاً!" : ([currentSelectedLanguage isEqualToString:@"ku"] ? @"❌ سەرەتا کلیل بنووسە!" : @"❌ Enter key first!");
+        }
+        return;
+    }
     
     NSString *encodedKey = [enteredKey stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
     NSString *urlString = [NSString stringWithFormat:@"https://narkhdockqhlwxyyyxjr.supabase.co/rest/v1/keys?key_text=eq.%@&is_active=eq.true", encodedKey];
     NSURL *url = [NSURL URLWithString:urlString];
     
     if (!url) {
-        if ([serverFallbackKeys containsObject:enteredKey]) {
-            activateSuccess(enteredKey);
-        } else {
-            if (globalKeyField) {
-                globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
-                globalKeyField.placeholder = [currentSelectedLanguage isEqualToString:@"ar"] ? @"❌ مفتاح خاطئ!" : ([currentSelectedLanguage isEqualToString:@"ku"] ? @"❌ کلیلەکە هەڵەیە!" : @"❌ Invalid Key!");
-                globalKeyField.text = @"";
-            }
+        if (globalKeyField) {
+            globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
+            globalKeyField.placeholder = [currentSelectedLanguage isEqualToString:@"ar"] ? @"❌ خطأ في الاتصال!" : ([currentSelectedLanguage isEqualToString:@"ku"] ? @"❌ هەڵە لە پەیوەندیدا!" : @"❌ Connection Error!");
+            globalKeyField.text = @"";
         }
         return;
     }
@@ -243,36 +241,31 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
         dispatch_async(dispatch_get_main_queue(), ^{
             NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
             
+            // مەرجی توند: تەنها و تەنها ئەگەر هێڵی ئینتەرنێت هەبێت، پەیوەندی سەرکەوتوو بوو (200)، و داتابەیسەکە کلیلەکەی دۆزییەوە (ئەنجامەکە بەتاڵ نەبوو)
             if (error || !data || httpResponse.statusCode != 200) {
-                if ([serverFallbackKeys containsObject:enteredKey]) {
-                    activateSuccess(enteredKey);
-                } else {
-                    if (globalKeyField) {
-                        globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
-                        globalKeyField.placeholder = [currentSelectedLanguage isEqualToString:@"ar"] ? @"❌ مفتاح غير صالح!" : ([currentSelectedLanguage isEqualToString:@"ku"] ? @"❌ کلیلەکە هەڵەیە یان ناچالاکە!" : @"❌ Invalid Key!");
-                        globalKeyField.text = @"";
-                    }
-                    openTelegramLink();
+                if (globalKeyField) {
+                    globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
+                    globalKeyField.placeholder = [currentSelectedLanguage isEqualToString:@"ar"] ? @"❌ خ خطأ في الخادم أو المفتاح غير صالح!" : ([currentSelectedLanguage isEqualToString:@"ku"] ? @"❌ کلیلەکە هەڵەیە یان سەوەر دەبەستێت!" : @"❌ Invalid Key or Server Error!");
+                    globalKeyField.text = @"";
                 }
+                openTelegramLink();
                 return;
             }
             
             NSError *jsonError;
             NSArray *jsonArray = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
             
+            // لێرە دەبێت دڵنیا بێین کە ژمارەی ئەنجامەکانی داتابەیس گەورەترە لە سفڕ (واتە کلیلەکە هەیە و چالاکە)
             if (!jsonError && [jsonArray isKindOfClass:[NSArray class]] && jsonArray.count > 0) {
                 activateSuccess(enteredKey);
             } else {
-                if ([serverFallbackKeys containsObject:enteredKey]) {
-                    activateSuccess(enteredKey);
-                } else {
-                    if (globalKeyField) {
-                        globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
-                        globalKeyField.placeholder = [currentSelectedLanguage isEqualToString:@"ar"] ? @"❌ مفتاح غير صالح!" : ([currentSelectedLanguage isEqualToString:@"ku"] ? @"❌ کلیلەکە هەڵەیە یان ناچالاکە!" : @"❌ Invalid Key!");
-                        globalKeyField.text = @"";
-                    }
-                    openTelegramLink();
+                // ئەگەر کلیلەکە نەدۆزرایەوە یان ناچالاک بوو، ڕێگەی پێ نادەین
+                if (globalKeyField) {
+                    globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
+                    globalKeyField.placeholder = [currentSelectedLanguage isEqualToString:@"ar"] ? @"❌ مفتاح غير صالح أو غير فعال!" : ([currentSelectedLanguage isEqualToString:@"ku"] ? @"❌ کلیلەکە هەڵەیە یان ناچالاکە!" : @"❌ Invalid or Inactive Key!");
+                    globalKeyField.text = @"";
                 }
+                openTelegramLink();
             }
         });
     }];
