@@ -211,7 +211,8 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
     }
     
     NSString *encodedKey = [enteredKey stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
-    NSString *urlString = [NSString stringWithFormat:@"https://narkhdockqhlwxyyyxjr.supabase.co/rest/v1/keys?key_text=eq.%@&is_active=eq.true", encodedKey];
+    // بەکارهێنانی ilike بۆ ئەوەی کێشەی پیتە گەورە و بچووکەکان نەمێنێت
+    NSString *urlString = [NSString stringWithFormat:@"https://narkhdockqhlwxyyyxjr.supabase.co/rest/v1/keys?key_text=ilike.%@&is_active=eq.true", encodedKey];
     NSURL *url = [NSURL URLWithString:urlString];
     
     if (!url) {
@@ -231,7 +232,7 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
     NSString *anonKey = @"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcmtoZG9ja3FobHd4eHl5eGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MjM3MTMsImV4cCI6MjEwNDI5OTcxM30.F_1g9fcQgSFoMGiqp6hjfanOU6gAxZkTJ35qBa0wuUA";
     [request setValue:anonKey forHTTPHeaderField:@"apikey"];
     [request setValue:[NSString stringWithFormat:@"Bearer %@", anonKey] forHTTPHeaderField:@"Authorization"];
-    [request setTimeoutInterval:10.0];
+    [request setTimeoutInterval:15.0];
     
     NSURLSessionConfiguration *config = [NSURLSessionConfiguration ephemeralSessionConfiguration];
     config.allowsCellularAccess = YES;
@@ -241,11 +242,10 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
         dispatch_async(dispatch_get_main_queue(), ^{
             NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
             
-            // مەرجی توند: تەنها و تەنها ئەگەر هێڵی ئینتەرنێت هەبێت، پەیوەندی سەرکەوتوو بوو (200)، و داتابەیسەکە کلیلەکەی دۆزییەوە (ئەنجامەکە بەتاڵ نەبوو)
             if (error || !data || httpResponse.statusCode != 200) {
                 if (globalKeyField) {
                     globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
-                    globalKeyField.placeholder = [currentSelectedLanguage isEqualToString:@"ar"] ? @"❌ خ خطأ في الخادم أو المفتاح غير صالح!" : ([currentSelectedLanguage isEqualToString:@"ku"] ? @"❌ کلیلەکە هەڵەیە یان سەوەر دەبەستێت!" : @"❌ Invalid Key or Server Error!");
+                    globalKeyField.placeholder = [currentSelectedLanguage isEqualToString:@"ar"] ? @"❌ خطأ في الخادم أو المفتاح غير صالح!" : ([currentSelectedLanguage isEqualToString:@"ku"] ? @"❌ کلیلەکە هەڵەیە یان سەوەر دەبەستێت!" : @"❌ Invalid Key or Server Error!");
                     globalKeyField.text = @"";
                 }
                 openTelegramLink();
@@ -255,11 +255,9 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
             NSError *jsonError;
             NSArray *jsonArray = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
             
-            // لێرە دەبێت دڵنیا بێین کە ژمارەی ئەنجامەکانی داتابەیس گەورەترە لە سفڕ (واتە کلیلەکە هەیە و چالاکە)
             if (!jsonError && [jsonArray isKindOfClass:[NSArray class]] && jsonArray.count > 0) {
                 activateSuccess(enteredKey);
             } else {
-                // ئەگەر کلیلەکە نەدۆزرایەوە یان ناچالاک بوو، ڕێگەی پێ نادەین
                 if (globalKeyField) {
                     globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
                     globalKeyField.placeholder = [currentSelectedLanguage isEqualToString:@"ar"] ? @"❌ مفتاح غير صالح أو غير فعال!" : ([currentSelectedLanguage isEqualToString:@"ku"] ? @"❌ کلیلەکە هەڵەیە یان ناچالاکە!" : @"❌ Invalid or Inactive Key!");
