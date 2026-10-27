@@ -16,6 +16,7 @@ static void openTelegramLink() {
 static UIWindow *globalModWindow = nil;
 static UIView *globalBlackScreen = nil;
 static UITextField *globalKeyField = nil;
+static NSString *currentSelectedLanguage = @"ku";
 static void verifyKeyOnSupabase(NSString *enteredKey);
 static void showKeyInputUI(NSString *language, CGRect screenBounds);
 
@@ -56,7 +57,16 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds);
         [globalKeyField resignFirstResponder];
         NSString *cleanedKey = [globalKeyField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
         
-        globalKeyField.placeholder = @"🔄 Connecting Server...";
+        if ([currentSelectedLanguage isEqualToString:@"ar"]) {
+            globalKeyField.placeholder = @"🔄 جاري الاتصال بالخادم...";
+        } else if ([currentSelectedLanguage isEqualToString:@"ur"]) {
+            globalKeyField.placeholder = @"🔄 سرور سے সংযোগ ہو رہا ہے...";
+        } else if ([currentSelectedLanguage isEqualToString:@"ku"]) {
+            globalKeyField.placeholder = @"🔄 پەیوەندی بە سەვەرەوە دەکرێت...";
+        } else {
+            globalKeyField.placeholder = @"🔄 Connecting Server...";
+        }
+        
         verifyKeyOnSupabase(cleanedKey);
     }
 }
@@ -68,26 +78,37 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds);
 - (void)langButtonTapped:(UIButton *)sender {
     NSArray *codes = @[@"ku", @"ar", @"en", @"ur"];
     NSInteger tag = sender.tag;
-    NSString *langCode = (tag >= 0 && tag < codes.count) ? codes[tag] : @"ku";
+    currentSelectedLanguage = (tag >= 0 && tag < codes.count) ? codes[tag] : @"ku";
     
     UIView *rootView = globalModWindow.rootViewController.view;
     [rootView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
-    showKeyInputUI(langCode, globalModWindow.bounds);
+    showKeyInputUI(currentSelectedLanguage, globalModWindow.bounds);
 }
 @end
 
-static void showMovingBypassText(UIWindow *targetWindow) {
+static void showMovingBypassText(UIWindow *targetWindow, NSString *language) {
     if (!targetWindow) return;
     
     CGRect screenBounds = targetWindow.bounds;
     
-    UILabel *bypassLabel = [[UILabel alloc] initWithFrame:CGRectMake(50, 100, 160, 40)];
-    bypassLabel.text = @"BYPASS 🟢";
+    // قەبارەی بایپاس بچووککراوە و ڕێکخراوە
+    UILabel *bypassLabel = [[UILabel alloc] initWithFrame:CGRectMake(40, 80, 110, 30)];
+    
+    NSString *bypassText = @"BYPASS 🟢";
+    if ([language isEqualToString:@"ar"]) {
+        bypassText = @"تخطي 🟢";
+    } else if ([language isEqualToString:@"ur"]) {
+        bypassText = @"بای پاس 🟢";
+    } else if ([language isEqualToString:@"ku"]) {
+        bypassText = @"لادان 🟢";
+    }
+    
+    bypassLabel.text = bypassText;
     bypassLabel.textColor = [UIColor greenColor];
-    bypassLabel.font = [UIFont boldSystemFontOfSize:22];
+    bypassLabel.font = [UIFont boldSystemFontOfSize:14];
     bypassLabel.textAlignment = NSTextAlignmentCenter;
-    bypassLabel.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.6];
-    bypassLabel.layer.cornerRadius = 8;
+    bypassLabel.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.5];
+    bypassLabel.layer.cornerRadius = 6;
     bypassLabel.clipsToBounds = YES;
     bypassLabel.userInteractionEnabled = NO;
     
@@ -100,11 +121,11 @@ static void showMovingBypassText(UIWindow *targetWindow) {
         UILabel *strongLabel = weakLabel;
         if (!strongLabel) return;
         
-        CGFloat randomX = arc4random_uniform((uint32_t)(screenBounds.size.width - 180));
-        CGFloat randomY = arc4random_uniform((uint32_t)(screenBounds.size.height - 100));
+        CGFloat randomX = arc4random_uniform((uint32_t)(screenBounds.size.width - 130));
+        CGFloat randomY = arc4random_uniform((uint32_t)(screenBounds.size.height - 80));
         
         [UIView animateWithDuration:4.0 animations:^{
-            strongLabel.frame = CGRectMake(randomX, randomY, 160, 40);
+            strongLabel.frame = CGRectMake(randomX, randomY, 110, 30);
         }];
     };
     
@@ -115,13 +136,13 @@ static void showMovingBypassText(UIWindow *targetWindow) {
 }
 
 static void showToastNotification(NSString *message, UIView *parentView) {
-    UILabel *toastLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 60, parentView.bounds.size.width - 40, 45)];
+    UILabel *toastLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 60, parentView.bounds.size.width - 40, 40)];
     toastLabel.backgroundColor = [[UIColor colorWithRed:0.0 green:0.8 blue:0.4 alpha:0.95] colorWithAlphaComponent:0.95];
     toastLabel.textColor = [UIColor whiteColor];
-    toastLabel.font = [UIFont boldSystemFontOfSize:15];
+    toastLabel.font = [UIFont boldSystemFontOfSize:14];
     toastLabel.textAlignment = NSTextAlignmentCenter;
     toastLabel.text = message;
-    toastLabel.layer.cornerRadius = 12;
+    toastLabel.layer.cornerRadius = 10;
     toastLabel.clipsToBounds = YES;
     toastLabel.alpha = 1.0;
     
@@ -137,7 +158,16 @@ static void activateSuccess(NSString *enteredKey) {
     [[NSUserDefaults standardUserDefaults] setObject:enteredKey forKey:@"MamaHalaSavedKey"];
     [[NSUserDefaults standardUserDefaults] synchronize];
     
-    showToastNotification(@"⚡️ MAMAHALA VIP Activated Successfully!", globalBlackScreen);
+    NSString *successMsg = @"⚡️ MAMAHALA VIP Activated Successfully!";
+    if ([currentSelectedLanguage isEqualToString:@"ar"]) {
+        successMsg = @"⚡️ تم تفعيل ماماهالا بنجاح!";
+    } else if ([currentSelectedLanguage isEqualToString:@"ur"]) {
+        successMsg = @"⚡️ کامیابی کے ساتھ فعال ہو گیا!";
+    } else if ([currentSelectedLanguage isEqualToString:@"ku"]) {
+        successMsg = @"⚡️ مەماهالا ڤایپ بە سەرکەوتوویی چالاک بوو!";
+    }
+    
+    showToastNotification(successMsg, globalBlackScreen);
     
     UIWindow *targetWindow = nil;
     for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
@@ -156,7 +186,7 @@ static void activateSuccess(NSString *enteredKey) {
             globalModWindow = nil;
             globalBlackScreen = nil;
         }
-        showMovingBypassText(targetWindow);
+        showMovingBypassText(targetWindow, currentSelectedLanguage);
     });
 }
 
@@ -175,7 +205,7 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
         } else {
             if (globalKeyField) {
                 globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
-                globalKeyField.placeholder = @"❌ کلیلەکە هەڵەیە!";
+                globalKeyField.placeholder = [currentSelectedLanguage isEqualToString:@"ar"] ? @"❌ مفتاح خاطئ!" : ([currentSelectedLanguage isEqualToString:@"ku"] ? @"❌ کلیلەکە هەڵەیە!" : @"❌ Invalid Key!");
                 globalKeyField.text = @"";
             }
         }
@@ -187,7 +217,7 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
     [request setValue:@"application/json" forHTTPHeaderField:@"Accept"];
     [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
     
-    NSString *anonKey = @"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcmtoZG9ja3FobHd4eHl5eGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MjM3MTMsImV4cCI6MjEwNDI5OTcxM30.F_1g9fcQgSFoMGiqp6hjfanOU6gAxZkTJ35qBa0wuUA";
+    NSString *anonKey = @"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcmtoZG9ja3FobHd4eHl5eGpyIiwicm9sZSI6ImFub24iOjE3ODg3MjM3MTMsImV4cCI6MjEwNDI5OTcxM30.F_1g9fcQgSFoMGiqp6hjfanOU6gAxZkTJ35qBa0wuUA";
     [request setValue:anonKey forHTTPHeaderField:@"apikey"];
     [request setValue:[NSString stringWithFormat:@"Bearer %@", anonKey] forHTTPHeaderField:@"Authorization"];
     [request setTimeoutInterval:10.0];
@@ -206,7 +236,7 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
                 } else {
                     if (globalKeyField) {
                         globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
-                        globalKeyField.placeholder = @"❌ کلیلەکە هەڵەیە یان ناچالاکە!";
+                        globalKeyField.placeholder = [currentSelectedLanguage isEqualToString:@"ar"] ? @"❌ مفتاح غير صالح!" : ([currentSelectedLanguage isEqualToString:@"ku"] ? @"❌ کلیلەکە هەڵەیە یان ناچالاکە!" : @"❌ Invalid or Inactive Key!");
                         globalKeyField.text = @"";
                     }
                     openTelegramLink();
@@ -225,7 +255,7 @@ static void verifyKeyOnSupabase(NSString *enteredKey) {
                 } else {
                     if (globalKeyField) {
                         globalKeyField.layer.borderColor = [UIColor redColor].CGColor;
-                        globalKeyField.placeholder = @"❌ کلیلەکە هەڵەیە یان ناچالاکە!";
+                        globalKeyField.placeholder = [currentSelectedLanguage isEqualToString:@"ar"] ? @"❌ مفتاح غير صالح!" : ([currentSelectedLanguage isEqualToString:@"ku"] ? @"❌ کلیلەکە هەڵەیە یان ناچالاکە!" : @"❌ Invalid or Inactive Key!");
                         globalKeyField.text = @"";
                     }
                     openTelegramLink();
@@ -284,15 +314,15 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds) {
     if ([language isEqualToString:@"ku"]) {
         placeholderText = @"🔑 کلیلەکەت لێرە بنووسە ...";
         loginBtnText = @"🚀 پشکنین و چوونەژوورەوە";
-        tgBtnText = @"💬 بۆ دەست کەوتنی کلیل";
+        tgBtnText = @"💬 بۆ دەست کەوتنی کلیل لە تێلیگرام";
     } else if ([language isEqualToString:@"ar"]) {
         placeholderText = @"🔑 أدخل المفتاح هنا ...";
         loginBtnText = @"🚀 تحقق وتسجيل الدخول";
-        tgBtnText = @"💬 للحصول على المفتاح";
+        tgBtnText = @"💬 للحصول على المفتاح عبر تلغرام";
     } else if ([language isEqualToString:@"ur"]) {
         placeholderText = @"🔑 یہاں کلید درج کریں ...";
         loginBtnText = @"🚀 لاگ ان کریں";
-        tgBtnText = @"💬 کلید حاصل کرنے کے لیے";
+        tgBtnText = @"💬 ٹیلیگرام پر کلید حاصل کریں";
     }
     
     globalKeyField.placeholder = placeholderText;
@@ -403,6 +433,7 @@ __attribute__((constructor)) static void initializer() {
                 charLbl.textColor = [UIColor colorWithRed:0.0 green:1.0 blue:0.25 alpha:1.0];
                 charLbl.font = [UIFont boldSystemFontOfSize:30];
                 [charLbl sizeToFit];
+                charLbl.alpha = 0.0;
                 [globalBlackScreen addSubview:charLbl];
                 [charLabels addObject:charLbl];
             }
@@ -414,13 +445,27 @@ __attribute__((constructor)) static void initializer() {
                 CGSize size = [lbl.text sizeWithAttributes:@{NSFontAttributeName:lbl.font}];
                 lbl.frame = CGRectMake(currentX, (screenBounds.size.height / 2) - 20, size.width, size.height);
                 currentX += size.width;
+                
+                double delay = 0.03 * i;
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    [UIView animateWithDuration:0.2 animations:^{
+                        lbl.alpha = 1.0;
+                    }];
+                });
             }
             
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                for (UILabel *lbl in charLabels) {
-                    [lbl removeFromSuperview];
-                }
-                showLanguageMenu(screenBounds);
+            double totalAnimationTime = (0.03 * welcomeText.length) + 1.2;
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(totalAnimationTime * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [UIView animateWithDuration:0.5 animations:^{
+                    for (UILabel *lbl in charLabels) {
+                        lbl.alpha = 0.0;
+                    }
+                } completion:^(BOOL finished) {
+                    for (UILabel *lbl in charLabels) {
+                        [lbl removeFromSuperview];
+                    }
+                    showLanguageMenu(screenBounds);
+                });
             });
         }
     });
