@@ -71,7 +71,7 @@ static void showKeyInputUI(NSString *language, CGRect screenBounds);
     NSString *langCode = (tag >= 0 && tag < codes.count) ? codes[tag] : @"ku";
     
     UIView *rootView = globalModWindow.rootViewController.view;
-    [UIView animateWithDuration:0.4 animations:^{
+    [UIView animateWithDuration:0.3 animations:^{
         for (UIView *v in rootView.subviews) {
             v.alpha = 0.0;
         }
@@ -411,7 +411,7 @@ static void showLanguageMenu(CGRect screenBounds) {
     for (int i = 0; i < langViews.count; i++) {
         UIButton *btn = langViews[i];
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)((0.1 * i) * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [UIView animateWithDuration:0.4 animations:^{
+            [UIView animateWithDuration:0.3 animations:^{
                 btn.alpha = 1.0;
             }];
         });
@@ -484,7 +484,7 @@ static void runMamaHalaMod() {
             
             double totalAnimationTime = (0.03 * welcomeText.length) + 1.2;
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(totalAnimationTime * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                [UIView animateWithDuration:0.6 animations:^{
+                [UIView animateWithDuration:0.5 animations:^{
                     for (UILabel *lbl in charLabels) {
                         lbl.alpha = 0.0;
                     }
