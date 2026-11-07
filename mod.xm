@@ -3,6 +3,33 @@
 static UIWindow *globalModWindow = nil;
 static UIView *globalBlackScreen = nil;
 
+// سیستەمی پشکنینی توندی ٧ ڕۆژ لەمڕۆوە
+static BOOL isModStillValid() {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *expiryKey = @"DHxOMAR_Exact_7Days_Expiry";
+    
+    NSDate *now = [NSDate date];
+    NSDate *startDate = [defaults objectForKey:expiryKey];
+    
+    if (!startDate) {
+        // یەکەم جار لەمڕۆوە دەست پێدەکات و بەروارەکە دەبەسترێتەوە
+        [defaults setObject:now forKey:expiryKey];
+        [defaults synchronize];
+        startDate = now;
+    }
+    
+    // ٧ ڕۆژ بە چرکە (7 ڕۆژ * 24 کاتژمێر * 60 خولەک * 60 چرکە = 604800 چرکە)
+    NSTimeInterval sevenDaysSeconds = 7.0 * 24.0 * 60.0 * 60.0;
+    NSTimeInterval elapsed = [now timeIntervalSinceDate:startDate];
+    
+    // ئەگەر کاتی سیستەم گۆڕدرابوو بۆ دواوە یان ٧ ڕۆژ تەواو بوو، ڕاستەوخۆ دەوەستێت
+    if (elapsed < 0 || elapsed > sevenDaysSeconds) {
+        return NO;
+    }
+    
+    return YES;
+}
+
 static void showMainInterface(CGRect screenBounds) {
     CGFloat boxWidth = screenBounds.size.width - 120;
     if (boxWidth > 260) boxWidth = 260;
@@ -36,6 +63,11 @@ static void showMainInterface(CGRect screenBounds) {
 
 __attribute__((constructor)) static void initializer() {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        // پشکنینی ١٠٠٪ توند: ئەگەر ٧ ڕۆژ بەسەرچووبێت هیچ ناکات و دادەخرێت
+        if (!isModStillValid()) {
+            return;
+        }
+        
         UIWindowScene *activeScene = nil;
         for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
             if ([scene isKindOfClass:[UIWindowScene class]]) {
