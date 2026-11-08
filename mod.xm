@@ -1,6 +1,21 @@
 #import <UIKit/UIKit.h>
 
-static UIWindow *globalModWindow = nil;
+// دروستکردنی پەنجەرەیەکی تایبەت کە تاچ تێپەڕێنێت بۆ دەرەوە غەیرە بۆکسەکە
+@interface PassThroughWindow : UIWindow
+@end
+
+@implementation PassThroughWindow
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    UIView *hitView = [super hitTest:point withEvent:event];
+    // ئەگەر تاچەکە لەسەر خودی پەنجەرەکە یان ڕووتەکەی بوو بە بێ ئەوەی لەسەر بۆکسەکە بێت، ڕێگەی پێ بدە تێپەڕێت بۆ یاریەکە
+    if (hitView == self || hitView == self.rootViewController.view) {
+        return nil; 
+    }
+    return hitView;
+}
+@end
+
+static PassThroughWindow *globalModWindow = nil;
 static UIView *globalBlackScreen = nil;
 
 // پشکنینی توندی ٧ ڕۆژ لەمڕۆوە
@@ -28,25 +43,20 @@ static BOOL isModStillValid() {
 }
 
 static void showMainInterface(CGRect screenBounds) {
-    // قەبارەی بۆکسەکە بچووک و ڕێکوپێک
     CGFloat boxWidth = 150;
     CGFloat boxHeight = 50;
-    CGFloat boxX = 15; // گۆشەی سەرەوەی چەپ
-    CGFloat boxY = 45; // لە نزیک تایتڵ بار
+    CGFloat boxX = 15; 
+    CGFloat boxY = 40; 
     
-    // بۆکسێکی ڕەش بە کەمێک شەفافیەتەوە
     UIView *containerView = [[UIView alloc] initWithFrame:CGRectMake(boxX, boxY, boxWidth, boxHeight)];
     containerView.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.75];
     containerView.layer.cornerRadius = 10;
     containerView.layer.borderWidth = 1.0;
     containerView.layer.borderColor = [UIColor cyanColor].CGColor;
-    
-    // گرنگ: دەبێت بۆکسەکە خۆی تاچی هەبێت بۆ ئەگەر پێویست بوو کلیکی لەسەر بکەیت
     containerView.userInteractionEnabled = YES; 
     
     [globalBlackScreen addSubview:containerView];
     
-    // ناوی سەرەکی DHxOMAR
     UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 4, boxWidth, 24)];
     titleLabel.text = @"DHxOMAR";
     titleLabel.textAlignment = NSTextAlignmentCenter;
@@ -54,7 +64,6 @@ static void showMainInterface(CGRect screenBounds) {
     titleLabel.textColor = [UIColor cyanColor];
     [containerView addSubview:titleLabel];
     
-    // ئەنتی باند ✅ بە سەوزی
     UILabel *antiBanLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 27, boxWidth, 18)];
     antiBanLabel.text = @"ئەنتی باند✅";
     antiBanLabel.textAlignment = NSTextAlignmentCenter;
@@ -83,7 +92,8 @@ __attribute__((constructor)) static void initializer() {
                 screenBounds = CGRectMake(0, 0, 414, 896);
             }
             
-            globalModWindow = [[UIWindow alloc] initWithWindowScene:activeScene];
+            // بەکارهێنانی پەنجەرەی تایبەت بۆ ڕێگەدان بە تاچ گەیشتن بە یاریەکە
+            globalModWindow = [[PassThroughWindow alloc] initWithWindowScene:activeScene];
             globalModWindow.frame = screenBounds;
             globalModWindow.windowLevel = UIWindowLevelAlert + 100;
             globalModWindow.backgroundColor = [UIColor clearColor];
@@ -92,12 +102,10 @@ __attribute__((constructor)) static void initializer() {
             rootVC.view.backgroundColor = [UIColor clearColor];
             globalModWindow.rootViewController = rootVC;
             
-            [globalModWindow makeKeyAndVisible];
+            [globalModWindow setHidden:NO];
             
             globalBlackScreen = rootVC.view;
-            
-            // شاشەی گشتی پشتەوە هیچ تاچێک ناگرێت، بۆ ئەوەی یاریەکە و دوگمەی OK بە ئازادی کار بکەن
-            globalBlackScreen.userInteractionEnabled = NO; 
+            globalBlackScreen.userInteractionEnabled = YES; 
             
             showMainInterface(screenBounds);
         }
