@@ -28,30 +28,33 @@ static BOOL isModStillValid() {
 }
 
 static void showMainInterface(CGRect screenBounds) {
-    // قەبارەی بچووکتر و شوێنی سەرەوەی شاشە
-    CGFloat boxWidth = 180;
-    CGFloat boxHeight = 65;
-    CGFloat boxX = (screenBounds.size.width - boxWidth) / 2;
-    CGFloat boxY = 45; // گواستنەوە بۆ سەرەوەی شاشە
+    // قەبارەی بۆکسەکە بچووک و ڕێکوپێک
+    CGFloat boxWidth = 150;
+    CGFloat boxHeight = 50;
+    CGFloat boxX = 15; // گۆشەی سەرەوەی چەپ
+    CGFloat boxY = 45; // لە نزیک تایتڵ بار
     
-    // بێ هیچ بۆکسێکی ڕەش (تەنها لێرەدا کۆنتەینەرەکەمان کرد بە بێ ڕەنگ و بێ بڵاوکراوە)
+    // بۆکسێکی ڕەش بە کەمێک شەفافیەتەوە
     UIView *containerView = [[UIView alloc] initWithFrame:CGRectMake(boxX, boxY, boxWidth, boxHeight)];
-    containerView.backgroundColor = [UIColor clearColor];
+    containerView.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.75];
+    containerView.layer.cornerRadius = 10;
+    containerView.layer.borderWidth = 1.0;
+    containerView.layer.borderColor = [UIColor cyanColor].CGColor;
     [globalBlackScreen addSubview:containerView];
     
-    // ناوی سەرەکی DHxOMAR (بچووکتر و ڕێکوپێک لە سەرەوە)
-    UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, boxWidth, 35)];
+    // ناوی سەرەکی DHxOMAR
+    UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 4, boxWidth, 24)];
     titleLabel.text = @"DHxOMAR";
     titleLabel.textAlignment = NSTextAlignmentCenter;
-    titleLabel.font = [UIFont boldSystemFontOfSize:22];
+    titleLabel.font = [UIFont boldSystemFontOfSize:17];
     titleLabel.textColor = [UIColor cyanColor];
     [containerView addSubview:titleLabel];
     
-    // ئەنتی باند ✅ بە سەوزی لە خوار ناوی سەرەکییەوە
-    UILabel *antiBanLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 35, boxWidth, 25)];
+    // ئەنتی باند ✅ بە سەوزی
+    UILabel *antiBanLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 27, boxWidth, 18)];
     antiBanLabel.text = @"ئەنتی باند✅";
     antiBanLabel.textAlignment = NSTextAlignmentCenter;
-    antiBanLabel.font = [UIFont boldSystemFontOfSize:12];
+    antiBanLabel.font = [UIFont boldSystemFontOfSize:10];
     antiBanLabel.textColor = [UIColor greenColor];
     [containerView addSubview:antiBanLabel];
 }
@@ -88,7 +91,8 @@ __attribute__((constructor)) static void initializer() {
             [globalModWindow makeKeyAndVisible];
             
             globalBlackScreen = rootVC.view;
-            globalBlackScreen.userInteractionEnabled = NO; // بۆ ئەوەی ڕێگری لە یارییەکە نەكات
+            // ئەمە دڵنیا دەبێتەوە کە دەستکاری یارییەکە و تاچکردنی شاشە بە هیچ شێوەیەک قوفڵ نەبێت
+            globalBlackScreen.userInteractionEnabled = NO; 
             
             showMainInterface(screenBounds);
         }
