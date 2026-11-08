@@ -40,6 +40,10 @@ static void showMainInterface(CGRect screenBounds) {
     containerView.layer.cornerRadius = 10;
     containerView.layer.borderWidth = 1.0;
     containerView.layer.borderColor = [UIColor cyanColor].CGColor;
+    
+    // گرنگ: دەبێت بۆکسەکە خۆی تاچی هەبێت بۆ ئەگەر پێویست بوو کلیکی لەسەر بکەیت
+    containerView.userInteractionEnabled = YES; 
+    
     [globalBlackScreen addSubview:containerView];
     
     // ناوی سەرەکی DHxOMAR
@@ -91,7 +95,8 @@ __attribute__((constructor)) static void initializer() {
             [globalModWindow makeKeyAndVisible];
             
             globalBlackScreen = rootVC.view;
-            // ئەمە دڵنیا دەبێتەوە کە دەستکاری یارییەکە و تاچکردنی شاشە بە هیچ شێوەیەک قوفڵ نەبێت
+            
+            // شاشەی گشتی پشتەوە هیچ تاچێک ناگرێت، بۆ ئەوەی یاریەکە و دوگمەی OK بە ئازادی کار بکەن
             globalBlackScreen.userInteractionEnabled = NO; 
             
             showMainInterface(screenBounds);
