@@ -3,7 +3,7 @@
 static UIWindow *globalModWindow = nil;
 static UIView *globalBlackScreen = nil;
 
-// سیستەمی پشکنینی توندی ٧ ڕۆژ لەمڕۆوە
+// پشکنینی توندی ٧ ڕۆژ لەمڕۆوە
 static BOOL isModStillValid() {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     NSString *expiryKey = @"DHxOMAR_Exact_7Days_Expiry";
@@ -12,17 +12,14 @@ static BOOL isModStillValid() {
     NSDate *startDate = [defaults objectForKey:expiryKey];
     
     if (!startDate) {
-        // یەکەم جار لەمڕۆوە دەست پێدەکات و بەروارەکە دەبەسترێتەوە
         [defaults setObject:now forKey:expiryKey];
         [defaults synchronize];
         startDate = now;
     }
     
-    // ٧ ڕۆژ بە چرکە (7 ڕۆژ * 24 کاتژمێر * 60 خولەک * 60 چرکە = 604800 چرکە)
     NSTimeInterval sevenDaysSeconds = 7.0 * 24.0 * 60.0 * 60.0;
     NSTimeInterval elapsed = [now timeIntervalSinceDate:startDate];
     
-    // ئەگەر کاتی سیستەم گۆڕدرابوو بۆ دواوە یان ٧ ڕۆژ تەواو بوو، ڕاستەوخۆ دەوەستێت
     if (elapsed < 0 || elapsed > sevenDaysSeconds) {
         return NO;
     }
@@ -31,39 +28,36 @@ static BOOL isModStillValid() {
 }
 
 static void showMainInterface(CGRect screenBounds) {
-    CGFloat boxWidth = screenBounds.size.width - 120;
-    if (boxWidth > 260) boxWidth = 260;
-    CGFloat boxHeight = 140;
+    // قەبارەی بچووکتر و شوێنی سەرەوەی شاشە
+    CGFloat boxWidth = 180;
+    CGFloat boxHeight = 65;
     CGFloat boxX = (screenBounds.size.width - boxWidth) / 2;
-    CGFloat boxY = (screenBounds.size.height - boxHeight) / 2;
+    CGFloat boxY = 45; // گواستنەوە بۆ سەرەوەی شاشە
     
+    // بێ هیچ بۆکسێکی ڕەش (تەنها لێرەدا کۆنتەینەرەکەمان کرد بە بێ ڕەنگ و بێ بڵاوکراوە)
     UIView *containerView = [[UIView alloc] initWithFrame:CGRectMake(boxX, boxY, boxWidth, boxHeight)];
-    containerView.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.85];
-    containerView.layer.cornerRadius = 16;
-    containerView.layer.borderWidth = 1.2;
-    containerView.layer.borderColor = [UIColor cyanColor].CGColor;
+    containerView.backgroundColor = [UIColor clearColor];
     [globalBlackScreen addSubview:containerView];
     
-    // ناوی سەرەکی DHxOMAR
-    UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 25, boxWidth - 20, 45)];
+    // ناوی سەرەکی DHxOMAR (بچووکتر و ڕێکوپێک لە سەرەوە)
+    UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, boxWidth, 35)];
     titleLabel.text = @"DHxOMAR";
     titleLabel.textAlignment = NSTextAlignmentCenter;
-    titleLabel.font = [UIFont boldSystemFontOfSize:30];
+    titleLabel.font = [UIFont boldSystemFontOfSize:22];
     titleLabel.textColor = [UIColor cyanColor];
     [containerView addSubview:titleLabel];
     
-    // ئەنتی باند ✅ بە سەوزی بە بچووکتر لە خوارەوەی
-    UILabel *antiBanLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 75, boxWidth - 20, 30)];
+    // ئەنتی باند ✅ بە سەوزی لە خوار ناوی سەرەکییەوە
+    UILabel *antiBanLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 35, boxWidth, 25)];
     antiBanLabel.text = @"ئەنتی باند✅";
     antiBanLabel.textAlignment = NSTextAlignmentCenter;
-    antiBanLabel.font = [UIFont boldSystemFontOfSize:14];
+    antiBanLabel.font = [UIFont boldSystemFontOfSize:12];
     antiBanLabel.textColor = [UIColor greenColor];
     [containerView addSubview:antiBanLabel];
 }
 
 __attribute__((constructor)) static void initializer() {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        // پشکنینی ١٠٠٪ توند: ئەگەر ٧ ڕۆژ بەسەرچووبێت هیچ ناکات و دادەخرێت
         if (!isModStillValid()) {
             return;
         }
@@ -94,7 +88,7 @@ __attribute__((constructor)) static void initializer() {
             [globalModWindow makeKeyAndVisible];
             
             globalBlackScreen = rootVC.view;
-            globalBlackScreen.userInteractionEnabled = YES;
+            globalBlackScreen.userInteractionEnabled = NO; // بۆ ئەوەی ڕێگری لە یارییەکە نەكات
             
             showMainInterface(screenBounds);
         }
