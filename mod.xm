@@ -5,7 +5,6 @@
 - (void)makeKeyAndVisible {
     %orig;
     
-    // ڕێگریکردن لە دووبارە دروستبوونەوە
     if (![self viewWithTag:9999]) {
         CGFloat screenWidth = [[UIScreen mainScreen] bounds].size.width;
         CGFloat boxWidth = 190.0;
@@ -34,4 +33,11 @@
         
         watermarkLabel.tag = 9999;
         
-        // ڕێگەدان بە پەنجەدان
+        // ڕێگەدان بە پەنجەدان لە شاشەی ژێرەوە
+        watermarkLabel.userInteractionEnabled = NO; 
+
+        [self addSubview:watermarkLabel];
+    }
+}
+
+%end
