@@ -1,113 +1,47 @@
 #import <UIKit/UIKit.h>
 
-// دروستکردنی پەنجەرەیەکی تایبەت کە تاچ تێپەڕێنێت بۆ دەرەوە غەیرە بۆکسەکە
-@interface PassThroughWindow : UIWindow
-@end
+%hook UIWindow
 
-@implementation PassThroughWindow
-- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
-    UIView *hitView = [super hitTest:point withEvent:event];
-    // ئەگەر تاچەکە لەسەر خودی پەنجەرەکە یان ڕووتەکەی بوو بە بێ ئەوەی لەسەر بۆکسەکە بێت، ڕێگەی پێ بدە تێپەڕێت بۆ یاریەکە
-    if (hitView == self || hitView == self.rootViewController.view) {
-        return nil; 
-    }
-    return hitView;
-}
-@end
-
-static PassThroughWindow *globalModWindow = nil;
-static UIView *globalBlackScreen = nil;
-
-// پشکنینی توندی ٧ ڕۆژ لەمڕۆوە
-static BOOL isModStillValid() {
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    NSString *expiryKey = @"DHxOMAR_Exact_7Days_Expiry";
+- (void)makeKeyAndVisible {
+    %orig;
     
-    NSDate *now = [NSDate date];
-    NSDate *startDate = [defaults objectForKey:expiryKey];
-    
-    if (!startDate) {
-        [defaults setObject:now forKey:expiryKey];
-        [defaults synchronize];
-        startDate = now;
-    }
-    
-    NSTimeInterval sevenDaysSeconds = 7.0 * 24.0 * 60.0 * 60.0;
-    NSTimeInterval elapsed = [now timeIntervalSinceDate:startDate];
-    
-    if (elapsed < 0 || elapsed > sevenDaysSeconds) {
-        return NO;
-    }
-    
-    return YES;
-}
-
-static void showMainInterface(CGRect screenBounds) {
-    CGFloat boxWidth = 150;
-    CGFloat boxHeight = 50;
-    CGFloat boxX = 15; 
-    CGFloat boxY = 40; 
-    
-    UIView *containerView = [[UIView alloc] initWithFrame:CGRectMake(boxX, boxY, boxWidth, boxHeight)];
-    containerView.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.75];
-    containerView.layer.cornerRadius = 10;
-    containerView.layer.borderWidth = 1.0;
-    containerView.layer.borderColor = [UIColor cyanColor].CGColor;
-    containerView.userInteractionEnabled = YES; 
-    
-    [globalBlackScreen addSubview:containerView];
-    
-    UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 4, boxWidth, 24)];
-    titleLabel.text = @"DHxOMAR";
-    titleLabel.textAlignment = NSTextAlignmentCenter;
-    titleLabel.font = [UIFont boldSystemFontOfSize:17];
-    titleLabel.textColor = [UIColor cyanColor];
-    [containerView addSubview:titleLabel];
-    
-    UILabel *antiBanLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 27, boxWidth, 18)];
-    antiBanLabel.text = @"ئەنتی باند✅";
-    antiBanLabel.textAlignment = NSTextAlignmentCenter;
-    antiBanLabel.font = [UIFont boldSystemFontOfSize:10];
-    antiBanLabel.textColor = [UIColor greenColor];
-    [containerView addSubview:antiBanLabel];
-}
-
-__attribute__((constructor)) static void initializer() {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        if (!isModStillValid()) {
-            return;
-        }
+    if (![self viewWithTag:9999]) {
+        // دیاریکردنی قەبارە (بچووکتر کراوەتەوە بۆ ئەوەی ڕێگر نەبێت لە یاری)
+        CGFloat screenWidth = [[UIScreen mainScreen] bounds].size.width;
+        CGFloat boxWidth = 190.0; // پانتایی چوارچێوەکە
+        CGFloat boxHeight = 35.0; // بەرزی چوارچێوەکە
         
-        UIWindowScene *activeScene = nil;
-        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
-            if ([scene isKindOfClass:[UIWindowScene class]]) {
-                activeScene = (UIWindowScene *)scene;
-                break;
-            }
-        }
+        // دانانی لە ناوەڕاستی سەرەوەی شاشەکە
+        UILabel *watermarkLabel = [[UILabel alloc] initWithFrame:CGRectMake((screenWidth - boxWidth) / 2, 40, boxWidth, boxHeight)];
         
-        if (activeScene) {
-            CGRect screenBounds = activeScene.windows.firstObject ? activeScene.windows.firstObject.bounds : CGRectMake(0, 0, 414, 896);
-            if (screenBounds.size.width == 0) {
-                screenBounds = CGRectMake(0, 0, 414, 896);
-            }
-            
-            // بەکارهێنانی پەنجەرەی تایبەت بۆ ڕێگەدان بە تاچ گەیشتن بە یاریەکە
-            globalModWindow = [[PassThroughWindow alloc] initWithWindowScene:activeScene];
-            globalModWindow.frame = screenBounds;
-            globalModWindow.windowLevel = UIWindowLevelAlert + 100;
-            globalModWindow.backgroundColor = [UIColor clearColor];
-            
-            UIViewController *rootVC = [[UIViewController alloc] init];
-            rootVC.view.backgroundColor = [UIColor clearColor];
-            globalModWindow.rootViewController = rootVC;
-            
-            [globalModWindow setHidden:NO];
-            
-            globalBlackScreen = rootVC.view;
-            globalBlackScreen.userInteractionEnabled = YES; 
-            
-            showMainInterface(screenBounds);
-        }
-    });
+        watermarkLabel.text = @"TG📱SaraExpert";
+        
+        // ڕەنگی نوسین: زەردێکی تۆخ (ئاڵتونی)
+        UIColor *darkYellowColor = [UIColor colorWithRed:0.90 green:0.75 blue:0.0 alpha:1.0];
+        watermarkLabel.textColor = darkYellowColor;
+        
+        // فۆنتەکە زەقە بەڵام قەبارەکەی بچووکترە (16) بۆ ئەوەی لە چوارچێوەکە جێی ببێتەوە
+        watermarkLabel.font = [UIFont boldSystemFontOfSize:16.0]; 
+        watermarkLabel.textAlignment = NSTextAlignmentCenter;
+        
+        // باکگراوند: چوارچێوەیەکی ڕەش
+        watermarkLabel.backgroundColor = [UIColor blackColor];
+        
+        // ڕۆخی چوارچێوەکە (بۆردەر): بە هەمان ڕەنگی زەردی تۆخ
+        watermarkLabel.layer.borderWidth = 1.5; // ئەستووری هێڵی چوارچێوەکە
+        watermarkLabel.layer.borderColor = [darkYellowColor CGColor];
+        
+        // چەمانەوەی گۆشەکانی چوارچێوەکە بۆ ئەوەی جوانتر دەرکەوێت
+        watermarkLabel.layer.cornerRadius = 8.0;
+        watermarkLabel.clipsToBounds = YES; // پێویستە بۆ ئەوەی ڕەنگە ڕەشەکە لە چوارچێوەکە دەرنەچێت
+        
+        watermarkLabel.tag = 9999;
+        
+        // ڕێگەدان بە پەنجەدان لە شاشەی ژێرەوەی بێ ئەوەی تێکستەکە ڕێگر بێت
+        watermarkLabel.userInteractionEnabled = NO; 
+
+        [self addSubview:watermarkLabel];
+    }
 }
+
+%end
