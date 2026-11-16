@@ -1,24 +1,24 @@
 #import <UIKit/UIKit.h>
-#import <AVFoundation/AVFoundation.h>
+#import <CoreMedia/CoreMedia.h>
+#import <objc/message.h>
+#import <dlfcn.h>
 
-static AVPlayer *introPlayer = nil;
-static AVPlayerLayer *introPlayerLayer = nil;
+static id introPlayer = nil;
+static CALayer *introPlayerLayer = nil;
 static UIView *videoContainer = nil;
 
 static void showAnimatedWelcomeText(UIWindow *keyWindow) {
     if (!keyWindow) return;
     
-    // دروستکردنی لێبڵی نووسینەکە لە ناوەڕاستی شاشە
     UILabel *welcomeLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 0, keyWindow.bounds.size.width - 40, 150)];
     welcomeLabel.center = CGPointMake(keyWindow.bounds.size.width / 2.0, keyWindow.bounds.size.height / 2.0);
     welcomeLabel.text = @"WELCOME TO\nSERVER MAMAHALA";
     welcomeLabel.numberOfLines = 2;
     welcomeLabel.textAlignment = NSTextAlignmentCenter;
     
-    // فۆنتی گەورە و ئەستوور
     welcomeLabel.font = [UIFont fontWithName:@"AvenirNext-Heavy" size:36.0] ?: [UIFont boldSystemFontOfSize:36.0];
     
-    // ڕەنگێکی ئاڵتوونی جوان لەگەڵ سێبەری درەوشاوە (Glow)
+    // ڕەنگی ئاڵتوونی درەوشاوە
     welcomeLabel.textColor = [UIColor colorWithRed:1.0 green:0.82 blue:0.15 alpha:1.0];
     welcomeLabel.layer.shadowColor = [UIColor colorWithRed:1.0 green:0.45 blue:0.0 alpha:1.0].CGColor;
     welcomeLabel.layer.shadowOffset = CGSizeMake(0, 0);
@@ -26,7 +26,6 @@ static void showAnimatedWelcomeText(UIWindow *keyWindow) {
     welcomeLabel.layer.shadowOpacity = 1.0;
     welcomeLabel.layer.masksToBounds = NO;
     
-    // ئامادەکردن بۆ ئەنیمەیشن (سەرەتا بچووک و نادیار)
     welcomeLabel.alpha = 0.0;
     welcomeLabel.transform = CGAffineTransformMakeScale(0.3, 0.3);
     welcomeLabel.userInteractionEnabled = NO;
@@ -34,7 +33,6 @@ static void showAnimatedWelcomeText(UIWindow *keyWindow) {
     
     [keyWindow addSubview:welcomeLabel];
     
-    // ئەنیمەیشنی هاتنە ناوەوە بە شێوەی سپرینگ (Spring)
     [UIView animateWithDuration:0.9
                           delay:0.0
          usingSpringWithDamping:0.55
@@ -44,7 +42,6 @@ static void showAnimatedWelcomeText(UIWindow *keyWindow) {
         welcomeLabel.alpha = 1.0;
         welcomeLabel.transform = CGAffineTransformIdentity;
     } completion:^(BOOL finished) {
-        // مانەوەی نووسینەکە بۆ ماوەی ٤ چرکە و پاشان ونبوونی بە هێواشی
         [UIView animateWithDuration:1.0
                               delay:4.0
                             options:UIViewAnimationOptionCurveEaseIn
@@ -63,14 +60,15 @@ static void finishVideoAndShowText(UIWindow *keyWindow) {
     [UIView animateWithDuration:0.6 animations:^{
         videoContainer.alpha = 0.0;
     } completion:^(BOOL finished) {
-        [introPlayer pause];
+        if (introPlayer) {
+            ((void (*)(id, SEL))objc_msgSend)(introPlayer, sel_registerName("pause"));
+        }
         [introPlayerLayer removeFromSuperlayer];
         [videoContainer removeFromSuperview];
         introPlayer = nil;
         introPlayerLayer = nil;
         videoContainer = nil;
         
-        // پیشاندانی نووسینە ئەنیمەیشنەکە
         showAnimatedWelcomeText(keyWindow);
     }];
 }
@@ -78,7 +76,15 @@ static void finishVideoAndShowText(UIWindow *keyWindow) {
 static void setupFullScreenIntro() {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         
-        // بەستەری ڕاستەوخۆی (Raw) ڤیدیۆکەت لە گیتهەب
+        // کردنەوەی AVFoundation بە شێوەی داینامیکی بەبێ پێویستبوون بە Makefile
+        dlopen("/System/Library/Frameworks/AVFoundation.framework/AVFoundation", RTLD_LAZY);
+        
+        Class AVPlayerItemClass = NSClassFromString(@"AVPlayerItem");
+        Class AVPlayerClass = NSClassFromString(@"AVPlayer");
+        Class AVPlayerLayerClass = NSClassFromString(@"AVPlayerLayer");
+        
+        if (!AVPlayerItemClass || !AVPlayerClass || !AVPlayerLayerClass) return;
+        
         NSURL *videoURL = [NSURL URLWithString:@"https://raw.githubusercontent.com/halo505444-ops/my-mod/main/Hala.MP4"];
         
         UIWindow *keyWindow = nil;
@@ -99,33 +105,36 @@ static void setupFullScreenIntro() {
         }
         
         if (keyWindow) {
-            // داپۆشینی تەواوی شاشەکە
             videoContainer = [[UIView alloc] initWithFrame:keyWindow.bounds];
             videoContainer.backgroundColor = [UIColor blackColor];
-            videoContainer.userInteractionEnabled = NO; // بۆ ئەوەی دەستلێدان نەوەستێت
+            videoContainer.userInteractionEnabled = NO;
             videoContainer.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
             
-            AVPlayerItem *playerItem = [AVPlayerItem playerItemWithURL:videoURL];
-            introPlayer = [AVPlayer playerWithPlayerItem:playerItem];
-            introPlayer.muted = NO; // دەنگی ڤیدیۆکە کار دەکات (ئەگەر دەتەوێت بێ دەنگ بێت بیکە بە YES)
+            id playerItem = ((id (*)(Class, SEL, NSURL *))objc_msgSend)(AVPlayerItemClass, sel_registerName("playerItemWithURL:"), videoURL);
+            introPlayer = ((id (*)(Class, SEL, id))objc_msgSend)(AVPlayerClass, sel_registerName("playerWithPlayerItem:"), playerItem);
             
-            introPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:introPlayer];
+            // دەنگی ڤیدیۆکە کراوە بێت
+            ((void (*)(id, SEL, BOOL))objc_msgSend)(introPlayer, sel_registerName("setMuted:"), NO);
+            
+            introPlayerLayer = ((CALayer * (*)(Class, SEL, id))objc_msgSend)(AVPlayerLayerClass, sel_registerName("playerLayerWithPlayer:"), introPlayer);
             introPlayerLayer.frame = videoContainer.bounds;
-            introPlayerLayer.videoGravity = AVLayerVideoGravityResizeAspectFill; // پڕکردنەوەی تەواوی شاشەکە
+            [introPlayerLayer setValue:@"AVLayerVideoGravityResizeAspectFill" forKey:@"videoGravity"];
             
             [videoContainer.layer addSublayer:introPlayerLayer];
             [keyWindow addSubview:videoContainer];
             
-            [introPlayer play];
+            // دەستپێکردنی لێدانی ڤیدیۆکە
+            ((void (*)(id, SEL))objc_msgSend)(introPlayer, sel_registerName("play"));
             
-            // کاتێک ڤیدیۆکە تەواو بوو یان دوای ٢٣ چرکە، ڤیدیۆکە لادەچێت و نووسینەکە دێت
-            [[NSNotificationCenter defaultCenter] addObserverForName:AVPlayerItemDidPlayToEndTimeNotification
+            // کاتێک ڤیدیۆکە تەواو بوو
+            [[NSNotificationCenter defaultCenter] addObserverForName:@"AVPlayerItemDidPlayToEndTimeNotification"
                                                               object:playerItem
                                                                queue:[NSOperationQueue mainQueue]
                                                           usingBlock:^(NSNotification *note) {
                 finishVideoAndShowText(keyWindow);
             }];
             
+            // یان دوای ٢٣ چرکە بە تەواوی
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(23.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                 finishVideoAndShowText(keyWindow);
             });
