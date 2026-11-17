@@ -8,7 +8,6 @@ static CALayer *introPlayerLayer = nil;
 static UIView *videoContainer = nil;
 static UIView *menuOverlay = nil;
 
-// کڵاسێکی یارمەتیدەر بۆ مامەڵەکردن لەگەڵ دوگمەکانی Skip و OK
 @interface BloodMenuHandler : NSObject
 + (instancetype)shared;
 - (void)skipTapped;
@@ -26,7 +25,6 @@ static void playFullScreenVideo(UIWindow *keyWindow) {
     
     if (!AVPlayerItemClass || !AVPlayerClass || !AVPlayerLayerClass) return;
     
-    // بەستەری ڕاستەوخۆی (Raw) ڤیدیۆی Mama.MOV لە گیتهەب
     NSURL *videoURL = [NSURL URLWithString:@"https://raw.githubusercontent.com/halo505444-ops/my-mod/main/Mama.MOV"];
     
     videoContainer = [[UIView alloc] initWithFrame:keyWindow.bounds];
@@ -37,19 +35,19 @@ static void playFullScreenVideo(UIWindow *keyWindow) {
     id playerItem = ((id (*)(Class, SEL, NSURL *))objc_msgSend)(AVPlayerItemClass, sel_registerName("playerItemWithURL:"), videoURL);
     introPlayer = ((id (*)(Class, SEL, id))objc_msgSend)(AVPlayerClass, sel_registerName("playerWithPlayerItem:"), playerItem);
     
-    // دەنگی ڤیدیۆکە کراوە بێت
     ((void (*)(id, SEL, BOOL))objc_msgSend)(introPlayer, sel_registerName("setMuted:"), NO);
     
     introPlayerLayer = ((CALayer * (*)(Class, SEL, id))objc_msgSend)(AVPlayerLayerClass, sel_registerName("playerLayerWithPlayer:"), introPlayer);
     introPlayerLayer.frame = videoContainer.bounds;
-    [introPlayerLayer setValue:@"AVLayerVideoGravityResizeAspectFill" forKey:@"videoGravity"];
+    
+    // ڕێکخستنی ڤیدیۆکە بە تەواوی قەبارەی شاشە بەبێ زووم و بەبێ مانەوەی ڕۆخی ڕەش
+    [introPlayerLayer setValue:@"AVLayerVideoGravityResize" forKey:@"videoGravity"];
     
     [videoContainer.layer addSublayer:introPlayerLayer];
     [keyWindow addSubview:videoContainer];
     
     ((void (*)(id, SEL))objc_msgSend)(introPlayer, sel_registerName("play"));
     
-    // کاتێک ڤیدیۆکە تەواو بوو بە هێواشی لادەچێت
     [[NSNotificationCenter defaultCenter] addObserverForName:@"AVPlayerItemDidPlayToEndTimeNotification"
                                                       object:playerItem
                                                        queue:[NSOperationQueue mainQueue]
@@ -125,28 +123,25 @@ static void showBloodThemedMenu() {
         }
         if (!keyWindow) return;
         
-        // پاشبنەمای تاریک بۆ پشتی مینیوەکە
         menuOverlay = [[UIView alloc] initWithFrame:keyWindow.bounds];
         menuOverlay.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.65];
         menuOverlay.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         menuOverlay.alpha = 0.0;
         
-        // بۆکسی سەرەکی مینیو بە ڕەنگی ڕەش و خوێناوی تۆخ
         CGFloat boxWidth = 290.0;
         CGFloat boxHeight = 165.0;
         UIView *menuBox = [[UIView alloc] initWithFrame:CGRectMake(0, 0, boxWidth, boxHeight)];
         menuBox.center = CGPointMake(keyWindow.bounds.size.width / 2.0, keyWindow.bounds.size.height / 2.0);
-        menuBox.backgroundColor = [UIColor colorWithRed:0.14 green:0.01 blue:0.02 alpha:0.96]; // سووری خوێناوی زۆر تۆخ
+        menuBox.backgroundColor = [UIColor colorWithRed:0.14 green:0.01 blue:0.02 alpha:0.96];
         menuBox.layer.cornerRadius = 18.0;
         menuBox.layer.borderWidth = 2.0;
-        menuBox.layer.borderColor = [UIColor colorWithRed:0.75 green:0.03 blue:0.06 alpha:1.0].CGColor; // چوارچێوەی خوێناوی
+        menuBox.layer.borderColor = [UIColor colorWithRed:0.75 green:0.03 blue:0.06 alpha:1.0].CGColor;
         menuBox.layer.shadowColor = [UIColor colorWithRed:0.85 green:0.0 blue:0.05 alpha:1.0].CGColor;
         menuBox.layer.shadowOffset = CGSizeMake(0, 0);
         menuBox.layer.shadowRadius = 20.0;
         menuBox.layer.shadowOpacity = 0.85;
         menuBox.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
         
-        // ناونیشانی Short video
         UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(15, 22, boxWidth - 30, 40)];
         titleLabel.text = @"Short video";
         titleLabel.textAlignment = NSTextAlignmentCenter;
@@ -158,12 +153,10 @@ static void showBloodThemedMenu() {
         titleLabel.layer.shadowOpacity = 0.9;
         [menuBox addSubview:titleLabel];
         
-        // هێڵێکی باریکی خوێناوی لە ژێر ناونیشانەکە
         UIView *divider = [[UIView alloc] initWithFrame:CGRectMake(35, 72, boxWidth - 70, 1.5)];
         divider.backgroundColor = [UIColor colorWithRed:0.65 green:0.04 blue:0.07 alpha:0.7];
         [menuBox addSubview:divider];
         
-        // دوگمەی Skip (لای چەپ)
         UIButton *skipBtn = [UIButton buttonWithType:UIButtonTypeSystem];
         skipBtn.frame = CGRectMake(22, 95, 112, 44);
         [skipBtn setTitle:@"Skip" forState:UIControlStateNormal];
@@ -176,7 +169,6 @@ static void showBloodThemedMenu() {
         [skipBtn addTarget:[BloodMenuHandler shared] action:@selector(skipTapped) forControlEvents:UIControlEventTouchUpInside];
         [menuBox addSubview:skipBtn];
         
-        // دوگمەی OK (لای ڕاست - خوێناوی تۆخ و درەوشاوە)
         UIButton *okBtn = [UIButton buttonWithType:UIButtonTypeSystem];
         okBtn.frame = CGRectMake(boxWidth - 134, 95, 112, 44);
         [okBtn setTitle:@"OK" forState:UIControlStateNormal];
@@ -197,7 +189,6 @@ static void showBloodThemedMenu() {
         [menuOverlay addSubview:menuBox];
         [keyWindow addSubview:menuOverlay];
         
-        // ئەنیمەیشنی هاتنە سەر شاشەی مینیوەکە
         [UIView animateWithDuration:0.45
                               delay:0.0
              usingSpringWithDamping:0.65
