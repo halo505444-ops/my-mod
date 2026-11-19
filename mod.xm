@@ -50,9 +50,10 @@ static UIWindow* getActiveWindow() {
     return keyWindow;
 }
 
+// لۆگۆی سەرەوەی شاشە (Dr.JPG)
 static void setupTopLogo() {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        NSURL *imageURL = [NSURL URLWithString:@"https://raw.githubusercontent.com/halo505444-ops/my-mod/main/Hala%20sonic%20.JPG"];
+        NSURL *imageURL = [NSURL URLWithString:@"https://raw.githubusercontent.com/halo505444-ops/my-mod/main/Dr.JPG"];
         
         NSURLSessionDataTask *downloadTask = [[NSURLSession sharedSession] dataTaskWithURL:imageURL completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
             if (data && !error) {
@@ -110,7 +111,7 @@ static void playFullScreenVideo(UIWindow *keyWindow) {
     
     if (!AVPlayerItemClass || !AVPlayerClass || !AVPlayerLayerClass) return;
     
-    NSURL *videoURL = [NSURL URLWithString:@"https://raw.githubusercontent.com/halo505444-ops/my-mod/main/MamaHala%20.MP4"];
+    NSURL *videoURL = [NSURL URLWithString:@"https://raw.githubusercontent.com/halo505444-ops/my-mod/main/Go.MP4"];
     
     videoContainer = [[UIView alloc] initWithFrame:keyWindow.bounds];
     videoContainer.backgroundColor = [UIColor blackColor];
@@ -186,10 +187,11 @@ static void playFullScreenVideo(UIWindow *keyWindow) {
 
 @end
 
+// مینیوی ناوەڕاست بە وێنەی Dr.JPG
 static void showBloodThemedMenu() {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         
-        NSURL *bgImageURL = [NSURL URLWithString:@"https://raw.githubusercontent.com/halo505444-ops/my-mod/main/Hala%20sonic%20.JPG"];
+        NSURL *bgImageURL = [NSURL URLWithString:@"https://raw.githubusercontent.com/halo505444-ops/my-mod/main/Dr.JPG"];
         
         NSURLSessionDataTask *bgTask = [[NSURLSession sharedSession] dataTaskWithURL:bgImageURL completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
             UIImage *bgImage = (data && !error) ? [UIImage imageWithData:data] : nil;
