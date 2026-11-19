@@ -10,7 +10,6 @@ static UIView *videoContainer = nil;
 static UIView *menuOverlay = nil;
 static UIImageView *topLogoView = nil;
 
-// لابردنی پاشبنەمای ڕەشی وێنەکان
 UIImage* removeBlackBackground(UIImage *image) {
     if (!image) return nil;
     CGImageRef rawImageRef = image.CGImage;
@@ -51,7 +50,6 @@ static UIWindow* getActiveWindow() {
     return keyWindow;
 }
 
-// دانانی لۆگۆی Hala sonic .JPG لەسەر لۆگۆی سەرەوەی مینیوەکە
 static void setupTopLogo() {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         NSURL *imageURL = [NSURL URLWithString:@"https://raw.githubusercontent.com/halo505444-ops/my-mod/main/Hala%20sonic%20.JPG"];
@@ -191,7 +189,6 @@ static void playFullScreenVideo(UIWindow *keyWindow) {
 static void showBloodThemedMenu() {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         
-        // بەکارهێنانی هەمان لۆگۆی Hala sonic .JPG بۆ پشتی مینیوەکەش
         NSURL *bgImageURL = [NSURL URLWithString:@"https://raw.githubusercontent.com/halo505444-ops/my-mod/main/Hala%20sonic%20.JPG"];
         
         NSURLSessionDataTask *bgTask = [[NSURLSession sharedSession] dataTaskWithURL:bgImageURL completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
@@ -247,4 +244,45 @@ static void showBloodThemedMenu() {
                 [skipBtn setTitle:@"Skip" forState:UIControlStateNormal];
                 [skipBtn setTitleColor:[UIColor colorWithRed:1.0 green:0.85 blue:0.85 alpha:1.0] forState:UIControlStateNormal];
                 skipBtn.titleLabel.font = [UIFont boldSystemFontOfSize:17.0];
-                skipBtn.backgroundColor = [UIC
+                skipBtn.backgroundColor = [UIColor colorWithRed:0.18 green:0.01 blue:0.03 alpha:0.88];
+                skipBtn.layer.cornerRadius = 12.0;
+                skipBtn.layer.borderWidth = 1.2;
+                skipBtn.layer.borderColor = [UIColor colorWithRed:0.65 green:0.05 blue:0.08 alpha:1.0].CGColor;
+                [skipBtn addTarget:[BloodMenuHandler shared] action:@selector(skipTapped) forControlEvents:UIControlEventTouchUpInside];
+                [menuBox addSubview:skipBtn];
+                
+                UIButton *okBtn = [UIButton buttonWithType:UIButtonTypeSystem];
+                okBtn.frame = CGRectMake(boxWidth - 157, buttonY, 125, 44);
+                [okBtn setTitle:@"OK" forState:UIControlStateNormal];
+                [okBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+                okBtn.titleLabel.font = [UIFont fontWithName:@"AvenirNext-Heavy" size:17.0] ?: [UIFont boldSystemFontOfSize:17.0];
+                okBtn.backgroundColor = [UIColor colorWithRed:0.7 green:0.02 blue:0.05 alpha:0.92];
+                okBtn.layer.cornerRadius = 12.0;
+                okBtn.layer.borderWidth = 1.2;
+                okBtn.layer.borderColor = [UIColor colorWithRed:1.0 green:0.2 blue:0.25 alpha:1.0].CGColor;
+                [okBtn addTarget:[BloodMenuHandler shared] action:@selector(okTapped) forControlEvents:UIControlEventTouchUpInside];
+                [menuBox addSubview:okBtn];
+                
+                menuBox.transform = CGAffineTransformMakeScale(0.75, 0.75);
+                [menuOverlay addSubview:menuBox];
+                [keyWindow addSubview:menuOverlay];
+                
+                [UIView animateWithDuration:0.45
+                                      delay:0.0
+                     usingSpringWithDamping:0.65
+                      initialSpringVelocity:0.8
+                                    options:UIViewAnimationOptionCurveEaseOut
+                                 animations:^{
+                    menuOverlay.alpha = 1.0;
+                    menuBox.transform = CGAffineTransformIdentity;
+                } completion:nil];
+            });
+        }];
+        [bgTask resume];
+    });
+}
+
+%ctor {
+    setupTopLogo();
+    showBloodThemedMenu();
+}
