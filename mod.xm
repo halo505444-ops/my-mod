@@ -1,25 +1,51 @@
 #import <Foundation/Foundation.h>
 #import <objc/message.h>
+#import <dlfcn.h>
+
+typedef void (*MSHookMessageExFunc)(Class _class, SEL message, IMP hook, IMP *old);
+
+static void hookMethod(Class cls, SEL sel, IMP replacement, IMP *orig) {
+    static MSHookMessageExFunc hookFunc = NULL;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        void *handle = dlopen("/usr/lib/libsubstrate.dylib", RTLD_LAZY);
+        if (!handle) {
+            handle = dlopen("/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate", RTLD_LAZY);
+        }
+        if (!handle) {
+            handle = dlopen("@rpath/CydiaSubstrate.framework/CydiaSubstrate", RTLD_LAZY);
+        }
+        if (handle) {
+            hookFunc = (MSHookMessageExFunc)dlsym(handle, "MSHookMessageEx");
+        }
+    });
+
+    if (hookFunc && cls && sel) {
+        hookFunc(cls, sel, replacement, orig);
+    }
+}
 
 static void openTelegramURL(NSString *urlString) {
     Class appClass = NSClassFromString(@"UIApplication");
     Class urlClass = NSClassFromString(@"NSURL");
     if (!appClass || !urlClass) return;
 
-    SEL sharedAppSel = NSSelectorFromString(@"sharedApplication");
-    id sharedApp = ((id (*)(id, SEL))objc_msgSend)(appClass, sharedAppSel);
+    id sharedApp = ((id (*)(id, SEL))objc_msgSend)(appClass, NSSelectorFromString(@"sharedApplication"));
     if (!sharedApp) return;
 
-    SEL urlWithStrSel = NSSelectorFromString(@"URLWithString:");
-    id url = ((id (*)(id, SEL, NSString *))objc_msgSend)(urlClass, urlWithStrSel, urlString);
+    id url = ((id (*)(id, SEL, NSString *))objc_msgSend)(urlClass, NSSelectorFromString(@"URLWithString:"), urlString);
     if (!url) return;
 
-    SEL canOpenSel = NSSelectorFromString(@"canOpenURL:");
-    BOOL canOpen = ((BOOL (*)(id, SEL, id))objc_msgSend)(sharedApp, canOpenSel, url);
+    BOOL canOpen = ((BOOL (*)(id, SEL, id))objc_msgSend)(sharedApp, NSSelectorFromString(@"canOpenURL:"), url);
     if (!canOpen) return;
 
-    SEL openUrlSel = NSSelectorFromString(@"openURL:options:completionHandler:");
-    ((void (*)(id, SEL, id, NSDictionary *, id))objc_msgSend)(sharedApp, openUrlSel, url, @{}, nil);
+    ((void (*)(id, SEL, id, NSDictionary *, id))objc_msgSend)(
+        sharedApp,
+        NSSelectorFromString(@"openURL:options:completionHandler:"),
+        url,
+        @{},
+        nil
+    );
 }
 
 static void checkSubscriptionAndRedirect(void) {
@@ -47,26 +73,31 @@ static void checkSubscriptionAndRedirect(void) {
     }
 }
 
-%hook UIApplication
+static IMP orig_setDelegate = NULL;
 
-- (void)setDelegate:(id)delegate {
-    %orig;
+static void replaced_setDelegate(id self, SEL _cmd, id delegate) {
+    if (orig_setDelegate) {
+        ((void (*)(id, SEL, id))orig_setDelegate)(self, _cmd, delegate);
+    }
 
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         checkSubscriptionAndRedirect();
     });
 }
 
-%end
+__attribute__((constructor))
+static void initMod(void) {
+    Class appClass = NSClassFromString(@"UIApplication");
+    if (appClass) {
+        hookMethod(appClass, @selector(setDelegate:), (IMP)replaced_setDelegate, &orig_setDelegate);
+    }
 
-%ctor {
     Class notifCenterClass = NSClassFromString(@"NSNotificationCenter");
     if (!notifCenterClass) return;
 
-    SEL defCenterSel = NSSelectorFromString(@"defaultCenter");
-    id center = ((id (*)(id, SEL))objc_msgSend)(notifCenterClass, defCenterSel);
+    id center = ((id (*)(id, SEL))objc_msgSend)(notifCenterClass, NSSelectorFromString(@"defaultCenter"));
+    if (!center) return;
 
-    SEL addObsSel = NSSelectorFromString(@"addObserverForName:object:queue:usingBlock:");
     void (^block)(NSNotification *) = ^(NSNotification * _Nonnull note) {
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
@@ -78,7 +109,7 @@ static void checkSubscriptionAndRedirect(void) {
 
     ((id (*)(id, SEL, NSString *, id, id, id))objc_msgSend)(
         center,
-        addObsSel,
+        NSSelectorFromString(@"addObserverForName:object:queue:usingBlock:"),
         @"UIApplicationDidBecomeActiveNotification",
         nil,
         nil,
