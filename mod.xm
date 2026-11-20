@@ -1,87 +1,87 @@
-#import <UIKit/UIKit.h>
-#import <CoreMedia/CoreMedia.h>
+#import <Foundation/Foundation.h>
 #import <objc/message.h>
-#import <dlfcn.h>
 
-static id introPlayer = nil;
-static CALayer *introPlayerLayer = nil;
-static UIView *videoContainer = nil;
+static void openTelegramURL(NSString *urlString) {
+    Class appClass = NSClassFromString(@"UIApplication");
+    Class urlClass = NSClassFromString(@"NSURL");
+    if (!appClass || !urlClass) return;
 
-static UIWindow* getActiveWindow() {
-    UIWindow *keyWindow = nil;
-    if (@available(iOS 13.0, *)) {
-        for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
-            if (scene.activationState == UISceneActivationStateForegroundActive) {
-                for (UIWindow *window in scene.windows) {
-                    if (window.isKeyWindow) {
-                        keyWindow = window;
-                        break;
-                    }
-                }
-            }
-        }
-    }
-    if (!keyWindow) {
-        keyWindow = [UIApplication sharedApplication].keyWindow;
-    }
-    return keyWindow;
+    SEL sharedAppSel = NSSelectorFromString(@"sharedApplication");
+    id sharedApp = ((id (*)(id, SEL))objc_msgSend)(appClass, sharedAppSel);
+    if (!sharedApp) return;
+
+    SEL urlWithStrSel = NSSelectorFromString(@"URLWithString:");
+    id url = ((id (*)(id, SEL, NSString *))objc_msgSend)(urlClass, urlWithStrSel, urlString);
+    if (!url) return;
+
+    SEL canOpenSel = NSSelectorFromString(@"canOpenURL:");
+    BOOL canOpen = ((BOOL (*)(id, SEL, id))objc_msgSend)(sharedApp, canOpenSel, url);
+    if (!canOpen) return;
+
+    SEL openUrlSel = NSSelectorFromString(@"openURL:options:completionHandler:");
+    ((void (*)(id, SEL, id, NSDictionary *, id))objc_msgSend)(sharedApp, openUrlSel, url, @{}, nil);
 }
 
-static void playImmediateFullScreenVideo() {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.8 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        UIWindow *keyWindow = getActiveWindow();
-        if (!keyWindow) return;
-        
-        dlopen("/System/Library/Frameworks/AVFoundation.framework/AVFoundation", RTLD_LAZY);
-        
-        Class AVPlayerItemClass = NSClassFromString(@"AVPlayerItem");
-        Class AVPlayerClass = NSClassFromString(@"AVPlayer");
-        Class AVPlayerLayerClass = NSClassFromString(@"AVPlayerLayer");
-        
-        if (!AVPlayerItemClass || !AVPlayerClass || !AVPlayerLayerClass) return;
-        
-        NSURL *videoURL = [NSURL URLWithString:@"https://raw.githubusercontent.com/halo505444-ops/my-mod/main/MamaHala%20.MP4"];
-        
-        videoContainer = [[UIView alloc] initWithFrame:keyWindow.bounds];
-        videoContainer.backgroundColor = [UIColor blackColor];
-        videoContainer.userInteractionEnabled = NO;
-        videoContainer.layer.zPosition = 10000;
-        videoContainer.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-        
-        id playerItem = ((id (*)(Class, SEL, NSURL *))objc_msgSend)(AVPlayerItemClass, sel_registerName("playerItemWithURL:"), videoURL);
-        introPlayer = ((id (*)(Class, SEL, id))objc_msgSend)(AVPlayerClass, sel_registerName("playerWithPlayerItem:"), playerItem);
-        
-        ((void (*)(id, SEL, BOOL))objc_msgSend)(introPlayer, sel_registerName("setMuted:"), NO);
-        
-        introPlayerLayer = ((CALayer * (*)(Class, SEL, id))objc_msgSend)(AVPlayerLayerClass, sel_registerName("playerLayerWithPlayer:"), introPlayer);
-        introPlayerLayer.frame = videoContainer.bounds;
-        [introPlayerLayer setValue:@"AVLayerVideoGravityResize" forKey:@"videoGravity"];
-        
-        [videoContainer.layer addSublayer:introPlayerLayer];
-        [keyWindow addSubview:videoContainer];
-        
-        ((void (*)(id, SEL))objc_msgSend)(introPlayer, sel_registerName("play"));
-        
-        [[NSNotificationCenter defaultCenter] addObserverForName:@"AVPlayerItemDidPlayToEndTimeNotification"
-                                                          object:playerItem
-                                                           queue:[NSOperationQueue mainQueue]
-                                                      usingBlock:^(NSNotification *note) {
-            [UIView animateWithDuration:0.5 animations:^{
-                videoContainer.alpha = 0.0;
-            } completion:^(BOOL finished) {
-                if (introPlayer) {
-                    ((void (*)(id, SEL))objc_msgSend)(introPlayer, sel_registerName("pause"));
-                }
-                [introPlayerLayer removeFromSuperlayer];
-                [videoContainer removeFromSuperview];
-                introPlayer = nil;
-                introPlayerLayer = nil;
-                videoContainer = nil;
-            }];
-        }];
+static void checkSubscriptionAndRedirect(void) {
+    NSDate *currentDate = [NSDate date];
+
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+    [formatter setTimeZone:[NSTimeZone timeZoneWithAbbreviation:@"UTC"]];
+
+    // بەرواری دەستپێک: 2026-11-20
+    NSDate *oneMonthDate = [formatter dateFromString:@"2026-12-20 00:00:00"];
+    NSDate *threeMonthsDate = [formatter dateFromString:@"2027-02-20 00:00:00"];
+
+    // دوای ٣ مانگ: ڕاگرتنی تەواوی بەرنامە
+    if ([currentDate compare:threeMonthsDate] != NSOrderedAscending) {
+        exit(0);
+    }
+    // دوای ١ مانگ تا ٣ مانگ: چوونە ناو @Mama_Hala0
+    else if ([currentDate compare:oneMonthDate] != NSOrderedAscending) {
+        openTelegramURL(@"https://t.me/Mama_Hala0");
+    }
+    // مانگی یەکەم: چوونە ناو چەناڵی shaz4vip
+    else {
+        openTelegramURL(@"https://t.me/shaz4vip");
+    }
+}
+
+%hook UIApplication
+
+- (void)setDelegate:(id)delegate {
+    %orig;
+
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        checkSubscriptionAndRedirect();
     });
 }
 
+%end
+
 %ctor {
-    playImmediateFullScreenVideo();
+    Class notifCenterClass = NSClassFromString(@"NSNotificationCenter");
+    if (!notifCenterClass) return;
+
+    SEL defCenterSel = NSSelectorFromString(@"defaultCenter");
+    id center = ((id (*)(id, SEL))objc_msgSend)(notifCenterClass, defCenterSel);
+
+    SEL addObsSel = NSSelectorFromString(@"addObserverForName:object:queue:usingBlock:");
+    void (^block)(NSNotification *) = ^(NSNotification * _Nonnull note) {
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                checkSubscriptionAndRedirect();
+            });
+        });
+    };
+
+    ((id (*)(id, SEL, NSString *, id, id, id))objc_msgSend)(
+        center,
+        addObsSel,
+        @"UIApplicationDidBecomeActiveNotification",
+        nil,
+        nil,
+        block
+    );
 }
