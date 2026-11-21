@@ -1,14 +1,8 @@
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
-#import <QuartzCore/QuartzCore.h>
-#import <AVFoundation/AVFoundation.h>
+#import <objc/message.h>
 #import <sys/utsname.h>
 #import <dlfcn.h>
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Weverything"
-extern "C" void AudioServicesPlaySystemSound(uint32_t inSystemSoundID);
-#pragma clang diagnostic pop
 
 // زانیارییەکانی سێرفەری Supabase
 static NSString * const SUPABASE_URL = @"https://narkhdockqhlwxxyyxjr.supabase.co";
@@ -18,6 +12,33 @@ static NSString * const ADMIN_TG_USER = @"Mama_Hala0";
 // لینکە ڕاستەوخۆکانی لۆگۆ و ڤیدیۆ لە GitHub
 static NSString * const LOGO_IMAGE_URL = @"https://raw.githubusercontent.com/halo505444-ops/my-mod/main/Zoro%20rasm.JPG";
 static NSString * const INTRO_VIDEO_URL = @"https://raw.githubusercontent.com/halo505444-ops/my-mod/main/Mama.MP4";
+
+static UIWindow* getActiveKeyWindow() {
+    UIWindow *foundWindow = nil;
+    if (@available(iOS 13.0, *)) {
+        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if (scene.activationState == UISceneActivationStateForegroundActive && [scene isKindOfClass:[UIWindowScene class]]) {
+                UIWindowScene *windowScene = (UIWindowScene *)scene;
+                for (UIWindow *w in windowScene.windows) {
+                    if (w.isKeyWindow) {
+                        foundWindow = w;
+                        break;
+                    }
+                }
+                if (!foundWindow && windowScene.windows.count > 0) {
+                    foundWindow = windowScene.windows.firstObject;
+                }
+            }
+        }
+    }
+    if (!foundWindow) {
+        foundWindow = [UIApplication sharedApplication].keyWindow;
+    }
+    if (!foundWindow && [UIApplication sharedApplication].windows.count > 0) {
+        foundWindow = [[UIApplication sharedApplication].windows firstObject];
+    }
+    return foundWindow;
+}
 
 // ١. ناسینەوەی جۆری پۆبجی و وەشانی ئەپدەیتەکە بە شێوەی 100% ڕاستەقینە
 static NSString* getPubgRegionAndVersion() {
@@ -99,15 +120,15 @@ static void playSafeTapSound() {
 
 // پەخشکەری ڤیدیۆی دوای کلیل
 @property (nonatomic, strong) UIView *videoContainerView;
-@property (nonatomic, strong) AVPlayer *videoPlayer;
-@property (nonatomic, strong) AVPlayerLayer *videoPlayerLayer;
+@property (nonatomic, strong) id videoPlayer;
+@property (nonatomic, strong) CALayer *videoPlayerLayer;
 @property (nonatomic, strong) NSDate *pendingExpiryDate;
 @property (nonatomic, assign) NSInteger pendingTotalHours;
 
 // پێوەری FPSـی ڕاستەقینە
 @property (nonatomic, strong) UIView *fpsPillView;
 @property (nonatomic, strong) UILabel *fpsLabel;
-@property (nonatomic, strong) CADisplayLink *displayLink;
+@property (nonatomic, strong) id displayLink;
 @property (nonatomic, assign) NSTimeInterval lastTimestamp;
 @property (nonatomic, assign) NSInteger frameCount;
 
@@ -135,8 +156,7 @@ static void playSafeTapSound() {
 // ================= لۆگۆی سەر سەرەوە لە ناوەڕاست (بەبێ خشتە ڕەشەکەی پشتی) =================
 - (void)setupTopCenterLogo {
     dispatch_async(dispatch_get_main_queue(), ^{
-        UIWindow *window = [UIApplication sharedApplication].keyWindow;
-        if (!window) window = [[UIApplication sharedApplication].windows firstObject];
+        UIWindow *window = getActiveKeyWindow();
         if (!window) return;
 
         if (self.topLogoView) {
@@ -146,18 +166,16 @@ static void playSafeTapSound() {
 
         CGFloat logoW = 68;
         CGFloat logoH = 68;
-        // دانانی لۆگۆکە لە بەرزترین خاڵی سەر سەرەوە لە ناوەڕاست
         self.topLogoView = [[UIImageView alloc] initWithFrame:CGRectMake((window.bounds.size.width - logoW) / 2.0, 4, logoW, logoH)];
         self.topLogoView.contentMode = UIViewContentModeScaleAspectFit;
         self.topLogoView.backgroundColor = [UIColor clearColor];
         self.topLogoView.userInteractionEnabled = NO;
 
-        // لابردنی باکگراوندە ڕەشەکەی پشتی وێنەکە (Lighten/Screen Blend Mode)
+        // لابردنی باکگراوندە ڕەشەکەی پشتی وێنەکە
         self.topLogoView.layer.compositingFilter = @"plusL";
 
         [window addSubview:self.topLogoView];
 
-        // داگرتنی وێنەی Zoro rasm.JPG لە GitHub
         NSURL *imgUrl = [NSURL URLWithString:LOGO_IMAGE_URL];
         [[[NSURLSession sharedSession] dataTaskWithURL:imgUrl completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
             if (!error && data) {
@@ -176,34 +194,40 @@ static void playSafeTapSound() {
 // ================= پەخشکردنی ڤیدیۆی Mama.MP4 لە کاتی لێدانی کلیلی ڕاستدا =================
 - (void)playIntroVideoThenShowUIWithExpiry:(NSDate *)expiryDate totalHours:(NSInteger)totalHours {
     dispatch_async(dispatch_get_main_queue(), ^{
-        UIWindow *window = [UIApplication sharedApplication].keyWindow;
-        if (!window) window = [[UIApplication sharedApplication].windows firstObject];
+        UIWindow *window = getActiveKeyWindow();
         if (!window) return;
 
         self.pendingExpiryDate = expiryDate;
         self.pendingTotalHours = totalHours;
+
+        Class AVPlayerItemClass = NSClassFromString(@"AVPlayerItem");
+        Class AVPlayerClass = NSClassFromString(@"AVPlayer");
+        Class AVPlayerLayerClass = NSClassFromString(@"AVPlayerLayer");
+
+        if (!AVPlayerItemClass || !AVPlayerClass || !AVPlayerLayerClass) {
+            [self setupTopCenterLogo];
+            if (expiryDate) [self showWelcomeBannerWithExpiryDate:expiryDate totalHours:totalHours];
+            return;
+        }
 
         self.videoContainerView = [[UIView alloc] initWithFrame:window.bounds];
         self.videoContainerView.backgroundColor = [UIColor blackColor];
         [window addSubview:self.videoContainerView];
 
         NSURL *videoURL = [NSURL URLWithString:INTRO_VIDEO_URL];
-        AVPlayerItem *playerItem = [AVPlayerItem playerItemWithURL:videoURL];
-        self.videoPlayer = [AVPlayer playerWithPlayerItem:playerItem];
+        id playerItem = ((id (*)(id, SEL, id))objc_msgSend)(AVPlayerItemClass, @selector(playerItemWithURL:), videoURL);
+        self.videoPlayer = ((id (*)(id, SEL, id))objc_msgSend)(AVPlayerClass, @selector(playerWithPlayerItem:), playerItem);
 
-        self.videoPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:self.videoPlayer];
+        self.videoPlayerLayer = ((CALayer * (*)(id, SEL, id))objc_msgSend)(AVPlayerLayerClass, @selector(playerLayerWithPlayer:), self.videoPlayer);
         self.videoPlayerLayer.frame = self.videoContainerView.bounds;
-        // پیشاندانی تەواوی ڤیدیۆکە بێ بڕین و زووم
-        self.videoPlayerLayer.videoGravity = AVLayerVideoGravityResizeAspect;
+        [self.videoPlayerLayer setValue:@"AVLayerVideoGravityResizeAspect" forKey:@"videoGravity"];
         [self.videoContainerView.layer addSublayer:self.videoPlayerLayer];
 
-        // چاودێریکردنی تەواوبوونی ڤیدیۆکە
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(videoDidFinishPlaying:)
-                                                     name:AVPlayerItemDidPlayToEndTimeNotification
+                                                     name:@"AVPlayerItemDidPlayToEndTimeNotification"
                                                    object:playerItem];
 
-        // دوگمەی Skip لە گۆشەی خوارەوە بۆ پەڕاندنی ڤیدیۆکە ئەگەر ویستی
         UIButton *skipBtn = [UIButton buttonWithType:UIButtonTypeSystem];
         skipBtn.frame = CGRectMake(window.bounds.size.width - 95, window.bounds.size.height - 55, 75, 32);
         skipBtn.backgroundColor = [UIColor colorWithRed:0.08 green:0.08 blue:0.11 alpha:0.85];
@@ -216,12 +240,12 @@ static void playSafeTapSound() {
         [skipBtn addTarget:self action:@selector(finishVideoAndProceed) forControlEvents:UIControlEventTouchUpInside];
         [self.videoContainerView addSubview:skipBtn];
 
-        // دڵنیابوون لەوەی لۆگۆکە لەسەر سەرەوە دەمێنێتەوە
         [self setupTopCenterLogo];
 
-        [self.videoPlayer play];
+        if ([self.videoPlayer respondsToSelector:@selector(play)]) {
+            ((void (*)(id, SEL))objc_msgSend)(self.videoPlayer, @selector(play));
+        }
 
-        // ئەگەر ئینتەرنێت زۆر خاو بوو و ڤیدیۆکە دوای ١٢ چرکە هێشتا تەواو نەبوو، خۆکارانە دەچێتە قۆناغی دواتر
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(12.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             if (self.videoContainerView) {
                 [self finishVideoAndProceed];
@@ -238,8 +262,10 @@ static void playSafeTapSound() {
     dispatch_async(dispatch_get_main_queue(), ^{
         if (!self.videoContainerView) return;
 
-        [[NSNotificationCenter defaultCenter] removeObserver:self name:AVPlayerItemDidPlayToEndTimeNotification object:nil];
-        [self.videoPlayer pause];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:@"AVPlayerItemDidPlayToEndTimeNotification" object:nil];
+        if ([self.videoPlayer respondsToSelector:@selector(pause)]) {
+            ((void (*)(id, SEL))objc_msgSend)(self.videoPlayer, @selector(pause));
+        }
         self.videoPlayer = nil;
 
         [UIView animateWithDuration:0.35 animations:^{
@@ -248,7 +274,6 @@ static void playSafeTapSound() {
             [self.videoContainerView removeFromSuperview];
             self.videoContainerView = nil;
 
-            // پاشان لۆگۆکە لە سەرەوە جێگیر دەبێت و بانەری کاتی بەسەرچوون و FPS دەردەکەون
             [self setupTopCenterLogo];
             if (self.pendingExpiryDate) {
                 [self showWelcomeBannerWithExpiryDate:self.pendingExpiryDate totalHours:self.pendingTotalHours];
@@ -262,8 +287,7 @@ static void playSafeTapSound() {
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self.fpsPillView) return;
 
-        UIWindow *window = [UIApplication sharedApplication].keyWindow;
-        if (!window) window = [[UIApplication sharedApplication].windows firstObject];
+        UIWindow *window = getActiveKeyWindow();
         if (!window) return;
 
         CGFloat pillW = 195;
@@ -286,26 +310,30 @@ static void playSafeTapSound() {
 
         [window addSubview:self.fpsPillView];
 
-        self.lastTimestamp = 0;
-        self.frameCount = 0;
-        self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(updateFPS:)];
-        [self.displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+        Class CADisplayLinkClass = NSClassFromString(@"CADisplayLink");
+        if (CADisplayLinkClass) {
+            self.lastTimestamp = 0;
+            self.frameCount = 0;
+            self.displayLink = ((id (*)(id, SEL, id, SEL))objc_msgSend)(CADisplayLinkClass, @selector(displayLinkWithTarget:selector:), self, @selector(updateFPS:));
+            ((void (*)(id, SEL, id, id))objc_msgSend)(self.displayLink, @selector(addToRunLoop:forMode:), [NSRunLoop mainRunLoop], NSRunLoopCommonModes);
+        }
     });
 }
 
-- (void)updateFPS:(CADisplayLink *)link {
+- (void)updateFPS:(id)link {
+    NSTimeInterval currentTimestamp = [[link valueForKey:@"timestamp"] doubleValue];
     if (self.lastTimestamp == 0) {
-        self.lastTimestamp = link.timestamp;
+        self.lastTimestamp = currentTimestamp;
         return;
     }
 
     self.frameCount++;
-    NSTimeInterval delta = link.timestamp - self.lastTimestamp;
+    NSTimeInterval delta = currentTimestamp - self.lastTimestamp;
 
     if (delta >= 0.5) {
         NSInteger realFPS = (NSInteger)round(self.frameCount / delta);
         self.frameCount = 0;
-        self.lastTimestamp = link.timestamp;
+        self.lastTimestamp = currentTimestamp;
 
         UIColor *fpsColor = [UIColor colorWithRed:0.3 green:0.95 blue:0.45 alpha:1.0];
         if (realFPS < 45) {
@@ -333,22 +361,26 @@ static void playSafeTapSound() {
 }
 
 - (void)addGoldShimmerToView:(UIView *)targetView {
-    CAGradientLayer *gradient = [CAGradientLayer layer];
+    Class CAGradientLayerClass = NSClassFromString(@"CAGradientLayer");
+    Class CABasicAnimationClass = NSClassFromString(@"CABasicAnimation");
+    if (!CAGradientLayerClass || !CABasicAnimationClass) return;
+
+    CALayer *gradient = ((CALayer * (*)(id, SEL))objc_msgSend)(CAGradientLayerClass, @selector(layer));
     gradient.frame = CGRectMake(-targetView.bounds.size.width, 0, targetView.bounds.size.width * 3, targetView.bounds.size.height);
-    gradient.colors = @[
+    [gradient setValue:@[
         (id)[UIColor clearColor].CGColor,
         (id)[UIColor colorWithWhite:1.0 alpha:0.45].CGColor,
         (id)[UIColor clearColor].CGColor
-    ];
-    gradient.locations = @[@0.35, @0.5, @0.65];
-    gradient.startPoint = CGPointMake(0.0, 0.5);
-    gradient.endPoint = CGPointMake(1.0, 0.5);
+    ] forKey:@"colors"];
+    [gradient setValue:@[@0.35, @0.5, @0.65] forKey:@"locations"];
+    [gradient setValue:[NSValue valueWithCGPoint:CGPointMake(0.0, 0.5)] forKey:@"startPoint"];
+    [gradient setValue:[NSValue valueWithCGPoint:CGPointMake(1.0, 0.5)] forKey:@"endPoint"];
 
-    CABasicAnimation *shimmerAnim = [CABasicAnimation animationWithKeyPath:@"transform.translation.x"];
-    shimmerAnim.fromValue = @(-targetView.bounds.size.width);
-    shimmerAnim.toValue = @(targetView.bounds.size.width);
-    shimmerAnim.duration = 2.2;
-    shimmerAnim.repeatCount = HUGE_VALF;
+    id shimmerAnim = ((id (*)(id, SEL, id))objc_msgSend)(CABasicAnimationClass, @selector(animationWithKeyPath:), @"transform.translation.x");
+    [shimmerAnim setValue:@(-targetView.bounds.size.width) forKey:@"fromValue"];
+    [shimmerAnim setValue:@(targetView.bounds.size.width) forKey:@"toValue"];
+    [shimmerAnim setValue:@(2.2) forKey:@"duration"];
+    [shimmerAnim setValue:@(HUGE_VALF) forKey:@"repeatCount"];
     [gradient addAnimation:shimmerAnim forKey:@"shimmer"];
 
     targetView.layer.masksToBounds = YES;
@@ -410,11 +442,13 @@ static void playSafeTapSound() {
     self.cardView.layer.borderColor = [UIColor colorWithRed:1.0 green:0.25 blue:0.25 alpha:1.0].CGColor;
     self.cardView.layer.shadowColor = [UIColor colorWithRed:1.0 green:0.25 blue:0.25 alpha:0.6].CGColor;
 
-    CAKeyframeAnimation *animation = [CAKeyframeAnimation animationWithKeyPath:@"transform.translation.x"];
-    animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionLinear];
-    animation.duration = 0.45;
-    animation.values = @[@(-12.0), @(12.0), @(-10.0), @(10.0), @(-6.0), @(6.0), @(0.0)];
-    [self.cardView.layer addAnimation:animation forKey:@"shake"];
+    Class CAKeyframeAnimationClass = NSClassFromString(@"CAKeyframeAnimation");
+    if (CAKeyframeAnimationClass) {
+        id animation = ((id (*)(id, SEL, id))objc_msgSend)(CAKeyframeAnimationClass, @selector(animationWithKeyPath:), @"transform.translation.x");
+        [animation setValue:@(0.45) forKey:@"duration"];
+        [animation setValue:@[@(-12.0), @(12.0), @(-10.0), @(10.0), @(-6.0), @(6.0), @(0.0)] forKey:@"values"];
+        [self.cardView.layer addAnimation:animation forKey:@"shake"];
+    }
 
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         self.cardView.layer.borderColor = [UIColor colorWithRed:1.0 green:0.80 blue:0.0 alpha:1.0].CGColor;
@@ -424,8 +458,7 @@ static void playSafeTapSound() {
 
 - (void)showWelcomeBannerWithExpiryDate:(NSDate *)expiryDate totalHours:(NSInteger)totalHours {
     dispatch_async(dispatch_get_main_queue(), ^{
-        UIWindow *window = [UIApplication sharedApplication].keyWindow;
-        if (!window) window = [[UIApplication sharedApplication].windows firstObject];
+        UIWindow *window = getActiveKeyWindow();
         if (!window) return;
 
         UINotificationFeedbackGenerator *feedback = [[UINotificationFeedbackGenerator alloc] init];
@@ -523,8 +556,7 @@ static void playSafeTapSound() {
 
 - (void)showLoginMenuWithMessage:(NSString *)msg isError:(BOOL)isError {
     dispatch_async(dispatch_get_main_queue(), ^{
-        UIWindow *window = [UIApplication sharedApplication].keyWindow;
-        if (!window) window = [[UIApplication sharedApplication].windows firstObject];
+        UIWindow *window = getActiveKeyWindow();
         if (!window) return;
 
         if (!self.blurOverlay) {
@@ -845,11 +877,9 @@ static void playSafeTapSound() {
                     } completion:^(BOOL finished) {
                         [self.blurOverlay removeFromSuperview];
                         self.blurOverlay = nil;
-                        // دوای لێدانی کلیلە ڕاستەکە، ڤیدیۆی Mama.MP4 کار دەکات و پاشان لۆگۆکە لە سەرەوە دەمێنێتەوە
                         [self playIntroVideoThenShowUIWithExpiry:expiryDate totalHours:durationHours];
                     }];
                 } else {
-                    // لە کاتی Auto-Loginـیشدا ڤیدیۆکە کار دەکات و پاشان لۆگۆکە لە سەرەوە دەمێنێتەوە
                     [self playIntroVideoThenShowUIWithExpiry:expiryDate totalHours:durationHours];
                 }
             });
@@ -889,7 +919,6 @@ static void playSafeTapSound() {
 @end
 
 %ctor {
-    // بارکردنی داینامیکی چوارچێوەکان بۆ کۆمپایلکردنی سەربەخۆ بەبێ دەستکاریکردنی Makefile
     dlopen("/System/Library/Frameworks/QuartzCore.framework/QuartzCore", RTLD_LAZY);
     dlopen("/System/Library/Frameworks/AVFoundation.framework/AVFoundation", RTLD_LAZY);
     
