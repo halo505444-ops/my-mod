@@ -4,14 +4,102 @@
 #import <sys/utsname.h>
 #import <dlfcn.h>
 
-// زانیارییەکانی سێرفەری Supabase
-static NSString * const SUPABASE_URL = @"https://narkhdockqhlwxxyyxjr.supabase.co";
-static NSString * const SUPABASE_ANON_KEY = @"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcmtoZG9ja3FobHd4eHl5eGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MjM3MTMsImV4cCI6MjEwNDI5OTcxM30.F_1g9fcQgSFoMGiqp6hjfanOU6gAxZkTJ35qBa0wuUA";
-static NSString * const ADMIN_TG_USER = @"Mama_Hala0";
+// فەنکشنی کردنەوەی زانیارییە شیفرەکراوەکان لە ناو ڕامدا
+static NSString* decryptSecret(const uint8_t *bytes, size_t len, uint8_t key) {
+    uint8_t *buf = (uint8_t *)malloc(len + 1);
+    if (!buf) return @"";
+    for (size_t i = 0; i < len; i++) {
+        buf[i] = bytes[i] ^ key;
+    }
+    buf[len] = '\0';
+    NSString *res = [NSString stringWithUTF8String:(const char *)buf];
+    free(buf);
+    return res ?: @"";
+}
 
-// لینکە ڕاستەوخۆکانی لۆگۆ و ڤیدیۆ لە GitHub
+// زانیارییەکانی سێرفەری Supabase بە شێوەی شاردراوە (XOR Encrypted)
+static NSString* getSupabaseURL() {
+    static const uint8_t enc[] = {
+        0x32,0x2e,0x2e,0x2a,0x29,0x60,0x75,0x75,0x34,0x3b,0x28,0x31,0x32,0x3e,0x35,0x39,
+        0x31,0x2b,0x32,0x36,0x2d,0x22,0x22,0x23,0x22,0x30,0x28,0x74,0x29,0x2f,0x2a,0x3b,
+        0x38,0x3b,0x29,0x3f,0x74,0x39,0x35
+    };
+    return decryptSecret(enc, sizeof(enc), 0x5A);
+}
+
+static NSString* getSupabaseAnonKey() {
+    static const uint8_t enc[] = {
+        0x56,0x4a,0x79,0x5b,0x50,0x74,0x5a,0x5a,0x7c,0x5a,0x7a,0x79,0x66,0x79,0x66,0x78,
+        0x5a,0x79,0x57,0x46,0x79,0x5a,0x7a,0x78,0x66,0x7a,0x51,0x7a,0x65,0x7a,0x6a,0x7a,
+        0x79,0x7a,0x7d,0x79,0x1d,0x56,0x4a,0x79,0x5a,0x40,0x40,0x7a,0x50,0x70,0x79,0x60,
+        0x66,0x79,0x40,0x47,0x43,0x52,0x51,0x52,0x40,0x56,0x79,0x1f,0x79,0x41,0x56,0x55,
+        0x79,0x79,0x66,0x79,0x5d,0x52,0x41,0x58,0x5b,0x57,0x5c,0x50,0x58,0x42,0x5b,0x5f,
+        0x44,0x4b,0x4b,0x4a,0x4a,0x59,0x41,0x79,0x1f,0x79,0x41,0x5c,0x5f,0x56,0x79,0x79,
+        0x66,0x79,0x52,0x5d,0x5c,0x5d,0x79,0x1f,0x79,0x5a,0x52,0x47,0x79,0x79,0x66,0x79,
+        0x02,0x04,0x0b,0x0b,0x04,0x01,0x00,0x04,0x02,0x00,0x79,0x1f,0x79,0x56,0x4b,0x43,
+        0x79,0x79,0x66,0x79,0x01,0x02,0x03,0x07,0x01,0x0a,0x0a,0x04,0x02,0x00,0x79,0x4e,
+        0x1d,0x75,0x6c,0x02,0x54,0x0a,0x55,0x50,0x62,0x54,0x60,0x75,0x5c,0x7e,0x74,0x5a,
+        0x42,0x43,0x05,0x5b,0x59,0x55,0x52,0x5d,0x7c,0x66,0x05,0x54,0x72,0x4b,0x69,0x58,
+        0x67,0x79,0x00,0x06,0x42,0x71,0x52,0x03,0x44,0x46,0x66,0x72
+    };
+    return decryptSecret(enc, sizeof(enc), 0x33);
+}
+
+static NSString * const ADMIN_TG_USER = @"Mama_Hala0";
 static NSString * const LOGO_IMAGE_URL = @"https://raw.githubusercontent.com/halo505444-ops/my-mod/main/Zoro%20rasm.JPG";
 static NSString * const INTRO_VIDEO_URL = @"https://raw.githubusercontent.com/halo505444-ops/my-mod/main/Mama.MP4";
+
+// لابردنی باکگراوندی ڕەش لەسەر ئاستی پیکسل بەبێ ئەوەی وێنەکە کاڵ ببێتەوە
+static UIImage* removeBlackBackgroundSolid(UIImage *image) {
+    if (!image) return nil;
+    CGImageRef rawImageRef = image.CGImage;
+    if (!rawImageRef) return image;
+
+    size_t width = CGImageGetWidth(rawImageRef);
+    size_t height = CGImageGetHeight(rawImageRef);
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    unsigned char *rawData = (unsigned char *)calloc(height * width * 4, sizeof(unsigned char));
+    if (!rawData) {
+        CGColorSpaceRelease(colorSpace);
+        return image;
+    }
+
+    CGContextRef context = CGBitmapContextCreate(rawData, width, height, 8, width * 4, colorSpace, kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+    CGColorSpaceRelease(colorSpace);
+    if (!context) {
+        free(rawData);
+        return image;
+    }
+
+    CGContextDrawImage(context, CGRectMake(0, 0, width, height), rawImageRef);
+    CGContextRelease(context);
+
+    for (size_t i = 0; i < width * height; i++) {
+        size_t offset = i * 4;
+        unsigned char r = rawData[offset];
+        unsigned char g = rawData[offset + 1];
+        unsigned char b = rawData[offset + 2];
+
+        if (r < 28 && g < 28 && b < 28) {
+            rawData[offset] = 0;
+            rawData[offset + 1] = 0;
+            rawData[offset + 2] = 0;
+            rawData[offset + 3] = 0;
+        }
+    }
+
+    CGColorSpaceRef outSpace = CGColorSpaceCreateDeviceRGB();
+    CGContextRef outContext = CGBitmapContextCreate(rawData, width, height, 8, width * 4, outSpace, kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+    CGImageRef newImageRef = CGBitmapContextCreateImage(outContext);
+    UIImage *resultImage = [UIImage imageWithCGImage:newImageRef scale:image.scale orientation:image.imageOrientation];
+
+    CGImageRelease(newImageRef);
+    CGContextRelease(outContext);
+    CGColorSpaceRelease(outSpace);
+    free(rawData);
+
+    return resultImage ?: image;
+}
 
 static UIWindow* getActiveKeyWindow() {
     UIWindow *foundWindow = nil;
@@ -40,7 +128,6 @@ static UIWindow* getActiveKeyWindow() {
     return foundWindow;
 }
 
-// ١. ناسینەوەی جۆری پۆبجی و وەشانی ئەپدەیتەکە بە شێوەی 100% ڕاستەقینە
 static NSString* getPubgRegionAndVersion() {
     NSDictionary *infoDict = [[NSBundle mainBundle] infoDictionary];
     NSString *bundleID = [infoDict objectForKey:@"CFBundleIdentifier"];
@@ -66,7 +153,6 @@ static NSString* getPubgRegionAndVersion() {
     return [NSString stringWithFormat:@"%@ (v%@)", regionName, version];
 }
 
-// ٢. وەرگرتنی ناسنامەی مۆبایل
 static NSString* getDeviceID() {
     NSString *deviceID = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
     if (!deviceID || deviceID.length == 0) {
@@ -80,7 +166,6 @@ static NSString* getDeviceID() {
     return deviceID;
 }
 
-// ٣. وەرگرتنی جۆری ئایفۆن و وەشانی iOS
 static NSString* getDeviceModelAndIOS() {
     struct utsname systemInfo;
     uname(&systemInfo);
@@ -89,7 +174,6 @@ static NSString* getDeviceModelAndIOS() {
     return [NSString stringWithFormat:@"%@ | iOS %@ | %@", model, iosVer, getPubgRegionAndVersion()];
 }
 
-// ٤. دەنگی نەرمی سیستەم بێ پێویستی بە Linker
 static void playSafeTapSound() {
     static void (*soundFunc)(uint32_t) = NULL;
     static dispatch_once_t onceToken;
@@ -104,9 +188,17 @@ static void playSafeTapSound() {
     }
 }
 
+// سێبەرێکی ڕوون بۆ نووسینە بێ خشتەکان تا لەسەر هەموو باکگراوندێک بە جوانی بخوێنرێنەوە
+static void applyCleanTextShadow(UIView *view) {
+    view.layer.shadowColor = [UIColor blackColor].CGColor;
+    view.layer.shadowOffset = CGSizeMake(0, 1.5);
+    view.layer.shadowRadius = 3.0;
+    view.layer.shadowOpacity = 1.0;
+}
+
 @interface MamaHalaKeyMenu : NSObject <UITextFieldDelegate>
-@property (nonatomic, strong) UIVisualEffectView *blurOverlay;
-@property (nonatomic, strong) UIView *cardView;
+@property (nonatomic, strong) UIView *dimOverlay;
+@property (nonatomic, strong) UIVisualEffectView *cardGlassView;
 @property (nonatomic, strong) UITextField *keyTextField;
 @property (nonatomic, strong) UILabel *announcementLabel;
 @property (nonatomic, strong) UILabel *statusLabel;
@@ -115,18 +207,15 @@ static void playSafeTapSound() {
 @property (nonatomic, strong) UIView *statusDot;
 @property (nonatomic, strong) UILabel *serverStatusText;
 
-// لۆگۆی سەرەوەی ناوەڕاست
 @property (nonatomic, strong) UIImageView *topLogoView;
 
-// پەخشکەری ڤیدیۆی دوای کلیل
 @property (nonatomic, strong) UIView *videoContainerView;
 @property (nonatomic, strong) id videoPlayer;
 @property (nonatomic, strong) CALayer *videoPlayerLayer;
 @property (nonatomic, strong) NSDate *pendingExpiryDate;
 @property (nonatomic, assign) NSInteger pendingTotalHours;
 
-// پێوەری FPSـی ڕاستەقینە
-@property (nonatomic, strong) UIView *fpsPillView;
+// تەنها نووسین بۆ FPS بەبێ هیچ خشتەیەک
 @property (nonatomic, strong) UILabel *fpsLabel;
 @property (nonatomic, strong) id displayLink;
 @property (nonatomic, assign) NSTimeInterval lastTimestamp;
@@ -153,7 +242,7 @@ static void playSafeTapSound() {
     return instance;
 }
 
-// ================= لۆگۆی سەر سەرەوە لە ناوەڕاست (بەبێ خشتە ڕەشەکەی پشتی) =================
+// ================= لۆگۆی سەر سەرەوە لە ناوەڕاست (گەورە، تۆخ و ڕوون، بێ خشتەی ڕەش) =================
 - (void)setupTopCenterLogo {
     dispatch_async(dispatch_get_main_queue(), ^{
         UIWindow *window = getActiveKeyWindow();
@@ -164,25 +253,24 @@ static void playSafeTapSound() {
             return;
         }
 
-        CGFloat logoW = 68;
-        CGFloat logoH = 68;
-        self.topLogoView = [[UIImageView alloc] initWithFrame:CGRectMake((window.bounds.size.width - logoW) / 2.0, 4, logoW, logoH)];
+        CGFloat logoW = 92;
+        CGFloat logoH = 92;
+        self.topLogoView = [[UIImageView alloc] initWithFrame:CGRectMake((window.bounds.size.width - logoW) / 2.0, 2, logoW, logoH)];
         self.topLogoView.contentMode = UIViewContentModeScaleAspectFit;
         self.topLogoView.backgroundColor = [UIColor clearColor];
+        self.topLogoView.alpha = 1.0;
         self.topLogoView.userInteractionEnabled = NO;
-
-        // لابردنی باکگراوندە ڕەشەکەی پشتی وێنەکە
-        self.topLogoView.layer.compositingFilter = @"plusL";
 
         [window addSubview:self.topLogoView];
 
         NSURL *imgUrl = [NSURL URLWithString:LOGO_IMAGE_URL];
         [[[NSURLSession sharedSession] dataTaskWithURL:imgUrl completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
             if (!error && data) {
-                UIImage *img = [UIImage imageWithData:data];
-                if (img) {
+                UIImage *rawImg = [UIImage imageWithData:data];
+                if (rawImg) {
+                    UIImage *cleanSolidImg = removeBlackBackgroundSolid(rawImg);
                     dispatch_async(dispatch_get_main_queue(), ^{
-                        self.topLogoView.image = img;
+                        self.topLogoView.image = cleanSolidImg;
                         [window bringSubviewToFront:self.topLogoView];
                     });
                 }
@@ -230,12 +318,12 @@ static void playSafeTapSound() {
 
         UIButton *skipBtn = [UIButton buttonWithType:UIButtonTypeSystem];
         skipBtn.frame = CGRectMake(window.bounds.size.width - 95, window.bounds.size.height - 55, 75, 32);
-        skipBtn.backgroundColor = [UIColor colorWithRed:0.08 green:0.08 blue:0.11 alpha:0.85];
+        skipBtn.backgroundColor = [UIColor colorWithRed:0.12 green:0.14 blue:0.20 alpha:0.85];
         skipBtn.layer.cornerRadius = 10;
         skipBtn.layer.borderWidth = 1.2;
-        skipBtn.layer.borderColor = [UIColor colorWithRed:1.0 green:0.80 blue:0.0 alpha:0.9].CGColor;
+        skipBtn.layer.borderColor = [UIColor whiteColor].CGColor;
         [skipBtn setTitle:@"Skip ⏭" forState:UIControlStateNormal];
-        [skipBtn setTitleColor:[UIColor colorWithRed:1.0 green:0.82 blue:0.1 alpha:1.0] forState:UIControlStateNormal];
+        [skipBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         skipBtn.titleLabel.font = [UIFont boldSystemFontOfSize:13];
         [skipBtn addTarget:self action:@selector(finishVideoAndProceed) forControlEvents:UIControlEventTouchUpInside];
         [self.videoContainerView addSubview:skipBtn];
@@ -282,33 +370,27 @@ static void playSafeTapSound() {
     });
 }
 
-// ================= پێوانەکردنی FPSـی 100% ڕاستەقینە =================
+// ================= پێوانەکردنی FPS بە سادەیی (تەنها نووسین بەبێ هیچ خشتەیەکی پشتی) =================
 - (void)startRealTimeFPSMonitor {
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (self.fpsPillView) return;
+        if (self.fpsLabel) return;
 
         UIWindow *window = getActiveKeyWindow();
         if (!window) return;
 
-        CGFloat pillW = 195;
-        CGFloat pillH = 26;
-        self.fpsPillView = [[UIView alloc] initWithFrame:CGRectMake(16, 44, pillW, pillH)];
-        self.fpsPillView.backgroundColor = [UIColor colorWithRed:0.06 green:0.06 blue:0.09 alpha:0.88];
-        self.fpsPillView.layer.cornerRadius = 13;
-        self.fpsPillView.layer.borderWidth = 1.2;
-        self.fpsPillView.layer.borderColor = [UIColor colorWithRed:1.0 green:0.80 blue:0.0 alpha:0.85].CGColor;
+        self.fpsLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 42, 230, 24)];
+        self.fpsLabel.backgroundColor = [UIColor clearColor];
+        self.fpsLabel.textAlignment = NSTextAlignmentLeft;
+        self.fpsLabel.font = [UIFont monospacedDigitSystemFontOfSize:13 weight:UIFontWeightBold];
+        self.fpsLabel.textColor = [UIColor colorWithRed:1.0 green:0.85 blue:0.2 alpha:1.0];
+        self.fpsLabel.userInteractionEnabled = YES;
+        self.fpsLabel.text = [NSString stringWithFormat:@"⚡ 60 FPS | @%@", ADMIN_TG_USER];
+        applyCleanTextShadow(self.fpsLabel);
 
-        UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(dragFpsPill:)];
-        [self.fpsPillView addGestureRecognizer:pan];
+        UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(dragFpsLabel:)];
+        [self.fpsLabel addGestureRecognizer:pan];
 
-        self.fpsLabel = [[UILabel alloc] initWithFrame:CGRectMake(8, 0, pillW - 16, pillH)];
-        self.fpsLabel.textAlignment = NSTextAlignmentCenter;
-        self.fpsLabel.font = [UIFont monospacedDigitSystemFontOfSize:11 weight:UIFontWeightBold];
-        self.fpsLabel.textColor = [UIColor colorWithRed:0.3 green:0.95 blue:0.45 alpha:1.0];
-        self.fpsLabel.text = [NSString stringWithFormat:@"FPS: -- | @%@", ADMIN_TG_USER];
-        [self.fpsPillView addSubview:self.fpsLabel];
-
-        [window addSubview:self.fpsPillView];
+        [window addSubview:self.fpsLabel];
 
         Class CADisplayLinkClass = NSClassFromString(@"CADisplayLink");
         if (CADisplayLinkClass) {
@@ -335,7 +417,7 @@ static void playSafeTapSound() {
         self.frameCount = 0;
         self.lastTimestamp = currentTimestamp;
 
-        UIColor *fpsColor = [UIColor colorWithRed:0.3 green:0.95 blue:0.45 alpha:1.0];
+        UIColor *fpsColor = [UIColor colorWithRed:1.0 green:0.85 blue:0.2 alpha:1.0];
         if (realFPS < 45) {
             fpsColor = [UIColor colorWithRed:1.0 green:0.35 blue:0.35 alpha:1.0];
         } else if (realFPS < 58) {
@@ -345,8 +427,8 @@ static void playSafeTapSound() {
         self.fpsLabel.textColor = fpsColor;
         self.fpsLabel.text = [NSString stringWithFormat:@"⚡ %ld FPS | @%@", (long)realFPS, ADMIN_TG_USER];
         
-        if (self.fpsPillView.superview) {
-            [self.fpsPillView.superview bringSubviewToFront:self.fpsPillView];
+        if (self.fpsLabel.superview) {
+            [self.fpsLabel.superview bringSubviewToFront:self.fpsLabel];
         }
         if (self.topLogoView.superview) {
             [self.topLogoView.superview bringSubviewToFront:self.topLogoView];
@@ -354,51 +436,27 @@ static void playSafeTapSound() {
     }
 }
 
-- (void)dragFpsPill:(UIPanGestureRecognizer *)pan {
-    CGPoint translation = [pan translationInView:self.fpsPillView.superview];
-    self.fpsPillView.center = CGPointMake(self.fpsPillView.center.x + translation.x, self.fpsPillView.center.y + translation.y);
-    [pan setTranslation:CGPointZero inView:self.fpsPillView.superview];
-}
-
-- (void)addGoldShimmerToView:(UIView *)targetView {
-    Class CAGradientLayerClass = NSClassFromString(@"CAGradientLayer");
-    Class CABasicAnimationClass = NSClassFromString(@"CABasicAnimation");
-    if (!CAGradientLayerClass || !CABasicAnimationClass) return;
-
-    CALayer *gradient = ((CALayer * (*)(id, SEL))objc_msgSend)(CAGradientLayerClass, @selector(layer));
-    gradient.frame = CGRectMake(-targetView.bounds.size.width, 0, targetView.bounds.size.width * 3, targetView.bounds.size.height);
-    [gradient setValue:@[
-        (id)[UIColor clearColor].CGColor,
-        (id)[UIColor colorWithWhite:1.0 alpha:0.45].CGColor,
-        (id)[UIColor clearColor].CGColor
-    ] forKey:@"colors"];
-    [gradient setValue:@[@0.35, @0.5, @0.65] forKey:@"locations"];
-    [gradient setValue:[NSValue valueWithCGPoint:CGPointMake(0.0, 0.5)] forKey:@"startPoint"];
-    [gradient setValue:[NSValue valueWithCGPoint:CGPointMake(1.0, 0.5)] forKey:@"endPoint"];
-
-    id shimmerAnim = ((id (*)(id, SEL, id))objc_msgSend)(CABasicAnimationClass, @selector(animationWithKeyPath:), @"transform.translation.x");
-    [shimmerAnim setValue:@(-targetView.bounds.size.width) forKey:@"fromValue"];
-    [shimmerAnim setValue:@(targetView.bounds.size.width) forKey:@"toValue"];
-    [shimmerAnim setValue:@(2.2) forKey:@"duration"];
-    [shimmerAnim setValue:@(HUGE_VALF) forKey:@"repeatCount"];
-    [gradient addAnimation:shimmerAnim forKey:@"shimmer"];
-
-    targetView.layer.masksToBounds = YES;
-    [targetView.layer addSublayer:gradient];
+- (void)dragFpsLabel:(UIPanGestureRecognizer *)pan {
+    CGPoint translation = [pan translationInView:self.fpsLabel.superview];
+    self.fpsLabel.center = CGPointMake(self.fpsLabel.center.x + translation.x, self.fpsLabel.center.y + translation.y);
+    [pan setTranslation:CGPointZero inView:self.fpsLabel.superview];
 }
 
 - (void)checkServerSettingsAndStart {
     [self setupTopCenterLogo];
 
-    NSString *urlString = [NSString stringWithFormat:@"%@/rest/v1/app_settings?id=eq.1&select=*", SUPABASE_URL];
+    NSString *serverUrl = getSupabaseURL();
+    NSString *serverKey = getSupabaseAnonKey();
+
+    NSString *urlString = [NSString stringWithFormat:@"%@/rest/v1/app_settings?id=eq.1&select=*", serverUrl];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:urlString]];
     [request setHTTPMethod:@"GET"];
-    [request setValue:SUPABASE_ANON_KEY forHTTPHeaderField:@"apikey"];
-    [request setValue:[NSString stringWithFormat:@"Bearer %@", SUPABASE_ANON_KEY] forHTTPHeaderField:@"Authorization"];
+    [request setValue:serverKey forHTTPHeaderField:@"apikey"];
+    [request setValue:[NSString stringWithFormat:@"Bearer %@", serverKey] forHTTPHeaderField:@"Authorization"];
 
     NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         BOOL isMaintenance = NO;
-        NSString *announcement = @"بەخێربێن بۆ سیستەمی MAMAHALA VIP 👑";
+        NSString *announcement = @"بەخێربێن بۆ سیستەمی MAMAHALA VIP";
 
         if (!error && data) {
             NSArray *arr = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
@@ -419,7 +477,6 @@ static void playSafeTapSound() {
                 self.loginButton.alpha = 0.5;
                 self.statusDot.backgroundColor = [UIColor orangeColor];
                 self.serverStatusText.text = @"Maintenance";
-                self.serverStatusText.textColor = [UIColor orangeColor];
                 return;
             }
 
@@ -439,23 +496,22 @@ static void playSafeTapSound() {
     UINotificationFeedbackGenerator *feedback = [[UINotificationFeedbackGenerator alloc] init];
     [feedback notificationOccurred:UINotificationFeedbackTypeError];
 
-    self.cardView.layer.borderColor = [UIColor colorWithRed:1.0 green:0.25 blue:0.25 alpha:1.0].CGColor;
-    self.cardView.layer.shadowColor = [UIColor colorWithRed:1.0 green:0.25 blue:0.25 alpha:0.6].CGColor;
+    self.cardGlassView.layer.borderColor = [UIColor colorWithRed:1.0 green:0.35 blue:0.35 alpha:0.9].CGColor;
 
     Class CAKeyframeAnimationClass = NSClassFromString(@"CAKeyframeAnimation");
     if (CAKeyframeAnimationClass) {
         id animation = ((id (*)(id, SEL, id))objc_msgSend)(CAKeyframeAnimationClass, @selector(animationWithKeyPath:), @"transform.translation.x");
         [animation setValue:@(0.45) forKey:@"duration"];
         [animation setValue:@[@(-12.0), @(12.0), @(-10.0), @(10.0), @(-6.0), @(6.0), @(0.0)] forKey:@"values"];
-        [self.cardView.layer addAnimation:animation forKey:@"shake"];
+        [self.cardGlassView.layer addAnimation:animation forKey:@"shake"];
     }
 
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        self.cardView.layer.borderColor = [UIColor colorWithRed:1.0 green:0.80 blue:0.0 alpha:1.0].CGColor;
-        self.cardView.layer.shadowColor = [UIColor colorWithRed:1.0 green:0.80 blue:0.0 alpha:0.5].CGColor;
+        self.cardGlassView.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.55].CGColor;
     });
 }
 
+// ================= هەموو زانیارییەکانی بەسەرچوون و کاتی ماوە بەبێ خشتە ڕەشەکەی پشتی =================
 - (void)showWelcomeBannerWithExpiryDate:(NSDate *)expiryDate totalHours:(NSInteger)totalHours {
     dispatch_async(dispatch_get_main_queue(), ^{
         UIWindow *window = getActiveKeyWindow();
@@ -487,229 +543,242 @@ static void playSafeTapSound() {
 
         BOOL isLowTime = (remainingSeconds < 7200);
 
-        CGFloat bannerW = 335;
-        CGFloat bannerH = 142;
-        UIView *banner = [[UIView alloc] initWithFrame:CGRectMake((window.bounds.size.width - bannerW)/2, -bannerH, bannerW, bannerH)];
-        banner.backgroundColor = [UIColor colorWithRed:0.07 green:0.07 blue:0.10 alpha:0.97];
-        banner.layer.cornerRadius = 18;
-        banner.layer.borderWidth = 1.8;
-        banner.layer.borderColor = (isLowTime ? [UIColor orangeColor] : [UIColor colorWithRed:1.0 green:0.80 blue:0.0 alpha:1.0]).CGColor;
-        banner.layer.shadowColor = [UIColor colorWithRed:1.0 green:0.80 blue:0.0 alpha:0.45].CGColor;
-        banner.layer.shadowOffset = CGSizeMake(0, 4);
-        banner.layer.shadowRadius = 12.0;
-        banner.layer.shadowOpacity = 0.85;
+        // کۆنتێنەرێکی تەواو شەفاف (بەبێ هیچ خشتە و چوارچێوەیەکی ڕەش)
+        CGFloat blockW = 310;
+        CGFloat blockH = 112;
+        UIView *transparentContainer = [[UIView alloc] initWithFrame:CGRectMake((window.bounds.size.width - blockW) / 2.0, 96, blockW, blockH)];
+        transparentContainer.backgroundColor = [UIColor clearColor];
+        transparentContainer.userInteractionEnabled = NO;
+        transparentContainer.alpha = 0.0;
 
-        UILabel *titleLbl = [[UILabel alloc] initWithFrame:CGRectMake(12, 8, bannerW - 24, 22)];
+        UILabel *titleLbl = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, blockW, 22)];
+        titleLbl.backgroundColor = [UIColor clearColor];
         titleLbl.text = [NSString stringWithFormat:@"👑 MAMAHALA VIP | @%@", ADMIN_TG_USER];
         titleLbl.textAlignment = NSTextAlignmentCenter;
         titleLbl.textColor = [UIColor colorWithRed:1.0 green:0.82 blue:0.1 alpha:1.0];
         titleLbl.font = [UIFont boldSystemFontOfSize:14];
-        [banner addSubview:titleLbl];
+        applyCleanTextShadow(titleLbl);
+        [transparentContainer addSubview:titleLbl];
 
-        UILabel *gameInfoLbl = [[UILabel alloc] initWithFrame:CGRectMake(12, 32, bannerW - 24, 20)];
+        UILabel *gameInfoLbl = [[UILabel alloc] initWithFrame:CGRectMake(0, 22, blockW, 20)];
+        gameInfoLbl.backgroundColor = [UIColor clearColor];
         gameInfoLbl.text = [NSString stringWithFormat:@"🎮 %@", getPubgRegionAndVersion()];
         gameInfoLbl.textAlignment = NSTextAlignmentCenter;
         gameInfoLbl.textColor = [UIColor colorWithRed:0.35 green:0.80 blue:1.0 alpha:1.0];
         gameInfoLbl.font = [UIFont boldSystemFontOfSize:13];
-        [banner addSubview:gameInfoLbl];
+        applyCleanTextShadow(gameInfoLbl);
+        [transparentContainer addSubview:gameInfoLbl];
 
-        UILabel *dateLbl = [[UILabel alloc] initWithFrame:CGRectMake(12, 56, bannerW - 24, 20)];
+        UILabel *dateLbl = [[UILabel alloc] initWithFrame:CGRectMake(0, 44, blockW, 20)];
+        dateLbl.backgroundColor = [UIColor clearColor];
         dateLbl.text = [NSString stringWithFormat:@"📅 بەسەرچوون: %@", formattedDate];
         dateLbl.textAlignment = NSTextAlignmentCenter;
         dateLbl.textColor = [UIColor whiteColor];
-        dateLbl.font = [UIFont systemFontOfSize:12 weight:UIFontWeightSemibold];
-        [banner addSubview:dateLbl];
+        dateLbl.font = [UIFont systemFontOfSize:13 weight:UIFontWeightSemibold];
+        applyCleanTextShadow(dateLbl);
+        [transparentContainer addSubview:dateLbl];
 
-        UILabel *remLbl = [[UILabel alloc] initWithFrame:CGRectMake(12, 78, bannerW - 24, 20)];
+        UILabel *remLbl = [[UILabel alloc] initWithFrame:CGRectMake(0, 66, blockW, 20)];
+        remLbl.backgroundColor = [UIColor clearColor];
         remLbl.text = [NSString stringWithFormat:@"⏳ ماوە: %@", remainingStr];
         remLbl.textAlignment = NSTextAlignmentCenter;
         remLbl.textColor = isLowTime ? [UIColor orangeColor] : [UIColor colorWithRed:0.3 green:0.95 blue:0.45 alpha:1.0];
-        remLbl.font = [UIFont systemFontOfSize:12 weight:UIFontWeightBold];
-        [banner addSubview:remLbl];
+        remLbl.font = [UIFont boldSystemFontOfSize:13];
+        applyCleanTextShadow(remLbl);
+        [transparentContainer addSubview:remLbl];
 
-        UIView *progressBg = [[UIView alloc] initWithFrame:CGRectMake(20, 108, bannerW - 40, 8)];
-        progressBg.backgroundColor = [UIColor colorWithWhite:1.0 alpha:0.15];
-        progressBg.layer.cornerRadius = 4;
-        [banner addSubview:progressBg];
+        // شریتی کاتی ماوە بەبێ خشتەی ڕەشی پشتی
+        UIView *progressBg = [[UIView alloc] initWithFrame:CGRectMake(15, 92, blockW - 30, 7)];
+        progressBg.backgroundColor = [UIColor colorWithWhite:1.0 alpha:0.25];
+        progressBg.layer.cornerRadius = 3.5;
+        applyCleanTextShadow(progressBg);
+        [transparentContainer addSubview:progressBg];
 
-        UIView *progressFill = [[UIView alloc] initWithFrame:CGRectMake(0, 0, (bannerW - 40) * progressRatio, 8)];
+        UIView *progressFill = [[UIView alloc] initWithFrame:CGRectMake(0, 0, (blockW - 30) * progressRatio, 7)];
         progressFill.backgroundColor = isLowTime ? [UIColor orangeColor] : [UIColor colorWithRed:0.3 green:0.95 blue:0.45 alpha:1.0];
-        progressFill.layer.cornerRadius = 4;
+        progressFill.layer.cornerRadius = 3.5;
         [progressBg addSubview:progressFill];
 
-        [window addSubview:banner];
+        [window addSubview:transparentContainer];
         [self startRealTimeFPSMonitor];
         if (self.topLogoView) [window bringSubviewToFront:self.topLogoView];
 
-        [UIView animateWithDuration:0.55 delay:0 usingSpringWithDamping:0.75 initialSpringVelocity:0.6 options:0 animations:^{
-            banner.frame = CGRectMake((window.bounds.size.width - bannerW)/2, 78, bannerW, bannerH);
+        [UIView animateWithDuration:0.4 animations:^{
+            transparentContainer.alpha = 1.0;
         } completion:^(BOOL finished) {
             [UIView animateWithDuration:0.5 delay:4.5 options:0 animations:^{
-                banner.frame = CGRectMake((window.bounds.size.width - bannerW)/2, -bannerH - 20, bannerW, bannerH);
-                banner.alpha = 0.0;
+                transparentContainer.alpha = 0.0;
             } completion:^(BOOL finished) {
-                [banner removeFromSuperview];
+                [transparentContainer removeFromSuperview];
             }];
         }];
     });
 }
 
+// ================= خشتەی چوونەژوورەوە: پان (Landscape)، شووشەیی ڕوون، نووسینەکان یەک ڕەنگی سپی =================
 - (void)showLoginMenuWithMessage:(NSString *)msg isError:(BOOL)isError {
     dispatch_async(dispatch_get_main_queue(), ^{
         UIWindow *window = getActiveKeyWindow();
         if (!window) return;
 
-        if (!self.blurOverlay) {
-            UIBlurEffect *blurEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleDark];
-            self.blurOverlay = [[UIVisualEffectView alloc] initWithEffect:blurEffect];
-            self.blurOverlay.frame = window.bounds;
-            self.blurOverlay.alpha = 0.97;
+        if (!self.dimOverlay) {
+            self.dimOverlay = [[UIView alloc] initWithFrame:window.bounds];
+            self.dimOverlay.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.35];
 
-            CGFloat cardW = 335;
-            CGFloat cardH = 415;
-            self.cardView = [[UIView alloc] initWithFrame:CGRectMake((window.bounds.size.width - cardW)/2, (window.bounds.size.height - cardH)/2 + 18, cardW, cardH)];
-            self.cardView.backgroundColor = [UIColor colorWithRed:0.07 green:0.07 blue:0.10 alpha:0.98];
-            self.cardView.layer.cornerRadius = 22;
-            self.cardView.layer.borderWidth = 2.0;
-            self.cardView.layer.borderColor = [UIColor colorWithRed:1.0 green:0.80 blue:0.0 alpha:1.0].CGColor;
-            
-            self.cardView.layer.shadowColor = [UIColor colorWithRed:1.0 green:0.80 blue:0.0 alpha:0.5].CGColor;
-            self.cardView.layer.shadowOffset = CGSizeMake(0, 0);
-            self.cardView.layer.shadowRadius = 18.0;
-            self.cardView.layer.shadowOpacity = 0.85;
+            CGFloat cardW = MIN(490, window.bounds.size.width - 36);
+            CGFloat cardH = 268;
+            CGFloat cardY = ((window.bounds.size.height - cardH) / 2.0) + 32;
+
+            UIBlurEffect *glassBlur = [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemThinMaterialDark];
+            self.cardGlassView = [[UIVisualEffectView alloc] initWithEffect:glassBlur];
+            self.cardGlassView.frame = CGRectMake((window.bounds.size.width - cardW) / 2.0, cardY, cardW, cardH);
+            self.cardGlassView.backgroundColor = [UIColor colorWithRed:0.14 green:0.18 blue:0.26 alpha:0.62];
+            self.cardGlassView.layer.cornerRadius = 22;
+            self.cardGlassView.layer.masksToBounds = YES;
+            self.cardGlassView.layer.borderWidth = 1.6;
+            self.cardGlassView.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.55].CGColor;
+
+            UIView *content = self.cardGlassView.contentView;
 
             self.statusDot = [[UIView alloc] initWithFrame:CGRectMake(18, 18, 8, 8)];
-            self.statusDot.backgroundColor = [UIColor colorWithRed:0.2 green:0.95 blue:0.4 alpha:1.0];
+            self.statusDot.backgroundColor = [UIColor colorWithRed:0.25 green:0.95 blue:0.50 alpha:1.0];
             self.statusDot.layer.cornerRadius = 4;
-            [self.cardView addSubview:self.statusDot];
+            [content addSubview:self.statusDot];
 
             self.serverStatusText = [[UILabel alloc] initWithFrame:CGRectMake(30, 14, 80, 16)];
             self.serverStatusText.text = @"Online";
-            self.serverStatusText.textColor = [UIColor colorWithRed:0.2 green:0.95 blue:0.4 alpha:1.0];
+            self.serverStatusText.textColor = [UIColor whiteColor];
             self.serverStatusText.font = [UIFont boldSystemFontOfSize:11];
-            [self.cardView addSubview:self.serverStatusText];
+            [content addSubview:self.serverStatusText];
 
-            UILabel *crownLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 32, cardW, 28)];
+            UILabel *gameVersionBadge = [[UILabel alloc] initWithFrame:CGRectMake(cardW - 195, 14, 178, 16)];
+            gameVersionBadge.text = [NSString stringWithFormat:@"🎮 %@", getPubgRegionAndVersion()];
+            gameVersionBadge.textAlignment = NSTextAlignmentRight;
+            gameVersionBadge.textColor = [UIColor whiteColor];
+            gameVersionBadge.font = [UIFont systemFontOfSize:11 weight:UIFontWeightSemibold];
+            [content addSubview:gameVersionBadge];
+
+            UILabel *crownLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 26, cardW - 40, 28)];
             crownLabel.text = @"👑 MAMAHALA VIP 👑";
             crownLabel.textAlignment = NSTextAlignmentCenter;
-            crownLabel.textColor = [UIColor colorWithRed:1.0 green:0.82 blue:0.1 alpha:1.0];
-            crownLabel.font = [UIFont boldSystemFontOfSize:22];
-            [self.cardView addSubview:crownLabel];
+            crownLabel.textColor = [UIColor whiteColor];
+            crownLabel.font = [UIFont boldSystemFontOfSize:21];
+            [content addSubview:crownLabel];
 
-            UILabel *gameVersionBadge = [[UILabel alloc] initWithFrame:CGRectMake(20, 62, cardW - 40, 20)];
-            gameVersionBadge.text = [NSString stringWithFormat:@"🎮 %@", getPubgRegionAndVersion()];
-            gameVersionBadge.textAlignment = NSTextAlignmentCenter;
-            gameVersionBadge.textColor = [UIColor colorWithRed:0.35 green:0.80 blue:1.0 alpha:1.0];
-            gameVersionBadge.font = [UIFont boldSystemFontOfSize:12];
-            [self.cardView addSubview:gameVersionBadge];
-
-            UIView *noticeBox = [[UIView alloc] initWithFrame:CGRectMake(20, 88, cardW - 40, 32)];
-            noticeBox.backgroundColor = [UIColor colorWithRed:1.0 green:0.80 blue:0.0 alpha:0.12];
+            UIView *noticeBox = [[UIView alloc] initWithFrame:CGRectMake(22, 58, cardW - 44, 28)];
+            noticeBox.backgroundColor = [UIColor colorWithWhite:1.0 alpha:0.14];
             noticeBox.layer.cornerRadius = 8;
-            [self.cardView addSubview:noticeBox];
+            [content addSubview:noticeBox];
 
-            self.announcementLabel = [[UILabel alloc] initWithFrame:CGRectMake(8, 2, cardW - 56, 28)];
-            self.announcementLabel.text = @"بەخێربێن بۆ سیستەمی MAMAHALA VIP 👑";
+            self.announcementLabel = [[UILabel alloc] initWithFrame:CGRectMake(8, 0, cardW - 60, 28)];
+            self.announcementLabel.text = @"بەخێربێن بۆ سیستەمی MAMAHALA VIP";
             self.announcementLabel.textAlignment = NSTextAlignmentCenter;
-            self.announcementLabel.textColor = [UIColor colorWithRed:1.0 green:0.85 blue:0.3 alpha:1.0];
-            self.announcementLabel.font = [UIFont systemFontOfSize:12 weight:UIFontWeightMedium];
+            self.announcementLabel.textColor = [UIColor whiteColor];
+            self.announcementLabel.font = [UIFont systemFontOfSize:12 weight:UIFontWeightSemibold];
             [noticeBox addSubview:self.announcementLabel];
 
-            UIView *inputContainer = [[UIView alloc] initWithFrame:CGRectMake(20, 132, cardW - 40, 48)];
-            inputContainer.backgroundColor = [UIColor colorWithRed:0.13 green:0.13 blue:0.17 alpha:1.0];
+            UIView *inputContainer = [[UIView alloc] initWithFrame:CGRectMake(22, 96, cardW - 44, 44)];
+            inputContainer.backgroundColor = [UIColor colorWithWhite:1.0 alpha:0.16];
             inputContainer.layer.cornerRadius = 12;
-            inputContainer.layer.borderWidth = 1.0;
-            inputContainer.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.18].CGColor;
-            [self.cardView addSubview:inputContainer];
+            inputContainer.layer.borderWidth = 1.2;
+            inputContainer.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.45].CGColor;
+            [content addSubview:inputContainer];
 
-            self.keyTextField = [[UITextField alloc] initWithFrame:CGRectMake(12, 6, cardW - 148, 36)];
+            self.keyTextField = [[UITextField alloc] initWithFrame:CGRectMake(14, 4, cardW - 150, 36)];
             self.keyTextField.placeholder = @"MAMAHALA-XXD-XXXX";
             self.keyTextField.textColor = [UIColor whiteColor];
-            self.keyTextField.font = [UIFont systemFontOfSize:14 weight:UIFontWeightSemibold];
+            self.keyTextField.font = [UIFont systemFontOfSize:14 weight:UIFontWeightBold];
             self.keyTextField.autocorrectionType = UITextAutocorrectionTypeNo;
             self.keyTextField.autocapitalizationType = UITextAutocapitalizationTypeAllCharacters;
             self.keyTextField.delegate = self;
-            [self.keyTextField setValue:[UIColor grayColor] forKeyPath:@"placeholderLabel.textColor"];
+            self.keyTextField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:@"MAMAHALA-XXD-XXXX" attributes:@{NSForegroundColorAttributeName: [UIColor colorWithWhite:1.0 alpha:0.65]}];
             [inputContainer addSubview:self.keyTextField];
 
             self.eyeButton = [UIButton buttonWithType:UIButtonTypeSystem];
-            self.eyeButton.frame = CGRectMake(cardW - 132, 9, 30, 30);
+            self.eyeButton.frame = CGRectMake(cardW - 134, 7, 30, 30);
             [self.eyeButton setTitle:@"👁️" forState:UIControlStateNormal];
             [self.eyeButton addTarget:self action:@selector(toggleSecureKey) forControlEvents:UIControlEventTouchUpInside];
             [inputContainer addSubview:self.eyeButton];
 
             UIButton *pasteBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-            pasteBtn.frame = CGRectMake(cardW - 98, 9, 52, 30);
-            pasteBtn.backgroundColor = [UIColor colorWithRed:1.0 green:0.80 blue:0.0 alpha:0.22];
+            pasteBtn.frame = CGRectMake(cardW - 100, 7, 50, 30);
+            pasteBtn.backgroundColor = [UIColor colorWithWhite:1.0 alpha:0.25];
             pasteBtn.layer.cornerRadius = 8;
             [pasteBtn setTitle:@"Paste" forState:UIControlStateNormal];
-            [pasteBtn setTitleColor:[UIColor colorWithRed:1.0 green:0.82 blue:0.1 alpha:1.0] forState:UIControlStateNormal];
+            [pasteBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
             pasteBtn.titleLabel.font = [UIFont boldSystemFontOfSize:12];
             [pasteBtn addTarget:self action:@selector(pasteKeyAction) forControlEvents:UIControlEventTouchUpInside];
             [inputContainer addSubview:pasteBtn];
 
-            self.statusLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 188, cardW - 40, 36)];
-            self.statusLabel.numberOfLines = 2;
+            self.statusLabel = [[UILabel alloc] initWithFrame:CGRectMake(22, 144, cardW - 44, 24)];
+            self.statusLabel.numberOfLines = 1;
             self.statusLabel.textAlignment = NSTextAlignmentCenter;
-            self.statusLabel.font = [UIFont systemFontOfSize:12 weight:UIFontWeightMedium];
-            [self.cardView addSubview:self.statusLabel];
+            self.statusLabel.textColor = [UIColor whiteColor];
+            self.statusLabel.font = [UIFont systemFontOfSize:12 weight:UIFontWeightSemibold];
+            [content addSubview:self.statusLabel];
 
             self.loginButton = [UIButton buttonWithType:UIButtonTypeSystem];
-            self.loginButton.frame = CGRectMake(20, 232, cardW - 40, 46);
-            self.loginButton.backgroundColor = [UIColor colorWithRed:1.0 green:0.80 blue:0.0 alpha:1.0];
+            self.loginButton.frame = CGRectMake(22, 174, cardW - 44, 42);
+            self.loginButton.backgroundColor = [UIColor colorWithRed:0.16 green:0.55 blue:0.95 alpha:0.95];
             self.loginButton.layer.cornerRadius = 12;
+            self.loginButton.layer.borderWidth = 1.0;
+            self.loginButton.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.5].CGColor;
             [self.loginButton setTitle:@"چوونەژوورەوە (LOGIN)" forState:UIControlStateNormal];
-            [self.loginButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-            self.loginButton.titleLabel.font = [UIFont boldSystemFontOfSize:16];
+            [self.loginButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+            self.loginButton.titleLabel.font = [UIFont boldSystemFontOfSize:15];
             [self.loginButton addTarget:self action:@selector(loginButtonTapped) forControlEvents:UIControlEventTouchUpInside];
-            [self.cardView addSubview:self.loginButton];
-            [self addGoldShimmerToView:self.loginButton];
+            [content addSubview:self.loginButton];
+
+            CGFloat halfW = (cardW - 54) / 2.0;
 
             UIButton *telegramBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-            telegramBtn.frame = CGRectMake(20, 288, cardW - 40, 44);
-            telegramBtn.backgroundColor = [UIColor colorWithRed:0.14 green:0.62 blue:0.86 alpha:1.0];
-            telegramBtn.layer.cornerRadius = 12;
-            [telegramBtn setTitle:[NSString stringWithFormat:@"✈️ کڕینی کلیل لە تێلێگرام (@%@)", ADMIN_TG_USER] forState:UIControlStateNormal];
+            telegramBtn.frame = CGRectMake(22, 224, halfW, 34);
+            telegramBtn.backgroundColor = [UIColor colorWithWhite:1.0 alpha:0.16];
+            telegramBtn.layer.cornerRadius = 10;
+            telegramBtn.layer.borderWidth = 1.0;
+            telegramBtn.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.35].CGColor;
+            [telegramBtn setTitle:[NSString stringWithFormat:@"✈️ @%@", ADMIN_TG_USER] forState:UIControlStateNormal];
             [telegramBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-            telegramBtn.titleLabel.font = [UIFont boldSystemFontOfSize:13];
+            telegramBtn.titleLabel.font = [UIFont boldSystemFontOfSize:12];
             [telegramBtn addTarget:self action:@selector(openTelegramAction) forControlEvents:UIControlEventTouchUpInside];
-            [self.cardView addSubview:telegramBtn];
+            [content addSubview:telegramBtn];
 
             UIButton *copyIdBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-            copyIdBtn.frame = CGRectMake(20, 342, cardW - 40, 36);
-            copyIdBtn.backgroundColor = [UIColor colorWithWhite:1.0 alpha:0.06];
+            copyIdBtn.frame = CGRectMake(22 + halfW + 10, 224, halfW, 34);
+            copyIdBtn.backgroundColor = [UIColor colorWithWhite:1.0 alpha:0.16];
             copyIdBtn.layer.cornerRadius = 10;
-            [copyIdBtn setTitle:@"📋 کۆپیکردنی کۆدی مۆبایل (Device ID)" forState:UIControlStateNormal];
-            [copyIdBtn setTitleColor:[UIColor lightGrayColor] forState:UIControlStateNormal];
-            copyIdBtn.titleLabel.font = [UIFont systemFontOfSize:12 weight:UIFontWeightMedium];
+            copyIdBtn.layer.borderWidth = 1.0;
+            copyIdBtn.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.35].CGColor;
+            [copyIdBtn setTitle:@"📋 کۆپیکردنی Device ID" forState:UIControlStateNormal];
+            [copyIdBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+            copyIdBtn.titleLabel.font = [UIFont boldSystemFontOfSize:12];
             [copyIdBtn addTarget:self action:@selector(copyAndSendDeviceIdAction) forControlEvents:UIControlEventTouchUpInside];
-            [self.cardView addSubview:copyIdBtn];
+            [content addSubview:copyIdBtn];
 
-            [self.blurOverlay.contentView addSubview:self.cardView];
-            [window addSubview:self.blurOverlay];
+            [self.dimOverlay addSubview:self.cardGlassView];
+            [window addSubview:self.dimOverlay];
 
-            self.cardView.transform = CGAffineTransformMakeScale(0.75, 0.75);
-            self.cardView.alpha = 0.0;
-            [UIView animateWithDuration:0.5 delay:0 usingSpringWithDamping:0.7 initialSpringVelocity:0.6 options:0 animations:^{
-                self.cardView.transform = CGAffineTransformIdentity;
-                self.cardView.alpha = 1.0;
+            self.cardGlassView.transform = CGAffineTransformMakeScale(0.82, 0.82);
+            self.cardGlassView.alpha = 0.0;
+            [UIView animateWithDuration:0.45 delay:0 usingSpringWithDamping:0.75 initialSpringVelocity:0.6 options:0 animations:^{
+                self.cardGlassView.transform = CGAffineTransformIdentity;
+                self.cardGlassView.alpha = 1.0;
             } completion:nil];
         }
 
-        self.blurOverlay.hidden = NO;
-        [window bringSubviewToFront:self.blurOverlay];
+        self.dimOverlay.hidden = NO;
+        [window bringSubviewToFront:self.dimOverlay];
         if (self.topLogoView) [window bringSubviewToFront:self.topLogoView];
         
         self.loginButton.enabled = YES;
         [self.loginButton setTitle:@"چوونەژوورەوە (LOGIN)" forState:UIControlStateNormal];
 
+        self.statusLabel.textColor = [UIColor whiteColor];
         if (msg.length > 0) {
             self.statusLabel.text = msg;
-            self.statusLabel.textColor = isError ? [UIColor colorWithRed:1.0 green:0.35 blue:0.35 alpha:1.0] : [UIColor colorWithRed:0.3 green:0.95 blue:0.45 alpha:1.0];
             if (isError) [self shakeCardWithErrorColor];
         } else {
             self.statusLabel.text = @"تکایە کلیلەکەت بنووسە یان Paste بکە";
-            self.statusLabel.textColor = [UIColor grayColor];
         }
     });
 }
@@ -745,8 +814,7 @@ static void playSafeTapSound() {
     playSafeTapSound();
     NSString *infoToCopy = [NSString stringWithFormat:@"Device ID: %@\nInfo: %@", getDeviceID(), getDeviceModelAndIOS()];
     [UIPasteboard generalPasteboard].string = infoToCopy;
-    self.statusLabel.text = [NSString stringWithFormat:@"✅ کۆپی کرا! دەتوانیت بینێریت بۆ @%@", ADMIN_TG_USER];
-    self.statusLabel.textColor = [UIColor colorWithRed:0.3 green:0.95 blue:0.45 alpha:1.0];
+    self.statusLabel.text = [NSString stringWithFormat:@"✅ کۆپی کرا! بینێرە بۆ @%@", ADMIN_TG_USER];
 }
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
@@ -772,18 +840,20 @@ static void playSafeTapSound() {
             self.loginButton.enabled = NO;
             [self.loginButton setTitle:@"پشکنین..." forState:UIControlStateNormal];
             self.statusLabel.text = @"⏳ پەیوەندی بە سێرفەری MAMAHALA دەکرێت...";
-            self.statusLabel.textColor = [UIColor colorWithRed:1.0 green:0.82 blue:0.1 alpha:1.0];
         }
     });
 
+    NSString *serverUrl = getSupabaseURL();
+    NSString *serverKey = getSupabaseAnonKey();
+
     NSString *encodedKey = [enteredKey stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
-    NSString *urlString = [NSString stringWithFormat:@"%@/rest/v1/keys?key_text=eq.%@&select=*", SUPABASE_URL, encodedKey];
+    NSString *urlString = [NSString stringWithFormat:@"%@/rest/v1/keys?key_text=eq.%@&select=*", serverUrl, encodedKey];
     NSURL *url = [NSURL URLWithString:urlString];
 
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
     [request setHTTPMethod:@"GET"];
-    [request setValue:SUPABASE_ANON_KEY forHTTPHeaderField:@"apikey"];
-    [request setValue:[NSString stringWithFormat:@"Bearer %@", SUPABASE_ANON_KEY] forHTTPHeaderField:@"Authorization"];
+    [request setValue:serverKey forHTTPHeaderField:@"apikey"];
+    [request setValue:[NSString stringWithFormat:@"Bearer %@", serverKey] forHTTPHeaderField:@"Authorization"];
 
     NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         if (error || !data) {
@@ -866,17 +936,16 @@ static void playSafeTapSound() {
             [[NSUserDefaults standardUserDefaults] synchronize];
             
             dispatch_async(dispatch_get_main_queue(), ^{
-                if (self.blurOverlay) {
+                if (self.dimOverlay) {
                     self.statusLabel.text = @"✅ کلیلەکە سەرکەوتوو بوو! بەخێربێیت...";
-                    self.statusLabel.textColor = [UIColor colorWithRed:0.3 green:0.95 blue:0.45 alpha:1.0];
-                    self.cardView.layer.borderColor = [UIColor colorWithRed:0.3 green:0.95 blue:0.45 alpha:1.0].CGColor;
                     
-                    [UIView animateWithDuration:0.35 delay:0.4 options:0 animations:^{
-                        self.blurOverlay.alpha = 0.0;
-                        self.cardView.transform = CGAffineTransformMakeScale(1.08, 1.08);
+                    [UIView animateWithDuration:0.35 delay:0.35 options:0 animations:^{
+                        self.dimOverlay.alpha = 0.0;
+                        self.cardGlassView.transform = CGAffineTransformMakeScale(1.06, 1.06);
                     } completion:^(BOOL finished) {
-                        [self.blurOverlay removeFromSuperview];
-                        self.blurOverlay = nil;
+                        [self.dimOverlay removeFromSuperview];
+                        self.dimOverlay = nil;
+                        self.cardGlassView = nil;
                         [self playIntroVideoThenShowUIWithExpiry:expiryDate totalHours:durationHours];
                     }];
                 } else {
@@ -886,11 +955,11 @@ static void playSafeTapSound() {
         };
 
         if (needsServerUpdate) {
-            NSString *patchUrlStr = [NSString stringWithFormat:@"%@/rest/v1/keys?key_text=eq.%@", SUPABASE_URL, encodedKey];
+            NSString *patchUrlStr = [NSString stringWithFormat:@"%@/rest/v1/keys?key_text=eq.%@", serverUrl, encodedKey];
             NSMutableURLRequest *patchReq = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:patchUrlStr]];
             [patchReq setHTTPMethod:@"PATCH"];
-            [patchReq setValue:SUPABASE_ANON_KEY forHTTPHeaderField:@"apikey"];
-            [patchReq setValue:[NSString stringWithFormat:@"Bearer %@", SUPABASE_ANON_KEY] forHTTPHeaderField:@"Authorization"];
+            [patchReq setValue:serverKey forHTTPHeaderField:@"apikey"];
+            [patchReq setValue:[NSString stringWithFormat:@"Bearer %@", serverKey] forHTTPHeaderField:@"Authorization"];
             [patchReq setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
 
             NSDictionary *updateBody = @{
