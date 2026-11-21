@@ -17,11 +17,11 @@ static NSString* decryptSecret(const uint8_t *bytes, size_t len, uint8_t key) {
     return res ?: @"";
 }
 
-// زانیارییەکانی سێرفەری Supabase بە شێوەی شاردراوە (XOR Encrypted)
+// زانیارییەکانی سێرفەری Supabase بە شێوەی شاردراوە و ڕاستکراوە (XOR Encrypted)
 static NSString* getSupabaseURL() {
     static const uint8_t enc[] = {
         0x32,0x2e,0x2e,0x2a,0x29,0x60,0x75,0x75,0x34,0x3b,0x28,0x31,0x32,0x3e,0x35,0x39,
-        0x31,0x2b,0x32,0x36,0x2d,0x22,0x22,0x23,0x22,0x30,0x28,0x74,0x29,0x2f,0x2a,0x3b,
+        0x31,0x2b,0x32,0x36,0x2d,0x22,0x22,0x23,0x23,0x30,0x28,0x74,0x29,0x2f,0x2a,0x3b,
         0x38,0x3b,0x29,0x3f,0x74,0x39,0x35
     };
     return decryptSecret(enc, sizeof(enc), 0x5A);
@@ -188,7 +188,6 @@ static void playSafeTapSound() {
     }
 }
 
-// سێبەرێکی ڕوون بۆ نووسینە بێ خشتەکان تا لەسەر هەموو باکگراوندێک بە جوانی بخوێنرێنەوە
 static void applyCleanTextShadow(UIView *view) {
     view.layer.shadowColor = [UIColor blackColor].CGColor;
     view.layer.shadowOffset = CGSizeMake(0, 1.5);
@@ -215,7 +214,6 @@ static void applyCleanTextShadow(UIView *view) {
 @property (nonatomic, strong) NSDate *pendingExpiryDate;
 @property (nonatomic, assign) NSInteger pendingTotalHours;
 
-// تەنها نووسین بۆ FPS بەبێ هیچ خشتەیەک
 @property (nonatomic, strong) UILabel *fpsLabel;
 @property (nonatomic, strong) id displayLink;
 @property (nonatomic, assign) NSTimeInterval lastTimestamp;
@@ -242,7 +240,7 @@ static void applyCleanTextShadow(UIView *view) {
     return instance;
 }
 
-// ================= لۆگۆی سەر سەرەوە لە ناوەڕاست (گەورە، تۆخ و ڕوون، بێ خشتەی ڕەش) =================
+// ================= لۆگۆی سەر سەرەوە لە ناوەڕاست (گەورە و بە بۆشاییەکی گونجاو لە سەرەوە) =================
 - (void)setupTopCenterLogo {
     dispatch_async(dispatch_get_main_queue(), ^{
         UIWindow *window = getActiveKeyWindow();
@@ -253,9 +251,10 @@ static void applyCleanTextShadow(UIView *view) {
             return;
         }
 
-        CGFloat logoW = 92;
-        CGFloat logoH = 92;
-        self.topLogoView = [[UIImageView alloc] initWithFrame:CGRectMake((window.bounds.size.width - logoW) / 2.0, 2, logoW, logoH)];
+        CGFloat logoW = 132;
+        CGFloat logoH = 132;
+        // دانانی بۆشاییەکی گونجاو (y = 14) تا بە سەرەوەی شاشەکەوە نەلکێت
+        self.topLogoView = [[UIImageView alloc] initWithFrame:CGRectMake((window.bounds.size.width - logoW) / 2.0, 14, logoW, logoH)];
         self.topLogoView.contentMode = UIViewContentModeScaleAspectFit;
         self.topLogoView.backgroundColor = [UIColor clearColor];
         self.topLogoView.alpha = 1.0;
@@ -543,10 +542,10 @@ static void applyCleanTextShadow(UIView *view) {
 
         BOOL isLowTime = (remainingSeconds < 7200);
 
-        // کۆنتێنەرێکی تەواو شەفاف (بەبێ هیچ خشتە و چوارچێوەیەکی ڕەش)
+        // کۆنتێنەرێکی تەواو شەفاف لە ژێر لۆگۆ گەورەکەوە (y = 136)
         CGFloat blockW = 310;
         CGFloat blockH = 112;
-        UIView *transparentContainer = [[UIView alloc] initWithFrame:CGRectMake((window.bounds.size.width - blockW) / 2.0, 96, blockW, blockH)];
+        UIView *transparentContainer = [[UIView alloc] initWithFrame:CGRectMake((window.bounds.size.width - blockW) / 2.0, 136, blockW, blockH)];
         transparentContainer.backgroundColor = [UIColor clearColor];
         transparentContainer.userInteractionEnabled = NO;
         transparentContainer.alpha = 0.0;
@@ -587,7 +586,6 @@ static void applyCleanTextShadow(UIView *view) {
         applyCleanTextShadow(remLbl);
         [transparentContainer addSubview:remLbl];
 
-        // شریتی کاتی ماوە بەبێ خشتەی ڕەشی پشتی
         UIView *progressBg = [[UIView alloc] initWithFrame:CGRectMake(15, 92, blockW - 30, 7)];
         progressBg.backgroundColor = [UIColor colorWithWhite:1.0 alpha:0.25];
         progressBg.layer.cornerRadius = 3.5;
@@ -626,8 +624,8 @@ static void applyCleanTextShadow(UIView *view) {
             self.dimOverlay.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.35];
 
             CGFloat cardW = MIN(490, window.bounds.size.width - 36);
-            CGFloat cardH = 268;
-            CGFloat cardY = ((window.bounds.size.height - cardH) / 2.0) + 32;
+            CGFloat cardH = 264;
+            CGFloat cardY = ((window.bounds.size.height - cardH) / 2.0) + 54;
 
             UIBlurEffect *glassBlur = [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemThinMaterialDark];
             self.cardGlassView = [[UIVisualEffectView alloc] initWithEffect:glassBlur];
